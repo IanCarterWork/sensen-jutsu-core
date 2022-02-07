@@ -1,0 +1,3 @@
+"use strict";
+alert('HTMLElement Handling Manipulate with smake(".selector").method().property ');
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic21ha2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJzbWFrZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUEsS0FBSyxDQUFDLDRFQUE0RSxDQUFDLENBQUEiLCJzb3VyY2VzQ29udGVudCI6WyJhbGVydCgnSFRNTEVsZW1lbnQgSGFuZGxpbmcgTWFuaXB1bGF0ZSB3aXRoIHNtYWtlKFwiLnNlbGVjdG9yXCIpLm1ldGhvZCgpLnByb3BlcnR5ICcpIl19

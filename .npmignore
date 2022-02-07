@@ -2,3 +2,7 @@
 ./webpack.config.js
 ./public
 ./vscode
+./exemple.ts
+./exemple.d.ts
+./exemple.js
+./exemple.js.map

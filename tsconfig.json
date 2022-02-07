@@ -5,8 +5,6 @@
         "allowJs": true,
         "moduleResolution":"node",
         "jsx": "react",
-        "outDir": "./lib",
-        "rootDir": "./core",
         "removeComments": false,
         "target": "ES2020",
         // "module": "commonjs",
@@ -20,8 +18,10 @@
         "types": ["node"],
     },
 
-	"include": [
-		"core", "core/index.t.ts",
-	],
+    "exclude": [
+        "./exemple/**/*",
+        "./public/**/*",
+        "./webpack.config.js"
+    ]
     
 }

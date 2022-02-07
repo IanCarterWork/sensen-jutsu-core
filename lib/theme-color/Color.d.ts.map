@@ -1,1 +1,0 @@
-{"version":3,"file":"color.d.ts","sourceRoot":"","sources":["../../core/theme-color/color.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,iBAAiB,EAAE,qBAAqB,EAAE,MAAM,WAAW,CAAC;AAErE,OAAO,EAAwB,qBAAqB,EAAE,MAAM,WAAW,CAAC;AAMxE,MAAM,CAAC,OAAO,OAAO,WAAW;IAE5B,MAAM,EAAE,iBAAiB,CAAc;IAEvC,IAAI,EAAE,MAAM,CAAM;IAElB,MAAM,EAAE,qBAAqB,CAA+B;IAE5D,KAAK,EAAE,qBAAqB,CAAM;IAElC,OAAO;CAoCV"}
