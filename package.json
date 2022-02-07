@@ -1,6 +1,6 @@
 {
   "name": "sensen-jutsu",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "lib/index.js",
   "scripts": {
     "prepare": "npm run build && yarn version",
@@ -35,5 +35,6 @@
   "directories": {
     "lib": "lib"
   },
-  "description": ""
+  "description": "",
+  "type": "module"
 }
