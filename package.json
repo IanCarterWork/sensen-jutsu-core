@@ -1,6 +1,6 @@
 {
   "name": "sensen-jutsu",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "main": "index.js",
   "scripts": {
     "prepare": "npm run build && yarn version",
