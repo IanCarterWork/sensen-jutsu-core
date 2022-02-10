@@ -1,9 +1,9 @@
 {
   "name": "sensen-jutsu",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "main": "index.js",
   "scripts": {
-    "prepare": "npm run build && yarn version",
+    "prepare": "yarn version",
     "watch": "tsc -watch",
     "build": "tsc",
     "wbuild": "webpack --config webpack.config.js",
