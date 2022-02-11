@@ -1,6 +1,6 @@
 {
   "name": "sensen-jutsu",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "main": "index.js",
   "scripts": {
     "prepare": "yarn version",
@@ -18,7 +18,10 @@
     "os": false
   },
   "devDependencies": {
+    "@babel/core": "^7.17.2",
+    "@babel/preset-env": "^7.16.11",
     "@types/node": "^17.0.13",
+    "babel-loader": "^8.2.3",
     "html-webpack-plugin": "^5.5.0",
     "node-loader": "^2.0.0",
     "ts-node": "^10.4.0",
