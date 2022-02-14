@@ -1,10 +1,10 @@
-import Sensen from ".";
+import Sensen from "./index";
 import { SceneActivity } from "./activity";
 import { FxPresenter, FxSlideHorizontal } from "./fx/preset";
 import { SceneActivityProps } from "./index.t";
 import { Jutsu } from "./jutsu";
 import { SensenRouter } from "./router";
-import SensenThemeColor from "./theme-color";
+import SensenThemeColor from "./theme-color/index";
 import { SensenPaletteColor } from "./theme-color/palette-color";
 import { SensenDefaultPalette } from "./theme-color/palette/default";
 import { SensenToneColor } from "./theme-color/tone-color";
@@ -12,7 +12,34 @@ import { SensenDarkTone } from "./theme-color/tone/dark";
 import { SensenLightTone } from "./theme-color/tone/light";
 import { SensenNightTone } from "./theme-color/tone/night";
 import { SensenSnowTone } from "./theme-color/tone/snow";
+import { UseVariable } from "./hook";
 
+
+
+
+
+
+const themeColor = (new SensenThemeColor())
+
+
+    .add(SensenDefaultPalette)
+
+    .add(SensenNightTone)
+
+    .add(SensenLightTone)
+
+    .add(SensenDarkTone)
+
+    .add(SensenSnowTone)
+
+
+    .render(true)
+
+    .usePalette("default", true)
+
+    .useTone("dark", true)
+
+;
 
 
     
@@ -138,28 +165,162 @@ import { SensenSnowTone } from "./theme-color/tone/snow";
 
 
 
+const AppHeader = new Sensen.Component({
 
-const themeColor = (new SensenThemeColor())
+    name: 'AppHeader',
+
+    template: true,
+    
+    emit:{
+
+        // expressionRecorded: (record)=>{
+
+        // },
+
+        connected: (e)=>{
+
+            // if(e.emit.$options.state && 'activityTitle' in e.emit.$options.state){
+
+            //     e.emit.$options.state.activityTitle = e.emit.$options.props?.activityTitle||''
+
+            // }
+
+            // console.log('Component Construct ///', )
+
+        }
+
+    },
 
 
-    .add(SensenDefaultPalette)
 
-    .add(SensenNightTone)
+    props:{
 
-    .add(SensenLightTone)
+        title: 'Component title',
 
-    .add(SensenDarkTone)
+        activityTitle: 'Component activityTitle'
 
-    .add(SensenSnowTone)
+        // ...UseVariable('activityTitle', 'Component activityTitle')
+
+    },
 
 
-    .render(true)
+    state:{
 
-    .usePalette("default", true)
 
-    .useTone("dark", true)
+    },
 
-;
+
+
+    methods:{
+
+        toggleTone({self, event}){
+
+            console.log('Self', self, themeColor)
+
+            themeColor.toggleTone()
+            
+        },
+
+    },
+
+
+
+    appearance:{
+
+        // $self:[
+        //     {
+        //         backgroundColor:'red'
+        //     }
+        // ]
+        
+    },
+
+
+
+})
+
+
+AppHeader.use()
+
+
+
+
+const TextInput = new Sensen.Component({
+
+    name: 'TextInput',
+
+    template: true,
+    
+    emit:{
+
+        // expressionRecorded: (record)=>{
+
+        // },
+
+        connected: (e)=>{
+
+            // if(e.emit.$options.state && 'activityTitle' in e.emit.$options.state){
+
+            //     e.emit.$options.state.activityTitle = e.emit.$options.props?.activityTitle||''
+
+            // }
+
+            // console.log('Component Construct ///', )
+
+        }
+
+    },
+
+
+
+    props:{
+
+        title: 'Component title',
+
+        activityTitle: 'Component activityTitle'
+
+        // ...UseVariable('activityTitle', 'Component activityTitle')
+
+    },
+
+
+    state:{
+
+
+    },
+
+
+
+    methods:{
+
+        toggleTone({self, event}){
+
+            console.log('Self', self, themeColor)
+
+            themeColor.toggleTone()
+            
+        },
+
+    },
+
+
+
+    appearance:{
+
+        // $self:[
+        //     {
+        //         backgroundColor:'red'
+        //     }
+        // ]
+        
+    },
+
+
+
+})
+
+
+TextInput.use()
 
 
 
@@ -186,18 +347,22 @@ const HomeActivity = new SceneActivity<HomeActivityProps>({
     name: 'home',
 
     route: 'home',
-
-    template: './screens/home.html',
     
     arguments: ['sdsd'],
 
     props: {
 
-        title: 'Hello My Screen',
+        title: 'Activity Prop Title',
     
         icon: 'home',
 
         message: 'Salut Mes guys'
+        
+    },
+
+    state:{
+
+        test: 'Hello'
         
     },
     
@@ -214,6 +379,20 @@ const HomeActivity = new SceneActivity<HomeActivityProps>({
         }
 
     },
+
+
+    methods:{
+
+        toggleTone({self, event}){
+
+            self.state.test = "World"
+
+            themeColor.toggleTone()
+
+        }
+        
+    },
+    
 
     emit:{ 
         ready(activity){

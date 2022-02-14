@@ -1,6 +1,6 @@
-import { SensenHTMLElement } from ".";
-import { SensenAppearance, TAppearanceProps } from "./appearance";
-import { ThemeColor } from "./theme-color";
+import { SensenHTMLElement } from "./index";
+import { SensenAppearance, TAppearanceProps } from "./appearance/index";
+import { ThemeColor } from "./theme-color/index";
 
 
 export type KuchiyoceProps = {

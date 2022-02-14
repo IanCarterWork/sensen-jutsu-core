@@ -1,8 +1,81 @@
-import { ComponentController } from ".";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression, SyDetr, SyntaxEcho } from "./expression";
+import { ComponentController } from "./index";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression, SyDetr, SyntaxEcho, SyntaxEchoReverse, UnStabilizeEchoExpression } from "./expression";
 import type { ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord } from "./index.t";
-import { render } from 'ejs';
-import { StabilizeContent } from "./utilities";
+import { render } from "ejs";
+import { decodeHTMLEntities, StabilizeContent } from "./utilities";
+
+
+
+
+
+
+
+export function PropsMachine<T>(input: string, props: T ){
+
+    if(typeof props == 'object'){
+
+        const output : T = {} as T
+
+        const arr = Object.entries(props)
+
+
+        if(arr.length){
+
+            arr.map($=>{
+
+                const echos = [...($[1]||'').matchAll(SyntaxEcho)]
+                
+                if(!echos.length){
+                    
+                    output[ $[0] as keyof T ] = $[1];
+    
+                }
+                
+                else{
+                    
+                    input = input.replace(`${ StabilizeEchoExpression($[1]) }`, $[1] )
+                    
+                }
+                
+            })
+
+            return { input, props: output };
+        }
+
+
+        else{
+
+            const echos = [...(input||'').matchAll(SyntaxEchoReverse)]
+
+            if(echos.length){
+
+                echos.map($=>{
+
+                    const ech = $[1].trim()
+
+                    if(ech.match(new RegExp(`this.props.`))){
+
+                        input = input.replace(`${ StabilizeEchoExpression($[0]) }`, `{{${ $[1] }}}` )
+                    
+                    }
+
+                })
+                
+            }
+    
+            
+        }
+        
+    }
+
+    
+
+    return { input, props };
+    
+}
+
+
+
 
 
 
@@ -19,7 +92,20 @@ export async function RenderEngine<
     M extends ComponentMethodRaw<S, P>
     
 >(input: string, context: ComponentController<S, P, M>, dictionary: { [K: string] : any  } ){
+
+    const refactory = PropsMachine(input, context.props);
+
+    context.props = refactory.props
+    
+    // context.props = refactory.props
+
+    input = refactory.input
+
+
+    // console.log('>$ Render', context.props, dictionary, input)
      
+
+
     return render(`${ input }`, dictionary, {
         
         delimiter: `${ SyDetr }`,
@@ -44,8 +130,23 @@ export async function RenderEngine<
 
 
 
-export async function SockRenderEngine(input: string | null, context: {}, dictionary: { [K: string] : any  } ){
+export async function SockRenderEngine(input: string | null, context: {props?:{}}, dictionary: { [K: string] : any  } ){
      
+    if(typeof context == 'object'){
+
+        if('props' in context){
+
+            const refactory = PropsMachine(input||'', context.props);
+    
+            context.props = refactory.props;
+        
+            input = refactory.input;
+    
+        }
+        
+    }
+    
+
     return render(`${ input }`, dictionary, {
         
         delimiter: `${ SyDetr }`,
@@ -94,7 +195,6 @@ export function CompilateEcho<
         /**
          * Prepares
          */
-
         const matches = [...mockup.matchAll(SyntaxEcho)]
 
         if(matches.length){
@@ -133,7 +233,7 @@ export function CompilateEcho<
 
             else if(record.node instanceof Node){
 
-                record.node.textContent = result
+                record.node.textContent = decodeHTMLEntities(result)
 
             }
 
@@ -199,7 +299,7 @@ export function CompilateSnapCode<
 
             else if(record.node instanceof Node){
 
-                record.node.textContent = result;
+                record.node.textContent = decodeHTMLEntities(result);
 
             }
 

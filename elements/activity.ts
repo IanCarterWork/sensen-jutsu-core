@@ -1,4 +1,4 @@
-import Sensen, { SensenHTMLElement } from "..";
+import Sensen, { SensenHTMLElement } from "../index";
 import { ComponentMethodRaw, ComponentProps, ComponentState } from "../index.t";
 
 

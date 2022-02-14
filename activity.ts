@@ -1,14 +1,14 @@
 
-import { SensenHTMLElement } from ".";
-import { SensenAppearance, TAppearanceProps } from "./appearance";
+import { ComponentController, SensenHTMLElement } from "./index";
+import { SensenAppearance, TAppearanceProps } from "./appearance/index";
 import { SensenEmitter } from "./emitter";
-import { SceneActivityOptionsWireframes, SceneActivityProps, TScreenConfig } from "./index.t";
+import { ComponentMethodRaw, ComponentMethods, ComponentProps, ComponentState, SceneActivityOptionsWireframes, SceneActivityProps, TScreenConfig } from "./index.t";
 import { SceneActivityBody, useScreenElements } from "./elements/activity";
 import { SensenTemplate } from "./template";
 import { ActivityWireframe, ActivityWireframeState } from "./wireframe/activity";
 import { SensenScript } from "./script";
-import { SockRenderEngine } from "./compilate";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
+import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes, SockRenderEngine } from "./compilate";
+import { FindExpressions, StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
 import { StabilizeContent } from "./utilities";
 import { AppearanceSceneActivity } from "./appearance/activity";
 
@@ -69,8 +69,13 @@ export function WireframeTemplateMixer(
             })
             
             .map(child=>{
+
+                if(wireframe?.header instanceof HTMLElement){
+
+                    wireframe?.header?.appendChild( child )
+
+                }
                 
-                wireframe?.header?.appendChild( child )
 
                 return child as HTMLElement;
 
@@ -92,7 +97,7 @@ export function WireframeTemplateMixer(
 export interface SensenSceneActivities{
 
 
-    config?: object;
+    $options?: object;
     
     props?: SceneActivityProps;
 
@@ -116,6 +121,8 @@ export interface SensenSceneActivities{
 
     $getWireframe : Function;
 
+    $controller?: ComponentController<ComponentState, ComponentProps, ComponentMethodRaw<ComponentState, ComponentProps>>
+
 }
 
 
@@ -129,9 +136,11 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
 
 
-    config?: TScreenConfig<Props> = {} as TScreenConfig<Props>;
+    $options?: TScreenConfig<Props> = {} as TScreenConfig<Props>;
     
     props?: Props = {} as Props
+
+    state?: ComponentState = {} as ComponentState
 
     isReady: boolean = false;
     
@@ -147,23 +156,40 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
     $klass?: CustomElementConstructor = {} as CustomElementConstructor;
 
 
+    methods: ComponentMethods<
+        
+        ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
+        
+    > = {} as ComponentMethods<
+        
+        ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
+    
+    >;
 
     #mockup: string = '';
     
 
 
+    constructor($options: TScreenConfig<Props>){
 
-    constructor(config: TScreenConfig<Props>){
+        this.$options = $options || {}
 
-        this.config = config || {}
+        this.props = this.$options.props || {} as Props
 
-        this.props = this.config.props || {} as Props
+        // this.state = {} as ComponentState
+        this.state = this.$options.state || {} as ComponentState
 
-        this.config.appearance = this.config.appearance || {} as TAppearanceProps
+        this.$options.appearance = this.$options.appearance || {} as TAppearanceProps
 
-        this.$tagName = `activity-${ this.config.name }`
+        this.$tagName = `activity-${ this.$options.name }`
 
         this.$element = undefined
+
+        this.methods = this.$options.methods ||  {} as ComponentMethods<
+        
+            ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
+        
+        >
 
 
 
@@ -180,7 +206,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
         
             .$create()
         
-            .$makeAppearance(this.config.appearance||{})
+            .$makeAppearance(this.$options.appearance||{})
 
         ;
 
@@ -209,7 +235,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
         SensenTemplate
         
-            .Load(this.config?.template||'')
+            .Load(`sensen/activities/${ this.$options?.template || `${ this.$options?.name||'' }.html` }`)
 
             .then(res=>SensenTemplate.ResolveResponse(res))
 
@@ -268,7 +294,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
     async $deepRender(element: SensenHTMLElement<Props>, data: string){
 
-        const wireframe = this.$getWireframe(this.config?.options?.wireframe||'basic')
+        const wireframe = this.$getWireframe(this.$options?.options?.wireframe||'basic')
 
         const template = (new DOMParser()).parseFromString(data, 'text/html');
 
@@ -419,39 +445,10 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
         if(wireframe){                        
 
-            await Object.values(wireframe).reverse().map(async child=>{
+            await Object.values(wireframe).map(async child=>{
 
-                await SockRenderEngine(
-
-                    StabilizeSnapCodeExpression(
-                        
-                        StabilizeEchoExpression(
-                        
-                            StabilizeContent(child.outerHTML||'') || ''
-    
-                            , false
-
-                        )
+                element.appendChild(child)
                     
-                        , false
-                    )
-                    
-                    , element, element.props
-                
-                )
-
-                .then(compilate=>{
-
-                    element.insertAdjacentHTML('afterbegin', compilate)
-                      
-                })
-
-                .catch(er=>{
-
-                    console.error('Sensen Scene Activity failed:\n', er)
-
-                })
-                
             })
 
 
@@ -461,13 +458,35 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
             otherElements.map(child=>{
 
-                // console.log('Other Element', child)
-
                 element.append(child)
                 
             })
             
         }
+
+
+        if('$controller' in element){
+
+            if(element.$controller instanceof ComponentController){
+
+                element.$controller
+                    
+                    .$observers({
+                        
+                        excludeTags: Object.keys(window.SensenAvailableComponents).map(k=>k.toLowerCase())
+                        
+                    })
+
+                    .$makeProps()
+                    
+                    .$compilate()
+
+                ;
+
+            }
+            
+        }
+
         
         return this;
         
@@ -514,7 +533,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
             if(this.$klass){
 
-                this.$element = new this.$klass(this.config?.props) as SensenHTMLElement<Props>
+                this.$element = new this.$klass(this.$options?.props) as SensenHTMLElement<Props>
     
                 this.$element.render(props)
             
@@ -597,7 +616,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
         if(customElements.get(this.$tagName)){
 
-            throw (`It not possible to create a activity with this name "${ this.config?.name }" again `)
+            throw (`It not possible to create a activity with this name "${ this.$options?.name }" again `)
             
         }
 
@@ -607,14 +626,41 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
 
             this.$klass = class extends SensenHTMLElement<Props>{
+
+                state: ComponentState = {} as ComponentState
     
+                $controller: ComponentController<
+    
+                ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
+                    
+                > = {} as ComponentController<
+                
+                    ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
+                
+                >;
+
+
+                
                 constructor(props: Props){
     
                     super(props);
 
+                    
                     this.props = props || self.props
-
+                    
+                    this.state = self.state || {}
+                    
                     self.$element = this
+
+                    // this.$fromAttributesProps(props||self.$options?.props)
+
+
+                    if(self.$options){
+
+                        self.$options.element = this;
+
+                    }
+                
 
                     /**
                      * Initialization
@@ -680,9 +726,9 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
                 render(props?: Props){
 
-                    this.props = this.$toAttributesProps(props||undefined) || this.props
+                    // this.props = this.$toAttributesProps(props||undefined) || this.props
 
-                    if(!this.isReady){
+                    // if(!this.isReady){
 
                         /**
                          * Load Template
@@ -693,15 +739,15 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
     
                         this.isReady = true;
      
-                    }
+                    // }
 
-                    else{
+                    // else{
 
-                        this.innerHTML = ''
+                    //     this.innerHTML = ''
                         
-                        self.$deepRender(this,  self.#mockup)
+                    //     self.$deepRender(this,  self.#mockup)
 
-                    }
+                    // }
     
                     return this;
  
@@ -712,10 +758,27 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
                 
                 $initialize(){
 
-                    this.$initializeProps()
+                    // this.$initializeProps()
+
+                    // this.$fromAttributesProps(self.props)
+                    
                     
                     this.$initializeEUiD()
 
+
+                    this.$controller = new ComponentController<
+                
+                        ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
+                
+                    >((self.$options || {} as TScreenConfig<Props>), {
+
+                        prefix: 'activity',
+
+                        templating: false,
+                        
+                    })
+                
+                
 
                     this.setAttribute('euid', this.$EUiD)
 
@@ -779,9 +842,13 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
                 
             }
     
+            window.SensenAvailableComponents[ this.$tagName ] = this.$klass;
+    
             customElements.define(this.$tagName, this.$klass )
     
         }
+
+
 
         
         /** * Emit Event */
@@ -817,9 +884,9 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
          * Custom Emitter Listener : Begin
          */
 
-         if(this.config?.emit){
+         if(this.$options?.emit){
 
-            Object.entries(this.config.emit).map(e=>{
+            Object.entries(this.$options.emit).map(e=>{
 
                 if(typeof e[1] == 'function'){
 

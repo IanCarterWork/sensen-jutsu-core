@@ -1,4 +1,5 @@
 import { NativeDirectiveAttributes } from "./directive.native";
+import { SensenHTMLElement } from "./index";
 import { ExpressionRecord, ParseSnapCodeBlock } from "./index.t";
 import { ArrayRange } from "./utilities";
 
@@ -17,6 +18,10 @@ export const SyntaxSnapCode = new RegExp('{%(.*?)%}', 'g')
 export const SyDetr = '%sn'
 
 
+export const SyntaxEchoReverse = new RegExp(`\<${ SyDetr }=(.*?)${ SyDetr }\>`, 'g')
+
+
+
 export const DirectiveAttributes = NativeDirectiveAttributes
 
 
@@ -25,6 +30,7 @@ export const DirectiveAttributes = NativeDirectiveAttributes
 /**
  * Stabilize Echo Expression
  */
+
 export function StabilizeEchoExpression(content: string | null, stop?: boolean){
 
     const echos = [...(content||'').matchAll(SyntaxEcho)]
@@ -42,11 +48,30 @@ export function StabilizeEchoExpression(content: string | null, stop?: boolean){
             
     }
 
-    else{
+    else{ if(stop){ return null; } }
 
-        if(stop){ return null; }
+    return content;
 
+}
+
+export function UnStabilizeEchoExpression(content: string | null, stop?: boolean){
+
+    const echos = [...(content||'').matchAll(SyntaxEchoReverse)]
+     
+    if(echos.length){
+        
+        echos.map(m=>{
+            
+            content = (content||'').replace(
+                new RegExp( `${ m[0] }` , 'g' ), 
+                `{{${ m[1] }}}`
+            )
+                
+        })
+            
     }
+
+    else{ if(stop){ return null; } }
 
     return content;
 
@@ -75,11 +100,7 @@ export function StabilizeSnapCodeExpression(content: string | null, stop?: boole
             
     }
 
-    else{
-
-        if(stop){ return null; }
-
-    }
+    else{ if(stop){ return null; } }
 
     return content;
 
@@ -381,7 +402,8 @@ export function FindExpressions(
         
     }
     
-    
+
+
 
     /**
      * Find
@@ -389,24 +411,36 @@ export function FindExpressions(
     if(nodes.length){
         
         nodes.forEach(child=>{
-            
-            /** * Find SnapCode */
-            const snapcode = ParseSnapCodeExpression(child as HTMLElement, reCallback);
 
-
-            /** * Find Deep */
-            if(!snapcode){
-
-                FindExpressions(child as HTMLElement, reCallback)
     
-            }
+            // if( child instanceof SensenHTMLElement ){
+    
+            //     console.warn('Find >', child)
+                    
+            // }
 
-            else{
+            // else{
 
-                // console.warn('Stop Find on', child)
                 
-            }
-            
+                /** * Find SnapCode */
+                const snapcode = ParseSnapCodeExpression(child as HTMLElement, reCallback);
+    
+    
+                /** * Find Deep */
+                if(!snapcode){
+    
+                    FindExpressions(child as HTMLElement, reCallback)
+        
+                }
+    
+                else{
+    
+                    // console.warn('Stop Find on', child)
+                    
+                }
+                
+            // }
+        
         })
         
     }
@@ -414,16 +448,36 @@ export function FindExpressions(
 
     if(!nodes.length){
 
-        /**
-         * Find Echo
-         */
-        ParseEchoExpression(node, reCallback)
+        // if( node instanceof SensenHTMLElement ){
+
+        //     console.warn('Find inenr', node)
+                
+        // }
+
+        // else{
+    
+            /**
+             * Find Echo
+             */
+            ParseEchoExpression(node, reCallback)
+            
+        // }
         
     }
     
     return recorder;
     
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

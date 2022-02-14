@@ -1,6 +1,6 @@
-import { SensenAppearance } from "../appearance";
+import { SensenAppearance } from "../appearance/index";
 import { SceneActivityBody, SceneActivityHeader, SceneActivityMenu } from "../elements/activity";
-import { ThemeColor } from "../theme-color";
+import { ThemeColor } from "../theme-color/index";
 
 
 
@@ -37,15 +37,11 @@ export function Basic() : ActivityWireframeState{
     const header = new SceneActivityHeader();
 
     const body = new SceneActivityBody();
-
-    const menu = new SceneActivityMenu();
     
 
     const HAppearance = new SensenAppearance()
 
     const BAppearance = new SensenAppearance()
-
-    const MAppearance = new SensenAppearance()
     
 
     
@@ -55,9 +51,9 @@ export function Basic() : ActivityWireframeState{
 
             {
                 
-                backgroundColor: ThemeColor.$('layer'),
+                // backgroundColor: ThemeColor.$('layer'),
                 
-                color: ThemeColor.$('white'),
+                color: ThemeColor.$('text'),
                 
                 minHeight:'48px',
                 
@@ -66,12 +62,16 @@ export function Basic() : ActivityWireframeState{
                 flexDirection: 'row',
                 
                 alignItems: 'center',
+
+                justifyContent: 'center',
                 
                 position: 'sticky',
                 
                 top:'0',
                 
                 left:'0',
+
+                zIndex: '999',
                 
                 width:'100vw',
                 
@@ -97,48 +97,12 @@ export function Basic() : ActivityWireframeState{
 
     }).mount()
     
+    // @ts-ignore
     header.classList.add(HAppearance.$UiD)
 
-    
 
-    
-    MAppearance.selectors({
+    console.warn('WireFrame Header', HAppearance )
 
-        $self:[
-
-            {
-            
-                backgroundColor: ThemeColor.$('layer'),
-            
-                color: ThemeColor.$('white'),
-            
-                minHeight:'48px',
-            
-                display: 'flex',
-            
-                flexDirection: 'row',
-            
-                alignItems: 'center',
-            
-                position: 'sticky',
-            
-                bottom:'0',
-            
-                left:'0',
-            
-                width:'100vw',
-            
-                maxWidth:'100vw',
-            
-            }
-
-        ],
-
-    }).mount()
-    
-    menu.classList.add(MAppearance.$UiD)
-
-    
 
     BAppearance.selectors({
 
@@ -150,8 +114,9 @@ export function Basic() : ActivityWireframeState{
 
     }).mount()
     
-    body.classList.add(BAppearance.$UiD)
 
+    // @ts-ignore
+    body.classList.add(BAppearance.$UiD)
 
 
 
@@ -162,8 +127,6 @@ export function Basic() : ActivityWireframeState{
         header: header,
 
         body: body,
-
-        menu: menu,
         
     }
 

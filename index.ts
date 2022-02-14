@@ -1,11 +1,12 @@
 import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate";
 import { SensenEmitter } from "./emitter";
 import { FindExpressions } from "./expression";
-import type { ComponentMethodEvent, ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, SceneActivityProps, SceneActivityEmitter, TComponentOptions, TScreenConfig } from "./index.t";
+import type { ComponentMethodEvent, ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, SceneActivityProps, SceneActivityEmitter, TComponentOptions, TScreenConfig, TComponentObserversParams } from "./index.t";
 import { ComponentHydrates } from "./hydrates";
-import { SensenAppearance, TAppearanceProps } from "./appearance";
+import { SensenAppearance, TAppearanceProps } from "./appearance/index";
 import { SensenTemplate } from "./template";
 import { SensenMetricRandom } from "./metric-random";
+import { ComponentVariable } from "./hook";
 
 
 
@@ -107,6 +108,9 @@ export class SensenHTMLElement<P> extends HTMLElement{
     isReady: boolean = false;
 
 
+    $controller?: object
+
+
     $initializeEUiD(){
 
         this.$EUiD = this.$EUiD || `${ SensenMetricRandom.CreateAplpha(16).join('') }`;
@@ -136,7 +140,7 @@ export class SensenHTMLElement<P> extends HTMLElement{
 
         super();
 
-        this.props = props;
+        // this.props = props;
         
     }
 
@@ -188,91 +192,93 @@ export class SensenHTMLElement<P> extends HTMLElement{
      * Utilities
      */
 
-    $initializeProps(){
+    // $initializeProps(){
 
-        if(this.props){
+    //     if(this.props){
 
-            Object.entries(this.props).map(prop=>{
+    //         Object.entries(this.props).map(prop=>{
 
-                if(
-                    typeof prop[1] == 'string' || typeof prop[1] == 'number' || typeof prop[1] == 'boolean'
-                ){
+    //             if(
+    //                 typeof prop[1] == 'string' || typeof prop[1] == 'number' || typeof prop[1] == 'boolean'
+    //             ){
 
-                    this.setAttribute(prop[0], `${ prop[1] }`)
+    //                 this.setAttribute(prop[0], `${ prop[1] }`)
 
-                }
+    //             }
 
-                else if(typeof prop[1] == 'object'){
+    //             else if(typeof prop[1] == 'object'){
 
-                    this.setAttribute(prop[0], JSON.stringify(prop[1]))
+    //                 this.setAttribute(prop[0], JSON.stringify(prop[1]))
 
-                }
+    //             }
                 
-            })
+    //         })
 
-        }
+    //     }
 
-        return this;
+    //     return this;
         
-    }
+    // }
 
 
-    $fromAttributesProps(props?: P){
+    // $fromAttributesProps(props?: P){
 
-        this.props = props || this.props;
+    //     this.props = props || this.props;
 
-        if(this.props){
+    //     if(this.props){
 
-            Object.entries(this.props).map(prop=>{
+    //         Object.entries(this.props).map(prop=>{
 
-                const get = this.getAttribute(`${ prop[0] }`);
+    //             const get = prop[1] || this.getAttribute(`${ prop[0] }`);
 
-                const name = prop[0] as keyof P
+    //             const name = prop[0] as keyof P
 
-                this.props[ name ] = get as typeof prop[1]
+    //             this.props[ name ] = get as typeof prop[1];
 
-            })
+    //             this.setAttribute(`${ prop[0] }`, get || '')
+    
+    //         })
             
-        }
+    //     }
 
-        return this.props;
+    //     return this.props;
 
-    }
+    // }
 
 
-    $toAttributesProps(props?: P){
+    // $toAttributesProps(props?: P){
 
-        if(props){
+    //     if(props){
 
-            Object.entries(props).map(prop=>{
+    //         Object.entries(props).map(prop=>{
 
-                if(!(prop[0] in this.props)){ return; }
+    //             if(!(prop[0] in this.props)){ return; }
 
-                const name = prop[0] as keyof P
+    //             const name = prop[0] as keyof P
 
-                if(
-                    typeof prop[1] == 'string' || typeof prop[1] == 'number' || typeof prop[1] == 'boolean'
-                ){
+    //             if(
+    //                 typeof prop[1] == 'string' || typeof prop[1] == 'number' || typeof prop[1] == 'boolean'
+    //             ){
 
-                    this.setAttribute(`${ name }`, `${ prop[1] }`)
+    //                 this.setAttribute(`${ name }`, `${ prop[1] }`)
 
-                }
+    //             }
 
-                else if(typeof prop[1] == 'object'){
+    //             else if(typeof prop[1] == 'object'){
 
-                    this.setAttribute(`${ name }`, JSON.stringify(prop[1]))
+    //                 this.setAttribute(`${ name }`, JSON.stringify(prop[1]))
 
-                }
+    //             }
                 
-                this.props[ name ] = prop[1]
+    //             this.props[ name ] = prop[1]
                 
-            })
+    //         })
             
-        }
+    //     }
 
-        return props;
+    //     return props;
 
-    }
+    // }
 
     
     
@@ -306,6 +312,8 @@ export class SensenHTMLElement<P> extends HTMLElement{
  * Sensen Component Controller
  */
 
+window.SensenAvailableComponents = {}
+
 export class ComponentController<
 
     State extends ComponentState, 
@@ -316,12 +324,16 @@ export class ComponentController<
 
 >{
 
+    $prefix : string = 's';
+    
+    $templating: boolean = true;
+
 
     $tagName : string = '';
 
     state : { [S in keyof State] : State[S] };
 
-    props : { [P in keyof Props] : Props[P] };
+    props : { [P in keyof Props] : Props[P] } = {} as { [P in keyof Props] : Props[P] };
 
     methods : { [M in keyof Methods] : Methods[M] } = {} as { [M in keyof Methods] : Methods[M] };
 
@@ -352,30 +364,85 @@ export class ComponentController<
     /**
      * New Construct
      */
-     constructor(options: TComponentOptions<State, Props, Methods>){
+     constructor(options: TComponentOptions<State, Props, Methods>, params?:{
 
+        prefix?: string,
+
+        templating?: boolean,
+         
+     }){
+
+        params = (params && typeof params == 'object') ? params : {}
+        
+
+        this.$prefix = params.prefix || this.$prefix;
+
+        this.$templating = (params.templating === false) ? false : this.$templating;
+
+        
         this.$options = options;
 
+
         this.state = Object.assign({}, this.$options.state||{}) as State
-
-        this.props = Object.assign({}, this.$options.props||{}) as Props
-
+        
         this.methods = Object.assign({}, this.$options.methods||{}) as Methods
+        
+        this.$tagName = `${ this.$prefix }-${ this.$options.name }`
 
-        this.$tagName = `sn-${ this.$options.name }`
 
         this.$emitter = new SensenEmitter();
-
-        this.#hydrates = new ComponentHydrates<State, Props, Methods>(this)
         
-        // console.warn('Controller Props', this.props )
-
+        this.#hydrates = new ComponentHydrates<typeof this.state, Props, Methods>(this)
+        
 
         this.$make();
-
         
     }
 
+
+
+    $makeProps(){
+
+        const props : Props = {} as Props;
+
+        /**
+         * Merge Element Atributes
+         */
+
+        Object.entries(this.$options.props||{}).map($=>{
+
+            if(this.$options.element instanceof SensenHTMLElement){
+                
+                let get = this.$options.element.getAttribute(`prop:${ $[0] }`)
+
+                if($[1] instanceof ComponentVariable){ 
+                    
+                    $[1].trigger();
+
+                    $[1].value = get || $[1].value;
+
+                    props[ $[0] as keyof Props ] = $[1].value as Props[ keyof Props ]
+
+                }
+
+                else{
+
+                    props[ $[0] as keyof Props ] = (get || $[1]) as Props[ keyof Props ]
+                    
+                }
+
+                this.$options.element.setAttribute(`prop:${ $[0] }`, `${ props[ $[0] as keyof Props ] }`)
+
+            }
+        
+            
+        })
+        
+        this.props = props;
+        
+        return this;
+
+    }
 
 
 
@@ -391,25 +458,33 @@ export class ComponentController<
                 
                 .then(tpl=>{
 
-                    if(tpl){
-    
-                        this.template = tpl;
-    
-                        if(this.$options.element instanceof HTMLElement){
-    
-                            this.$options.element.innerHTML = tpl;
+                    if(this.$templating === true){
+
+                        if(tpl){
+        
+                            this.template = tpl;
+        
+                            if(this.$options.element instanceof HTMLElement){
+        
+                                this.$options.element.innerHTML = tpl;
+                                
+                            }
                             
                         }
-                        
-                    }
-        
-                    this
-                
-                        .$observers()
             
-                        .$compilate()
+                        this
+                    
+                            .$observers()
+
+                            .$makeProps()
+                
+                            .$compilate()
+        
+                        ;
+
+                    }
+
     
-                    ;
         
                 })
             
@@ -429,76 +504,91 @@ export class ComponentController<
      */
     $makeTemplate(){
 
-        return new Promise<string | undefined>((resolve, reject)=>{
- 
-            if(typeof this.$options.template != 'string'){
+        return new Promise<string | 0 | undefined>((resolve, reject)=>{
 
-                if(this.$options.element instanceof HTMLElement){
+            if( this.$templating === true ){
 
-                    if('innerHTML' in this.$options.element){
 
-                        resolve(this.$options.element.innerHTML)
+                this.$options.template = (this.$options.template === true) 
 
-                        return;
+                    ? `${ this.$options.name }.html` : this.$options.template;
+        
 
+                if(typeof this.$options.template != 'string'){
+
+                    if(this.$options.element instanceof HTMLElement){
+    
+                        if('innerHTML' in this.$options.element){
+    
+                            resolve(this.$options.element.innerHTML)
+    
+                            return;
+    
+                        }
+    
                     }
-
-
+                    
+                    resolve(undefined);
+    
+                    return;
+                    
+                }
+    
+                else{
+    
+                    /**
+                     * Check 
+                     */
+                    const check = this.$options.template.match(/<\/?[^>]+>/gi);
+    
+    
+                    /**
+                     * If Template is String HTML code
+                     */
+                    if(check){ resolve(this.$options.template); return; }
+    
+    
+    
+                    /**
+                     * Else, it's file path
+                     */
+    
+                    const url = new URL(location.href)
+    
+                    const path = `${ url.origin }${ (url.pathname == '/') ? '' : url.pathname }/sensen/components/${ this.$options.template }`
+    
+    
+                    fetch(path).then(d=>{ if(d.status == 404){ return undefined } return d.text() })
+    
+                        .then(data=>{
+    
+                            if(data){
+    
+                                resolve(data)
+    
+                            }
+    
+                            else{ resolve(undefined); }
+    
+                    
+                        })
+    
+                        .catch(er=>{ resolve(undefined); })
+    
+    
+                    return;
+                    
                 }
                 
-                resolve(undefined);
-
-                return;
-                
+    
             }
 
             else{
 
-                /**
-                 * Check 
-                 */
-                const check = this.$options.template.match(/<\/?[^>]+>/gi);
-
-
-                /**
-                 * If Template is String HTML code
-                 */
-                if(check){ resolve(this.$options.template); return; }
-
-
-
-                /**
-                 * Else, it's file path
-                 */
-
-                const url = new URL(location.href)
-
-                const path = `${ url.origin }${ (url.pathname == '/') ? '' : url.pathname }/${ this.$options.template }`
-
-
-                fetch(path).then(d=>{ if(d.status == 404){ return undefined } return d.text() })
-
-                    .then(data=>{
-
-                        if(data){
-
-                            resolve(data)
-
-                        }
-
-                        else{ resolve(undefined); }
-
-                
-                    })
-
-                    .catch(er=>{ resolve(undefined); })
-
-
-                return;
+                resolve(0)
                 
             }
-            
-
+ 
 
             
             
@@ -570,7 +660,7 @@ export class ComponentController<
 
         if($props){
 
-            this.$tagName = `sn-${ $props.name }`
+            // this.$tagName = `s-${ $props.name }`
 
 
             /**
@@ -625,7 +715,14 @@ export class ComponentController<
     /**
      * DOM Observer
      */
-    $observers(){
+    $observers(params?: TComponentObserversParams){
+
+        const $params : TComponentObserversParams = params || {} as TComponentObserversParams
+
+
+        $params.excludeTags = params?.excludeTags || []
+
+        // console.warn('Self Props', this.props)
 
 
         if(this.$options.element instanceof HTMLElement){
@@ -636,36 +733,68 @@ export class ComponentController<
 
                     this.#mutationObserved = records
 
+                    const excludeTags = $params.excludeTags
+
+                    // const excludeTags = Object.keys(window.SensenAvailableComponents).map(k=>k.toLowerCase())
+
+
                     records.forEach(record=>{
 
+
+                        if(excludeTags?.length){
+
+                            if(record.target instanceof SensenHTMLElement){
+
+                                if(excludeTags.indexOf( record.target.tagName.toLowerCase() ) > - 1){
+
+                                    // console.warn('Exclude tag', record.target)
+
+                                    return;
+                                    
+                                }
+
+                            }
+                            
+                            
+                        }
+
+
                         if(record.type == 'attributes'){
+                                    
 
                             if(record.attributeName && this.$options.element instanceof HTMLElement){
 
-                                if(record.attributeName in this.props){
+                                // if(record.attributeName in this.props){
 
-                                    const key = record.attributeName as keyof typeof this.props
+                                //     const key = record.attributeName as keyof Props
 
-                                    const value = this.$options.element.getAttribute(record.attributeName)
+                                //     const value = this.$options.element.getAttribute(record.attributeName)
 
-                                    // @ts-ignore
-                                    this.props[ key ] = value;
+                                //     // @ts-ignore
+                                //     this.props[ key ] = value;
 
-                                    this.$options.element.props[ key ] = SetDataLikeType(value) as Props[ typeof key ];    
+                                //     if(this.$options.element instanceof SensenHTMLElement){
+
+                                //         this.$options.element.props[ key ] = SetDataLikeType(value) as Props[ typeof key ];
+
+                                //     }
+
             
-                                    /** * Emit Event */
-                                    this.$emitter?.dispatch('propsChanged', {
-                                        name: record.attributeName,
-                                        value,
-                                        oldValue: record.oldValue
-                                    });
+                                //     /** * Emit Event */
+                                //     this.$emitter?.dispatch('propsChanged', {
+                                //         name: record.attributeName,
+                                //         value,
+                                //         oldValue: record.oldValue
+                                //     });
 
-                                }
+                                // }
                                 
                             }
 
                             
                         }
+
+                        
 
                         /** * Emit Event */
                         this.$emitter?.dispatch('mutationObserved', record);
@@ -756,11 +885,13 @@ export class ComponentController<
      */
     $compilate(){
 
+
         if(this.$options.element instanceof HTMLElement){
 
             const found = FindExpressions(this.$options.element, (record)=>{
-                
+
                 this.#pending++;
+                
 
                 /**
                  * Find State to auto-compilate
@@ -778,6 +909,7 @@ export class ComponentController<
                         ...(value||'').matchAll(new RegExp(`this\\.state\\.(${ Object.keys(this.state).join(')|this\\.state\\.(') })`, 'g')),
 
                         // ...(value||'').matchAll(new RegExp(`this\\.props\\.${ Object.keys(this.props).join('|this\\.props\\.') }`, 'g')),
+
                     ]
 
 
@@ -876,8 +1008,6 @@ export class ComponentController<
          */
 
         this.$emitter?.listen<typeof this>('elementReady', (args)=>{
-
-            // console.warn('Create Element Model', args)
             
         })
 
@@ -897,10 +1027,10 @@ export class ComponentController<
             
         })
 
+
         this.$emitter?.listen<MutationRecord>('mutationObserved', (args)=>{
 
-            // console.warn('Mutation Observed', args)
-
+            
             if(args.emit.target){
 
                 this.#hydrates?.hydratesNode(args.emit.target)
@@ -950,6 +1080,15 @@ export class ComponentController<
                 }
 
                 else if($.emit.type == 'attribute.echo'){
+
+                    
+                    // if($.emit.node === this.$options.element){
+                        
+                    //     console.warn('Record Attribute echo ', $.emit.node === this.$options.element, $.emit.attribute)
+
+                    //     return false;
+                        
+                    // }
 
                     promised.push(CompilateEchoAttributes(this, $.emit))
     
@@ -1083,6 +1222,7 @@ export class ComponentController<
 /**
  * Sensen Component
  */
+
 export class Component<
 
     State extends ComponentState, 
@@ -1119,8 +1259,7 @@ export class Component<
         
         this.$appearance.mount()
 
-        this.$create()
-        
+        this.$create();
 
     }
 
@@ -1145,8 +1284,9 @@ export class Component<
     
                     super(props);
 
-                    this.$fromAttributesProps(props||self.$options.props)
-                    
+
+                    this.props = {} as Props
+
                     this.$initialize()
 
                     /** * Emit Event */
@@ -1157,12 +1297,14 @@ export class Component<
         
                 $initialize(){
         
-                    
                     const $options = Object.assign({}, self.$options)
+                    
                     
                     $options.element = this;
 
+
                     this.$controller = new ComponentController<State, Props, Methods>($options)
+
 
     
                     /** * Emit Event */
@@ -1219,8 +1361,8 @@ export class Component<
             }
     
     
-    
-            
+
+            window.SensenAvailableComponents[ this.$tagName ] = this.$klass;
     
             customElements.define(this.$tagName.toLowerCase(), this.$klass )
     
@@ -1233,6 +1375,16 @@ export class Component<
     }
     
     
+
+
+    use(){
+
+        return this;
+        
+    }
+
+
+
 
 
 }

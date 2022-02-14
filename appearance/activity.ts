@@ -1,6 +1,6 @@
-import { TObjectEmbed } from "..";
-import { SensenAppearance, TAppearanceDeclarations, TAppearanceProps } from "../appearance";
-import { ThemeColor } from "../theme-color";
+import { TObjectEmbed } from "../index";
+import { SensenAppearance, TAppearanceDeclarations, TAppearanceProps } from "./index";
+import { ThemeColor } from "../theme-color/index";
 
 
 
@@ -32,9 +32,9 @@ export function AppearanceSceneActivity(){
                     
                     color: ThemeColor.$('text'),
                     
-                    display: 'flex',
+                    // display: 'flex',
                     
-                    flexDirection:'column',
+                    // flexDirection:'column',
                     
                     height: '100vh',
                     

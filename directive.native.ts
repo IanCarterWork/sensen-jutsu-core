@@ -1,4 +1,4 @@
-import { CreateComponentMethodEvent } from ".";
+import { CreateComponentMethodEvent } from "./index";
 import { DirectiveAttributes } from "./directive"
 
 

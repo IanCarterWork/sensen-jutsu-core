@@ -1,4 +1,4 @@
-import { MetricTAlphaL, MetricTAlphaNum, MetricTAlphaNumL, MetricTAlphaNumU, MetricTAlphaU, MetricTNum } from ".";
+import { MetricTAlphaL, MetricTAlphaNum, MetricTAlphaNumL, MetricTAlphaNumU, MetricTAlphaU, MetricTNum } from "./index";
 
 
 

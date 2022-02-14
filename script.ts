@@ -1,4 +1,4 @@
-import { SensenHTMLElement } from "."
+import { SensenHTMLElement } from "./index"
 import { SockRenderEngine } from "./compilate"
 import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression"
 import { StabilizeContent } from "./utilities"

@@ -1,9 +1,10 @@
-import { ComponentController, SensenHTMLElement, TObjectEmbed } from "."
+import { ComponentController, SensenHTMLElement, TObjectEmbed } from "./index"
 import { SceneActivity, SensenSceneActivities } from "./activity"
-import { TAppearanceDeclarations, TAppearanceProps } from "./appearance"
+import { TAppearanceDeclarations, TAppearanceProps } from "./appearance/index"
 import { TDirectiveAttribute } from "./directive"
 import { SensenEmitterArguments } from "./emitter"
-import { SensenFxTransition } from "./fx"
+import { SensenFxTransition } from "./fx/index"
+import { ComponentVariable } from "./hook"
 
 
 
@@ -37,7 +38,7 @@ export type ComponentState = {
 
 export type ComponentProps = {
 
-    [K: string]: string | number | boolean | null | undefined
+    [K: string]: ComponentVariable | string | number | boolean | null | undefined
 
 }
 
@@ -75,6 +76,15 @@ export type TComponentHydratesStore<S, P> = {
     state?: { [K in keyof S]: S[K] },
     
     props?: { [K in keyof P]: P[K] },
+
+}
+
+
+
+
+export type TComponentObserversParams = {
+        
+    excludeTags?: string[]
 
 }
 
@@ -158,7 +168,6 @@ export type TComponentOptions<
 
     Methods extends ComponentMethodRaw<State, Props>
 
-
 > = {
 
     name: string;
@@ -173,7 +182,7 @@ export type TComponentOptions<
 
     methods?: ComponentMethods<State, Props, Methods>
 
-    template?: string;
+    template?: string | true;
 
     emit?: {
 
@@ -366,7 +375,7 @@ export type SceneActivityRouteName = string;
 
 
 
-export type TScreenConfig<P extends SceneActivityProps> = {
+export type TScreenConfig<P extends SceneActivityProps> = TComponentOptions<{}, P, {}> & {
 
     name: string;
 
@@ -389,6 +398,12 @@ export type TScreenConfig<P extends SceneActivityProps> = {
         }
         
     }
+
+    methods?: ComponentMethods<
+        
+        ComponentState, P, ComponentMethodRaw<ComponentState, P>
+
+    >
 
     template?: string;
     

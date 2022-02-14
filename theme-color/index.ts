@@ -272,6 +272,79 @@ export default class SensenThemeColor{
     }
 
 
+
+
+    toggleTone(){
+
+        const doc = document.documentElement;
+
+        const current =  doc.getAttribute('theme-color-tone');
+
+        let key: number | undefined = undefined;
+
+        let toneKeys : number[] = []
+
+        
+        this.input.map((input, k)=>{
+
+            if(input.nature == '@tone'){ toneKeys.push(k); }
+
+            if(key !== undefined){ return false }
+            
+            if(input.nature == '@tone'){ if(input.name == current){ key = k } }
+            
+        })
+
+        if(key){
+
+            const next = this.input[ key + 1 ] || this.input[ toneKeys[0] ]
+
+            if(next.nature == '@tone'){ this.useTone(next.name) }
+                        
+        }
+
+        return this;
+        
+    }
+
+
+
+
+
+    togglePalette(){
+
+        const doc = document.documentElement;
+
+        const current =  doc.getAttribute('theme-color-palette');
+
+        let key: number | undefined = undefined;
+
+        let paletteKeys : number[] = []
+
+        
+        this.input.map((input, k)=>{
+
+            if(input.nature == '@palette'){ paletteKeys.push(k); }
+
+            if(key !== undefined){ return false }
+            
+            if(input.nature == '@palette'){ if(input.name == current){ key = k } }
+            
+        })
+
+        if(key){
+
+            const next = this.input[ key + 1 ] || this.input[ paletteKeys[0] ]
+
+            if(next.nature == '@palette'){ this.usePalette(next.name) }
+                        
+        }
+
+        return this;
+        
+    }
+
+
     /* Web Abilities - Fin */
 
 

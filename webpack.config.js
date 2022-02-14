@@ -23,10 +23,28 @@ module.exports = {
 
 	entry: {
 		
-		basic: './lib/exemple.js',
+		basic: './libs/exemple.js',
 	
 	},
 
+
+	module:{
+
+		rules:[
+
+			{
+
+				test: /\.js$/,
+				
+				exclude: /(node_modules)/,
+				
+				use: { loader: 'babel-loader', }	
+
+			}
+
+		]
+		
+	},
 	
 	devServer: {
 
@@ -71,7 +89,7 @@ module.exports = {
     
 		filename: 'sensen.[name].js',
     
-		path: path.resolve(__dirname, './public/'),
+		path: path.resolve(__dirname, './public'),
     
 		clean: false,
     

@@ -1,4 +1,4 @@
-import { SensenFxTransition, SensenFxEngine } from ".";
+import { SensenFxTransition, SensenFxEngine } from "./index";
 
 
 

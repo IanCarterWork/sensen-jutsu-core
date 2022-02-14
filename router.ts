@@ -1,5 +1,5 @@
 import { SceneActivity, SensenSceneActivities } from "./activity";
-import { SensenFxEngine } from "./fx";
+import { SensenFxEngine } from "./fx/index";
 import { FxPresenter } from "./fx/preset";
 import { SceneActivityProps, SceneActivityRouteName, TSensenWindow } from "./index.t";
 
@@ -37,7 +37,7 @@ interface Window{
 export class SensenRouter<B extends SceneActivityProps>{
 
 
-    config: RouterConfig;
+    $options: RouterConfig;
 
     routes: { 
         
@@ -53,9 +53,9 @@ export class SensenRouter<B extends SceneActivityProps>{
 
 
 
-    constructor(config: RouterConfig){
+    constructor($options: RouterConfig){
 
-        this.config = config;
+        this.$options = $options;
         
         this.initialize()
         
@@ -65,9 +65,9 @@ export class SensenRouter<B extends SceneActivityProps>{
 
     get<P extends SceneActivityProps>(activity :  SceneActivity<P> ){
 
-        if(typeof activity.config?.route == 'string'){
+        if(typeof activity.$options?.route == 'string'){
 
-            const key = activity.config.route as keyof B
+            const key = activity.$options.route as keyof B
             
             this.routes[ key ] = activity as SceneActivity<B[ keyof B]>
 
@@ -82,11 +82,11 @@ export class SensenRouter<B extends SceneActivityProps>{
 
     initialize(){
 
-        this.canvas = (this.config.canvas instanceof HTMLElement)
+        this.canvas = (this.$options.canvas instanceof HTMLElement)
 
-            ? this.config.canvas
+            ? this.$options.canvas
 
-            : document.querySelector(this.config.canvas)
+            : document.querySelector(this.$options.canvas)
 
         ;
 
@@ -132,11 +132,11 @@ export class SensenRouter<B extends SceneActivityProps>{
 
         }
 
-        else if(this.config.default){
+        else if(this.$options.default){
 
-            // console.warn('Go to default view', this.config.default)
+            // console.warn('Go to default view', this.$options.default)
 
-            this.navigate(this.config.default)
+            this.navigate(this.$options.default)
             
         }
 
@@ -172,7 +172,7 @@ export class SensenRouter<B extends SceneActivityProps>{
         [K in keyof B] ?: any
     }){
 
-        const parsed = this.parseSlug(slug || this.config.default)
+        const parsed = this.parseSlug(slug || this.$options.default)
 
         
         
@@ -198,9 +198,9 @@ export class SensenRouter<B extends SceneActivityProps>{
 
                     // if(SensenWindow.$SceneActivity){
 
-                    //     if(SensenWindow.$SceneActivity.config?.options?.transition){
+                    //     if(SensenWindow.$SceneActivity.$options?.options?.transition){
 
-                    //         console.log('Fx Transition', SensenWindow.$SceneActivity.config?.options?.transition)
+                    //         console.log('Fx Transition', SensenWindow.$SceneActivity.$options?.options?.transition)
                             
                     //     }
 
@@ -215,6 +215,7 @@ export class SensenRouter<B extends SceneActivityProps>{
                     
                         this.canvas?.appendChild(this.activity.$element);
 
+                        // @ts-ignore
                         SensenWindow.$SceneActivity = activity as SceneActivity<SceneActivityProps>;
 
                     }
@@ -224,11 +225,11 @@ export class SensenRouter<B extends SceneActivityProps>{
                     /**
                      * Exit Reverse Transition
                      */
-                    if(oldActivity && oldActivity.config?.options?.transition && firstTime){
+                    if(oldActivity && oldActivity.$options?.options?.transition && firstTime){
 
-                        if(oldActivity.config.options.transition.exit instanceof FxPresenter){
+                        if(oldActivity.$options.options.transition.exit instanceof FxPresenter){
 
-                            oldActivity.config?.options?.transition.exit.exitReverse(
+                            oldActivity.$options?.options?.transition.exit.exitReverse(
 
                                 oldActivity.$element
                                 
@@ -249,11 +250,11 @@ export class SensenRouter<B extends SceneActivityProps>{
                     /**
                      * Exit Reverse Transition
                      */
-                    if(oldActivity && oldActivity.config?.options?.transition && !firstTime){
+                    if(oldActivity && oldActivity.$options?.options?.transition && !firstTime){
 
-                        if(oldActivity.config.options.transition.exit instanceof FxPresenter){
+                        if(oldActivity.$options.options.transition.exit instanceof FxPresenter){
 
-                            oldActivity.config?.options?.transition.exit.exit(
+                            oldActivity.$options?.options?.transition.exit.exit(
 
                                 oldActivity.$element
                                 
@@ -278,11 +279,11 @@ export class SensenRouter<B extends SceneActivityProps>{
                     /**
                      * Entry Reverse Transition
                      */
-                    if(activity.config?.options?.transition && !firstTime){
+                    if(activity.$options?.options?.transition && !firstTime){
 
-                        if(activity.config.options.transition.entry instanceof FxPresenter){
+                        if(activity.$options.options.transition.entry instanceof FxPresenter){
 
-                            activity.config?.options?.transition.entry.entryReverse(
+                            activity.$options?.options?.transition.entry.entryReverse(
 
                                 activity.$element
                                 
@@ -312,11 +313,11 @@ export class SensenRouter<B extends SceneActivityProps>{
                     /**
                      * Entry Transition
                      */
-                    if(activity.config?.options?.transition && firstTime){
+                    if(activity.$options?.options?.transition && firstTime){
 
-                        if(activity.config.options.transition.entry instanceof FxPresenter){
+                        if(activity.$options.options.transition.entry instanceof FxPresenter){
 
-                            activity.config?.options?.transition.entry.entry(
+                            activity.$options?.options?.transition.entry.entry(
 
                                 activity.$element
                                 

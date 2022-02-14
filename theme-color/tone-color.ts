@@ -1,8 +1,8 @@
 
-import SensenColor from './color';
-import { SensenColorNature } from './color.t';
-import { SensenColorVariations } from './index.t';
-import { SensenToneScheme, SensenToneSchemeIs } from './tone-color.t';
+import SensenColor from "./color";
+import type { SensenColorNature } from "./color.t";
+import type { SensenColorVariations } from "./index.t";
+import type { SensenToneScheme, SensenToneSchemeIs } from "./tone-color.t";
 
 
 

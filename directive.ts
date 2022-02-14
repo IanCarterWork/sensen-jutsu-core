@@ -1,4 +1,5 @@
-import { ComponentController } from ".";
+import { SceneActivity } from "./activity";
+import { ComponentController } from "./index";
 import { ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord } from "./index.t";
 
 /**

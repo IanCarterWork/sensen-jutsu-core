@@ -1,4 +1,4 @@
-import { ComponentController } from ".";
+import { ComponentController } from "./index";
 import { CompilateErrorException, RenderEngine } from "./compilate";
 import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
 import { ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, TComponentHydratesEntry } from "./index.t";
@@ -153,31 +153,34 @@ export class ComponentHydrates<
 
     state: S = {} as S
 
-    props: P = {} as P
+    // props: P = {} as P
 
 
 
     $state: ComponentHydratesStore<S> = {} as ComponentHydratesStore<S>
 
-    $props: ComponentHydratesStore<P> = {} as ComponentHydratesStore<P>
+    // $props: ComponentHydratesStore<P> = {} as ComponentHydratesStore<P>
 
 
     
-    constructor(component: ComponentController<S, P, M>, state?: S, props?: P){
+    constructor(component: ComponentController<S, P, M>, state?: S){
 
         
         this.component = component;
         
         this.state = Object.assign({}, state || component.state);
         
-        this.props = props || component.props;
+        // this.props = props || component.props;
         
         this.$state = new ComponentHydratesStore();
 
-        this.$props = new ComponentHydratesStore();
-
+        // this.$props = new ComponentHydratesStore();
 
         this.proxies()
+        
+        // this.component.state = this.state;
+
+        // this.component.props = this.props;
 
     }
 
@@ -268,6 +271,8 @@ export class ComponentHydrates<
             const self = this.component;
 
             const $ = this;
+
+
 
             Object.entries({...this.state}).map(e=>{
 
@@ -370,7 +375,7 @@ export class ComponentHydrates<
          
                 if('innerHTML' in node){ node.innerHTML = result }
 
-                else if('textContent' in node){ node.textContent = result }
+                else if('textContent' in node){ node.textContent = (result) }
 
                 resolve(result)
      
