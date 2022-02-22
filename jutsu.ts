@@ -63,29 +63,26 @@ export class KuchiyoceElement extends SensenHTMLElement<KuchiyoceProps>{
             
         ).selectors({
 
-            $self:[
+            $self: {
 
-                {
-                    width: '100vw',
+                width: '100vw',
 
-                    height: '100vh',
+                height: '100vh',
 
-                    overflow: 'hidden',
+                overflow: 'hidden',
 
-                    position: 'relative',
+                position: 'relative',
 
-                    display: 'flex',
+                display: 'flex',
 
-                    justifyContent: 'center',
+                justifyContent: 'center',
 
-                    alignItems: 'center',
+                alignItems: 'center',
 
-                    backgroundColor: ThemeColor.$('layer'),
-                    
-                }
+                backgroundColor: ThemeColor.$('layer'),
                 
-            ]
-            
+            }
+
         }).mount();
 
         this.classList.add( this.$appearance.$UiD )
@@ -105,7 +102,6 @@ export class KuchiyoceElement extends SensenHTMLElement<KuchiyoceProps>{
 
 export class Jutsu{
 
-
     static Kuchiyose(props: KuchiyoceProps){
 
         const tagName = `sensen-${ props.name }`;
@@ -118,15 +114,11 @@ export class Jutsu{
             customElements.define(tagName, KuchiyoceElement)
             
         }
-        
 
         return new KuchiyoceElement(props);
         
     }
 
-    
-    
-    
-    
+
 }
 

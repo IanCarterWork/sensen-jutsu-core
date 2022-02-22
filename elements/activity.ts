@@ -91,12 +91,13 @@ export function activityHeaderComponent(){
 
         appearance: {
 
-            $self:[
-                {
-                    display:'flex',
-                    flexDirection:'row'
-                }
-            ]
+            $self: {
+                
+                display:'flex',
+                
+                flexDirection:'row'
+
+            }
             
         },
     

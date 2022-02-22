@@ -17,18 +17,16 @@ export class KuchiyoceElement extends SensenHTMLElement {
     }
     $setAppearance() {
         this.$appearance.selectors(this.props.appearance || {}).selectors({
-            $self: [
-                {
-                    width: '100vw',
-                    height: '100vh',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: ThemeColor.$('layer'),
-                }
-            ]
+            $self: {
+                width: '100vw',
+                height: '100vh',
+                overflow: 'hidden',
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: ThemeColor.$('layer'),
+            }
         }).mount();
         this.classList.add(this.$appearance.$UiD);
         return this;

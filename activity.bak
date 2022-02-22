@@ -1,16 +1,16 @@
 
-import { SensenHTMLElement } from "./index";
-import { SensenAppearance, TAppearanceProps } from "./appearance/index";
-import { SensenEmitter } from "./emitter";
-import { SceneActivityOptionsWireframes, SceneActivityProps, TScreenConfig } from "./index.t";
-import { SceneActivityBody, useScreenElements } from "./elements/activity";
-import { SensenTemplate } from "./template";
-import { ActivityWireframe, ActivityWireframeState } from "./wireframe/activity";
-import { SensenScript } from "./script";
-import { SockRenderEngine } from "./compilate";
-import { FindExpressions, StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
-import { StabilizeContent } from "./utilities";
-import { AppearanceSceneActivity } from "./appearance/activity";
+import { SensenHTMLElement } from "./index.js";
+import { SensenAppearance, TAppearanceProps } from "./appearance/index.js";
+import { SensenEmitter } from "./emitter.js";
+import { SceneActivityOptionsWireframes, SceneActivityProps, TScreenConfig } from "./index.t.js";
+import { SceneActivityBody, useScreenElements } from "./elements/activity.js";
+import { SensenTemplate } from "./template.js";
+import { ActivityWireframe, ActivityWireframeState } from "./wireframe/activity.js";
+import { SensenScript } from "./script.js";
+import { SockRenderEngine } from "./compilate.js";
+import { FindExpressions, StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js";
+import { StabilizeContent } from "./utilities.js";
+import { AppearanceSceneActivity } from "./appearance/activity.js";
 
 
 useScreenElements()

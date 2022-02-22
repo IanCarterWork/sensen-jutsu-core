@@ -1,5 +1,7 @@
-import { SensenEmitter } from "../emitter.js.js";
-import { SensenMetricRandom } from "../metric-random.js.js";
+import { SensenEmitter } from "../emitter";
+import { SensenMetricRandom } from "../metric-random";
+import { ArrayRange } from "../utilities";
+import SensenURLScheme from "../pathScheme";
 export class SensenAppearance {
     constructor(props) {
         this.$dom = {};
@@ -16,6 +18,33 @@ export class SensenAppearance {
         this.$emitter?.dispatch('construct', this);
         this.$emitting();
     }
+    static absorbent(txt, domain) {
+        txt = txt.toString();
+        const output = {};
+        const rexSelector = /(.*)([^{])\s*\{\s*([^}]*?)\s*}/g;
+        const matchSelectors = [...txt.matchAll(rexSelector)];
+        if (matchSelectors.length) {
+            matchSelectors.map(match => {
+                const selector = match[1];
+                const content = ArrayRange(match, 2).join('').trim();
+                const rex = /(.*):(.*)[;]/g;
+                const matches = [...content.matchAll(rex)];
+                const lines = {};
+                if (matches.length) {
+                    matches.map(prop => {
+                        const key = (prop[1] || '').trim();
+                        Object.entries(SensenURLScheme(domain || '')).map(scheme => {
+                            prop[2] = (prop[2] || "").replace(new RegExp(`${scheme[0]}`, 'g'), scheme[1]);
+                        });
+                        // @ts-ignore
+                        lines[key] = prop[2];
+                    });
+                }
+                output[selector] = lines;
+            });
+        }
+        return output;
+    }
     $generateUiD() {
         return `${SensenMetricRandom.CreateAplpha(12).join('')}${SensenMetricRandom.Create(20).join('')}`;
     }
@@ -24,23 +53,20 @@ export class SensenAppearance {
         this.$dom.setAttribute('type', 'text/css');
         this.$dom.setAttribute('sensen-appearance', `${this.$UiD}`);
         document.head.appendChild(this.$dom);
-        console.warn('Appreance Initialize', this.$UiD, this.$dom);
         /** * Emit Event */
         this.$emitter?.dispatch('initialized', this);
         return this;
     }
     selector(selector, value) {
-        this.props[selector] = this.props[selector] || [];
-        const rank = this.props[selector].length;
-        this.props[selector][rank] = value;
+        this.props[selector] = { ...value };
         /** * Emit Event */
-        this.$emitter?.dispatch('selectorAdded', { selector, value, rank });
+        this.$emitter?.dispatch('selectorAdded', { selector, value });
         return this;
     }
     selectors(appearance) {
         const entries = Object.entries(appearance || {});
         if (entries.length) {
-            entries.map($ => ($[1] || []).map(selector => this.selector($[0], selector)));
+            entries.map($ => this.selector($[0], $[1]));
         }
         return this;
     }
@@ -124,15 +150,15 @@ export function OIAppearance(entries) {
         Object.values(entry[0].trim().split(',')).forEach(selector => {
             selectors[selectors.length] = selector;
             const rw = [];
-            entry[1].reverse().map(value => {
-                Object.entries(value).map($ => {
-                    Object.values($[0].trim().split(',')).map(prop => {
-                        OIAppearanceProp((`${prop}`).replace(majRex, '-$&').toLowerCase()).forEach(p => {
-                            rw[rw.length] = `${p}:${OIAppearanceValue($[1] || '')}`;
-                        });
+            // entry[1].reverse().map(value=>{
+            Object.entries(entry[1]).map($ => {
+                Object.values($[0].trim().split(',')).map(prop => {
+                    OIAppearanceProp((`${prop}`).replace(majRex, '-$&').toLowerCase()).forEach(p => {
+                        rw[rw.length] = `${p}:${OIAppearanceValue($[1] || '')}`;
                     });
                 });
             });
+            // })
             rows[rows.length] = rw.join(';');
         });
     });

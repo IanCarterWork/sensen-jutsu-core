@@ -1,4 +1,4 @@
-import Sensen, { SensenHTMLElement } from "../index.js";
+import Sensen, { SensenHTMLElement } from "../index";
 /**
  * Scene Header
  */
@@ -39,12 +39,10 @@ export function activityHeaderComponent() {
             }
         },
         appearance: {
-            $self: [
-                {
-                    display: 'flex',
-                    flexDirection: 'row'
-                }
-            ]
+            $self: {
+                display: 'flex',
+                flexDirection: 'row'
+            }
         },
         props: {
             title: 'default title',

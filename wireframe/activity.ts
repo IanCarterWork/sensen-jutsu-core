@@ -47,51 +47,45 @@ export function Basic() : ActivityWireframeState{
     
     HAppearance.selectors({
 
-        $self:[
-
-            {
-                
-                // backgroundColor: ThemeColor.$('layer'),
-                
-                color: ThemeColor.$('text'),
-                
-                minHeight:'48px',
-                
-                display: 'flex',
-                
-                flexDirection: 'row',
-                
-                alignItems: 'center',
-
-                justifyContent: 'center',
-                
-                position: 'sticky',
-                
-                top:'0',
-                
-                left:'0',
-
-                zIndex: '999',
-                
-                width:'100vw',
-                
-                maxWidth:'100vw',
-
-            }
-
-        ],
-
-
-
-        '[activity\\:header-center]':[
+        $self: {
             
-            {
-                
-                flex: '1 1 auto'
-                
-            }
+            // backgroundColor: ThemeColor.$('layer'),
             
-        ]
+            color: ThemeColor.$('text'),
+            
+            minHeight:'48px',
+            
+            display: 'flex',
+            
+            flexDirection: 'row',
+            
+            alignItems: 'center',
+
+            justifyContent: 'center',
+            
+            position: 'sticky',
+            
+            top:'0',
+            
+            left:'0',
+
+            zIndex: '999',
+            
+            width:'100vw',
+            
+            maxWidth:'100vw',
+
+        } ,
+
+
+
+        '[activity\\:header-center]': {
+            
+            flex: '1 1 auto'
+            
+        }
+            
+        
 
 
 
@@ -101,16 +95,16 @@ export function Basic() : ActivityWireframeState{
     header.classList.add(HAppearance.$UiD)
 
 
-    console.warn('WireFrame Header', HAppearance )
+    // console.warn('WireFrame Header', HAppearance )
 
 
     BAppearance.selectors({
 
-        $self:[
-            {
-                padding:'48px 0',
-            }
-        ],
+        $self: {
+            
+            padding:'48px 0',
+
+        } ,
 
     }).mount()
     

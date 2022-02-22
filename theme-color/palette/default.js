@@ -1,4 +1,4 @@
-import { SensenPaletteColor } from "../palette-color.js";
+import { SensenPaletteColor } from "../palette-color";
 export const SensenDefaultPalette = new SensenPaletteColor('default', {
     one: '#124a88',
     two: '#2f3944',

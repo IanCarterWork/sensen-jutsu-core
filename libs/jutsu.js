@@ -1,6 +1,6 @@
-import { SensenHTMLElement } from "./index.js.js";
-import { SensenAppearance } from "./appearance/index.js.js";
-import { ThemeColor } from "./theme-color/index.js.js";
+import { SensenHTMLElement } from "./index";
+import { SensenAppearance } from "./appearance/index";
+import { ThemeColor } from "./theme-color/index";
 export class KuchiyoceElement extends SensenHTMLElement {
     constructor(props) {
         super(props);
@@ -17,18 +17,16 @@ export class KuchiyoceElement extends SensenHTMLElement {
     }
     $setAppearance() {
         this.$appearance.selectors(this.props.appearance || {}).selectors({
-            $self: [
-                {
-                    width: '100vw',
-                    height: '100vh',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: ThemeColor.$('layer'),
-                }
-            ]
+            $self: {
+                width: '100vw',
+                height: '100vh',
+                overflow: 'hidden',
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: ThemeColor.$('layer'),
+            }
         }).mount();
         this.classList.add(this.$appearance.$UiD);
         return this;

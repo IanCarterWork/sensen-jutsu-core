@@ -1,4 +1,4 @@
-import { SensenToneColor } from "../tone-color.js";
+import { SensenToneColor } from "../tone-color";
 export const SensenSnowTone = new SensenToneColor('snow', {
     text: '#282828',
     textLite: '#333',

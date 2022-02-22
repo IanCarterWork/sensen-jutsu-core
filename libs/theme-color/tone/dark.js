@@ -1,4 +1,4 @@
-import { SensenToneColor } from "../tone-color.js.js";
+import { SensenToneColor } from "../tone-color";
 export const SensenDarkTone = new SensenToneColor('dark', {
     text: '#a1a1a1',
     textLite: '#bebebe',

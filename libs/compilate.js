@@ -1,13 +1,13 @@
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression, SyDetr, SyntaxEcho, SyntaxEchoReverse } from "./expression.js.js";
-import { render } from "ejs.js.js";
-import { decodeHTMLEntities, StabilizeContent } from "./utilities.js.js";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression, SyDetr, SyntaxEcho, SyntaxEchoReverse } from "./expression";
+import { render } from "ejs";
+import { decodeHTMLEntities, StabilizeContent } from "./utilities";
 export function PropsMachine(input, props) {
     if (typeof props == 'object') {
         const output = {};
         const arr = Object.entries(props);
         if (arr.length) {
             arr.map($ => {
-                const echos = [...($[1]).matchAll(SyntaxEcho)];
+                const echos = [...($[1] || '').matchAll(SyntaxEcho)];
                 if (!echos.length) {
                     output[$[0]] = $[1];
                 }
@@ -18,7 +18,7 @@ export function PropsMachine(input, props) {
             return { input, props: output };
         }
         else {
-            const echos = [...(input).matchAll(SyntaxEchoReverse)];
+            const echos = [...(input || '').matchAll(SyntaxEchoReverse)];
             if (echos.length) {
                 echos.map($ => {
                     const ech = $[1].trim();

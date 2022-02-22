@@ -10,13 +10,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _ComponentController_instances, _ComponentController_hydrates, _ComponentController_mutationObserver, _ComponentController_mutationObserved, _ComponentController_pending, _ComponentController_completed, _ComponentController_camouflage, _ComponentController_checkCompilatedDone;
-import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate.js.js";
-import { SensenEmitter } from "./emitter.js.js";
-import { FindExpressions } from "./expression.js.js";
-import { ComponentHydrates } from "./hydrates.js.js";
-import { SensenAppearance } from "./appearance/index.js.js";
-import { SensenMetricRandom } from "./metric-random.js.js";
-import { ComponentVariable } from "./hook.js.js";
+import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate";
+import { SensenEmitter } from "./emitter";
+import { FindExpressions } from "./expression";
+import { ComponentHydrates } from "./hydrates";
+import { SensenAppearance } from "./appearance/index";
+import { SensenMetricRandom } from "./metric-random";
+import { ComponentVariable } from "./hook";
 /**
  *
  */

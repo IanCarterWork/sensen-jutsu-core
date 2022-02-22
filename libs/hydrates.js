@@ -1,6 +1,6 @@
-import { CompilateErrorException, RenderEngine } from "./compilate.js.js";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js.js";
-import { decodeHTMLEntities, StabilizeContent } from "./utilities.js.js";
+import { CompilateErrorException, RenderEngine } from "./compilate";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
+import { decodeHTMLEntities, StabilizeContent } from "./utilities";
 export class ComponentHydratesStore {
     constructor() {
         this.entries = {};

@@ -1,12 +1,14 @@
 import { TObjectEmbed } from "../index";
 import { SensenEmitter } from "../emitter";
 import { SensenMetricRandom } from "../metric-random";
+import { ArrayRange } from "../utilities";
+import SensenURLScheme from "../pathScheme";
 
 
 
 
 
-export interface TAppearanceDeclarations extends Omit<CSSStyleDeclaration, 'width' | 'height' | 'margin' | 'padding'>{
+export interface TAppearanceDeclarations extends Omit<CSSStyleDeclaration, 'width' | 'height' | 'margin' | 'padding' | 'length' | 'parentRule'>{
     
     width?: 'auto' | 'initial' | 'inherit' | 'unset' | number | string;
     height?: 'auto' | 'initial' | 'inherit' | 'unset' | number | string;
@@ -33,7 +35,7 @@ export interface TAppearanceDeclarations extends Omit<CSSStyleDeclaration, 'widt
 export type TAppearanceEntry = {
     selector: string, 
     value: TObjectEmbed<TAppearanceDeclarations>,
-    rank: number
+    // rank: number
 }
 
 
@@ -41,7 +43,7 @@ export type TAppearanceEntry = {
 
 export type TAppearanceProps = {
 
-    [selector: string] : TObjectEmbed<TAppearanceDeclarations>[]
+    [selector: string] : TObjectEmbed<TAppearanceDeclarations>
     
 }
 
@@ -58,6 +60,12 @@ export type TAppearanceEmitter = {
     selectorAdded: (entry: TAppearanceEntry) => void;
     
 }
+
+
+
+
+
+
 
 
 
@@ -102,6 +110,74 @@ export class SensenAppearance{
 
 
 
+
+
+    static absorbent(txt: string, domain?: string){
+
+        txt = txt.toString()
+    
+        const output : TAppearanceProps  = {} as TAppearanceProps;
+    
+        const rexSelector = /(.*)([^{])\s*\{\s*([^}]*?)\s*}/g
+    
+        const matchSelectors = [ ...txt.matchAll(rexSelector) ]
+    
+    
+        if(matchSelectors.length){
+    
+            matchSelectors.map(match=>{
+    
+                const selector = match[1];
+    
+                const content = ArrayRange(match, 2).join('').trim();
+    
+                const rex = /(.*):(.*)[;]/g
+    
+                const matches = [...content.matchAll(rex)]
+    
+                const lines : TObjectEmbed<TAppearanceDeclarations> = {}
+                
+
+    
+                if(matches.length){
+    
+                    matches.map(prop=>{
+    
+                        const key : keyof TObjectEmbed<TAppearanceDeclarations> = (prop[1]||'').trim() as keyof TObjectEmbed<TAppearanceDeclarations>
+
+                        Object.entries(SensenURLScheme(domain||'')).map(scheme=>{
+
+                            prop[2] = (prop[2]||"").replace(
+                                
+                                new RegExp(`${scheme[0]}`, 'g'), 
+                                
+                                scheme[1]
+                                
+                            );
+                            
+                        })
+    
+                        // @ts-ignore
+                        lines[ key ] = prop[2] as typeof lines[ keyof typeof lines]
+                        
+                    })
+
+                }
+                
+                output[ selector ] = lines
+    
+            })
+            
+        }
+        
+        
+        return output;
+    
+    }
+    
+    
+
+
     $generateUiD(){
 
         return `${ SensenMetricRandom.CreateAplpha(12).join('') }${ SensenMetricRandom.Create(20).join('') }`;
@@ -135,14 +211,10 @@ export class SensenAppearance{
 
     selector(selector: string, value: TObjectEmbed<TAppearanceDeclarations>){
 
-        this.props[ selector ] = this.props[ selector ] || [];
+        this.props[ selector ] = {...value};
 
-        const rank = this.props[ selector ].length
-
-        this.props[ selector ][ rank ] = value
-        
         /** * Emit Event */
-        this.$emitter?.dispatch('selectorAdded', { selector, value, rank } as TAppearanceEntry);
+        this.$emitter?.dispatch('selectorAdded', { selector, value } as TAppearanceEntry);
 
         return this;
         
@@ -156,7 +228,7 @@ export class SensenAppearance{
 
         if(entries.length){
 
-            entries.map($=> ($[1]||[]).map(selector=>this.selector($[0], selector)) )
+            entries.map($=>this.selector($[0], $[1]))
             
         }
         
@@ -323,10 +395,10 @@ export function OIAppearance(entries : TAppearanceProps){
             selectors[ selectors.length ] = selector
 
             const rw: string[] = []
-            
-            entry[1].reverse().map(value=>{
+
+            // entry[1].reverse().map(value=>{
                 
-                Object.entries(value).map($=>{
+                Object.entries(entry[1]).map($=>{
 
                     Object.values($[0].trim().split(',')).map(prop=>{
 
@@ -340,7 +412,7 @@ export function OIAppearance(entries : TAppearanceProps){
 
                 })
 
-            })
+            // })
 
             rows[ rows.length ] = rw.join(';')
 
@@ -351,3 +423,17 @@ export function OIAppearance(entries : TAppearanceProps){
     return {selectors, rows}
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

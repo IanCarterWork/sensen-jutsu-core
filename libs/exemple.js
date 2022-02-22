@@ -1,14 +1,14 @@
-import Sensen from "./index.js.js";
-import { SceneActivity } from "./activity.js.js";
-import { FxSlideHorizontal } from "./fx/preset.js.js";
-import { Jutsu } from "./jutsu.js.js";
-import { SensenRouter } from "./router.js.js";
-import SensenThemeColor from "./theme-color/index.js.js";
-import { SensenDefaultPalette } from "./theme-color/palette/default.js.js";
-import { SensenDarkTone } from "./theme-color/tone/dark.js.js";
-import { SensenLightTone } from "./theme-color/tone/light.js.js";
-import { SensenNightTone } from "./theme-color/tone/night.js.js";
-import { SensenSnowTone } from "./theme-color/tone/snow.js.js";
+import Sensen from "./index";
+import { SceneActivity } from "./activity";
+import { FxSlideHorizontal } from "./fx/preset";
+import { Jutsu } from "./jutsu";
+import { SensenRouter } from "./router";
+import SensenThemeColor from "./theme-color/index";
+import { SensenDefaultPalette } from "./theme-color/palette/default";
+import { SensenDarkTone } from "./theme-color/tone/dark";
+import { SensenLightTone } from "./theme-color/tone/light";
+import { SensenNightTone } from "./theme-color/tone/night";
+import { SensenSnowTone } from "./theme-color/tone/snow";
 const themeColor = (new SensenThemeColor())
     .add(SensenDefaultPalette)
     .add(SensenNightTone)

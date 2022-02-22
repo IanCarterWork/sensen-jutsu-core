@@ -10,13 +10,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SceneActivity_mockup;
-import { ComponentController, SensenHTMLElement } from "./index.js.js";
-import { SensenEmitter } from "./emitter.js.js";
-import { useScreenElements } from "./elements/activity.js.js";
-import { SensenTemplate } from "./template.js.js";
-import { ActivityWireframe } from "./wireframe/activity.js.js";
-import { SensenScript } from "./script.js.js";
-import { AppearanceSceneActivity } from "./appearance/activity.js.js";
+import { ComponentController, SensenHTMLElement } from "./index";
+import { SensenEmitter } from "./emitter";
+import { useScreenElements } from "./elements/activity";
+import { SensenTemplate } from "./template";
+import { ActivityWireframe } from "./wireframe/activity";
+import { SensenScript } from "./script";
+import { AppearanceSceneActivity } from "./appearance/activity";
 useScreenElements();
 export function WireframeTemplateMixer(template, wireframe, slot, clone, found = false) {
     /**

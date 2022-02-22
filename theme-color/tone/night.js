@@ -1,4 +1,4 @@
-import { SensenToneColor } from "../tone-color.js";
+import { SensenToneColor } from "../tone-color";
 export const SensenNightTone = new SensenToneColor('night', {
     text: '#f0f6fc',
     textLite: '#FFF',
