@@ -324,7 +324,7 @@ export class ComponentController<
 
 >{
 
-    $prefix : string = 's';
+    $prefix : string = 'sense';
     
     $templating: boolean = true;
 
@@ -1254,7 +1254,7 @@ export class Component<
         
         this.$appearance = new SensenAppearance(this.$options.appearance)
         
-        this.$tagName = `s-${ this.$options.name }`;
+        this.$tagName = `sense-${ this.$options.name }`;
 
         
         this.$appearance.mount()

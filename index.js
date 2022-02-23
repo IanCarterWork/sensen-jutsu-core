@@ -156,7 +156,7 @@ export class ComponentController {
      */
     constructor(options, params) {
         _ComponentController_instances.add(this);
-        this.$prefix = 's';
+        this.$prefix = 'sense';
         this.$templating = true;
         this.$tagName = '';
         this.props = {};
@@ -573,7 +573,7 @@ export class Component {
         this.$options = options;
         this.$options.appearance = this.$options.appearance || {};
         this.$appearance = new SensenAppearance(this.$options.appearance);
-        this.$tagName = `s-${this.$options.name}`;
+        this.$tagName = `sense-${this.$options.name}`;
         this.$appearance.mount();
         this.$create();
     }

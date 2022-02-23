@@ -1,32 +1,32 @@
 
 
-function SensenURLScheme(base: string = ''){
+function SensenURLScheme(base: string = '/'){
 
     return {
 
-        '@Components' : `${ base }/sensen/components/`,
+        '@Components' : `${ base || '/' }sensen/components`,
         
-        '@Activities' : `${ base }/sensen/activities/`,
+        '@Activities' : `${ base || '/' }sensen/activities`,
         
-        '@Palette' : `${ base }/sensen/palette/`,
+        '@Palette' : `${ base || '/' }sensen/palette`,
         
-        '@Tone' : `${ base }/sensen/tone/`,
+        '@Tone' : `${ base || '/' }sensen/tone`,
         
-        '@Themes' : `${ base }/sensen/themes/`,
+        '@Themes' : `${ base || '/' }sensen/themes`,
         
-        '@Plugins' : `${ base }/sensen/plugins/`,
+        '@Plugins' : `${ base || '/' }sensen/plugins`,
 
-        '@Assets' : `${ base }/assets/`,
+        '@Assets' : `${ base || '/' }assets`,
 
-        '@CSSAssets' : `${ base }/sensen/assets/css/`,
+        '@CSSAssets' : `${ base || '/' }assets/css`,
 
-        '@JSAssets' : `${ base }/sensen/assets/js/`,
+        '@JSAssets' : `${ base || '/' }assets/js`,
 
-        '@FontsAssets' : `${ base }/sensen/assets/fonts/`,
+        '@FontsAssets' : `${ base || '/' }assets/fonts`,
 
-        '@ImagesAssets' : `${ base }/sensen/assets/images/`,
+        '@ImagesAssets' : `${ base || '/' }assets/images`,
 
-        '@App' : `${ base }/`,
+        '@App' : `${ base || '/' }`,
         
     }
     
