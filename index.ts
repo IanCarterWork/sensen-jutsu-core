@@ -1,7 +1,7 @@
 import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate";
 import { SensenEmitter } from "./emitter";
 import { FindExpressions } from "./expression";
-import type { ComponentMethodEvent, ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, SceneActivityProps, SceneActivityEmitter, TComponentOptions, TScreenConfig, TComponentObserversParams } from "./index.t";
+import type { ComponentMethodEvent, ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, SceneActivityProps, SceneActivityEmitter, TComponentOptions, TSceneActivityOptions, TComponentObserversParams } from "./index.t";
 import { ComponentHydrates } from "./hydrates";
 import { SensenAppearance, TAppearanceProps } from "./appearance/index";
 import { SensenTemplate } from "./template";
@@ -88,7 +88,10 @@ export function CreateComponentMethodEvent<
     
     _.self = component;
 
-    _.event = ev
+    _.event = ev;
+
+    // @ts-ignore
+    _.router = window.$SensenRouter;
     
     return _;
 
@@ -109,6 +112,8 @@ export class SensenHTMLElement<P> extends HTMLElement{
 
 
     $controller?: object
+
+    $parentComponent?: object
 
 
     $initializeEUiD(){
@@ -403,7 +408,13 @@ export class ComponentController<
 
     $makeProps(){
 
+        // @ts-ignore
+        // console.warn('Get Parent Component', this.$options.element?.$parentComponent?.props?.title )
+
+
         const props : Props = {} as Props;
+
+
 
         /**
          * Merge Element Atributes
@@ -438,7 +449,9 @@ export class ComponentController<
             
         })
         
+        
         this.props = props;
+
         
         return this;
 
@@ -888,71 +901,104 @@ export class ComponentController<
 
         if(this.$options.element instanceof HTMLElement){
 
-            const found = FindExpressions(this.$options.element, (record)=>{
 
-                this.#pending++;
+            if(this.$options.element.children.length){
+
                 
+                Object.values(this.$options.element.children).forEach(child=>{
 
-                /**
-                 * Find State to auto-compilate
-                 */
-
-                if(typeof this.state == 'object'){
-
-                    const value = record.mockup?.textContent;
-
-                    
-                    const sMatches = [
-
-                        ...(value||'').matchAll(new RegExp(`(${ Object.keys(this.state).join('|') })`, 'g')),
-
-                        ...(value||'').matchAll(new RegExp(`this\\.state\\.(${ Object.keys(this.state).join(')|this\\.state\\.(') })`, 'g')),
-
-                        // ...(value||'').matchAll(new RegExp(`this\\.props\\.${ Object.keys(this.props).join('|this\\.props\\.') }`, 'g')),
-
-                    ]
-
-
-                    if(sMatches.length){
-
-                        sMatches.map(match=>{
-
-                            const recordClone = Object.assign({}, record)
-
-                            const purge = match.filter(v=>v!=undefined)
-
-                            const slot = purge[1] as keyof State
-
-                            // @ts-ignore
-                            purge.input = match.input
-
-                            recordClone.match = purge;
-
-                            this.#hydrates?.$state.push(slot, recordClone)
-                            
-                        })
+        
+                    FindExpressions(child as HTMLElement, (record)=>{
+        
+                        this.#pending++;
                         
-                    }
+    
+                        if(record.node instanceof HTMLElement){
+    
+                            // @ts-ignore
+                            record.node.$parentComponent = this;
+                            
+                            if(record.node instanceof SensenHTMLElement){ 
 
-                }
+                                console.warn('Stop $Compilate', record)
+                                
+                                // return; 
+                            
+                            }
+        
+                        }
+    
+    
 
+                        /**
+                         * Find State to auto-compilate
+                         */
+        
+                        if(typeof this.state == 'object'){
+        
+                            const value = record.mockup?.textContent;
+        
+                            
+                            const sMatches = [
+        
+                                ...(value||'').matchAll(new RegExp(`(${ Object.keys(this.state).join('|') })`, 'g')),
+        
+                                ...(value||'').matchAll(new RegExp(`this\\.state\\.(${ Object.keys(this.state).join(')|this\\.state\\.(') })`, 'g')),
+        
+                                // ...(value||'').matchAll(new RegExp(`this\\.props\\.${ Object.keys(this.props).join('|this\\.props\\.') }`, 'g')),
+        
+                            ]
+        
+        
+                            if(sMatches.length){
+        
+                                sMatches.map(match=>{
+        
+                                    const recordClone = Object.assign({}, record)
+        
+                                    const purge = match.filter(v=>v!=undefined)
+        
+                                    const slot = purge[1] as keyof State
+        
+                                    // @ts-ignore
+                                    purge.input = match.input
+        
+                                    recordClone.match = purge;
+        
+                                    this.#hydrates?.$state.push(slot, recordClone)
+                                    
+                                })
+                                
+                            }
+        
+                        }
+        
 
-                /** * Emit Event */
-                this.$emitter?.dispatch('expressionDetected', record);
-
-            })
-
+        
+                        /** * Emit Event */
+                        this.$emitter?.dispatch('expressionDetected', record);
+        
+                    })
+        
+                    
+                    
+                })
+                
+                
+            }
+            
+            
 
 
             /**
              * No Expression detected
              */
 
-            if(!found.length){
+            // if(!found.length){
 
-                this.#checkCompilatedDone([]);
+            //     this.#checkCompilatedDone([]);
                 
-            }
+            // }
             
             
         }
@@ -1033,7 +1079,7 @@ export class ComponentController<
             
             if(args.emit.target){
 
-                this.#hydrates?.hydratesNode(args.emit.target)
+                // this.#hydrates?.hydratesNode(args.emit.target)
 
             }
 
@@ -1064,6 +1110,8 @@ export class ComponentController<
             const promised: (Promise<ExpressionRecord> | undefined)[] = []
 
             
+            // console.warn('ChildNode', $); debugger;
+        
 
             if($.emit){
 
@@ -1080,15 +1128,6 @@ export class ComponentController<
                 }
 
                 else if($.emit.type == 'attribute.echo'){
-
-                    
-                    // if($.emit.node === this.$options.element){
-                        
-                    //     console.warn('Record Attribute echo ', $.emit.node === this.$options.element, $.emit.attribute)
-
-                    //     return false;
-                        
-                    // }
 
                     promised.push(CompilateEchoAttributes(this, $.emit))
     

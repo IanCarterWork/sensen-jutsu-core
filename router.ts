@@ -1,13 +1,13 @@
 import { SceneActivity, SensenSceneActivities } from "./activity";
 import { SensenFxEngine } from "./fx/index";
 import { FxPresenter } from "./fx/preset";
-import { SceneActivityProps, SceneActivityRouteName, TSensenWindow } from "./index.t";
+import { SceneActivityProps, SceneActivityRouteName, TSceneActivityOptions, TSensenWindow } from "./index.t";
 
 
 const SensenWindow = {} as TSensenWindow
 
 
-export type RouterConfig = {
+export type RouterConfig = IRouterConfig & {
 
     default: string;
 
@@ -34,22 +34,18 @@ interface Window{
 
 
 
-export class SensenRouter<B extends SceneActivityProps>{
+export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter{
 
 
     $options: RouterConfig;
 
-    routes: { 
-        
-        [x in keyof B] : SceneActivity<B[x]> 
+    routes: { [x in keyof B ] : SceneActivity<B[x]> } = {} as { [x in keyof B] : SceneActivity<B[x]> };
     
-    } = {} as { [x in keyof B] : SceneActivity<B[x]> };
-    
-    activity: SceneActivity<B[ string ]> = {} as SceneActivity<B[ string ]>
+    activity: SceneActivity<B[ keyof B]> = {} as SceneActivity<B[ keyof B]>
     
     root: HTMLElement = {} as HTMLElement;
     
-    canvas?: HTMLElement | null;
+    canvas?: HTMLElement;
 
 
 
@@ -58,18 +54,20 @@ export class SensenRouter<B extends SceneActivityProps>{
         this.$options = $options;
         
         this.initialize()
+
+        SensenWindow.$SensenRouter = this;
         
     }
 
 
 
-    get<P extends SceneActivityProps>(activity :  SceneActivity<P> ){
+    get<K extends keyof B>(activity :  SceneActivity<B[K]> ){
 
         if(typeof activity.$options?.route == 'string'){
 
-            const key = activity.$options.route as keyof B
+            const key = activity.$options.route as K
             
-            this.routes[ key ] = activity as SceneActivity<B[ keyof B]>
+            this.routes[ key ] = activity as SceneActivity<B[K]>
 
         }
 
@@ -86,7 +84,7 @@ export class SensenRouter<B extends SceneActivityProps>{
 
             ? this.$options.canvas
 
-            : document.querySelector(this.$options.canvas)
+            : document.querySelector(this.$options.canvas) as HTMLElement
 
         ;
 
@@ -168,9 +166,7 @@ export class SensenRouter<B extends SceneActivityProps>{
     
     
 
-    async navigate(slug: keyof B, props?: {
-        [K in keyof B] ?: any
-    }){
+    async navigate(slug: (keyof B), props?: B[ typeof slug ] ){
 
         const parsed = this.parseSlug(slug || this.$options.default)
 
@@ -178,7 +174,7 @@ export class SensenRouter<B extends SceneActivityProps>{
         
         return new Promise<typeof SceneActivity>(async (resolve: Function, reject: Function)=>{
     
-           const activity = this.routes[ parsed.name ] || undefined;
+           const activity : SceneActivity<B[typeof slug]> = this.routes[ parsed.name as keyof B ];
 
 
             if(activity){
@@ -188,7 +184,7 @@ export class SensenRouter<B extends SceneActivityProps>{
                 const oldActivity = SensenWindow.$SceneActivity;
                 
 
-                activity.render(props as B[ keyof B])
+                activity.render(props)
                 
                 if(activity.$element instanceof HTMLElement && this.canvas instanceof HTMLElement){
 
@@ -207,7 +203,6 @@ export class SensenRouter<B extends SceneActivityProps>{
                         
                     // }
                     
-
                     
                     this.activity = activity;
 

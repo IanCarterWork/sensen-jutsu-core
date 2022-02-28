@@ -1,4 +1,4 @@
-import { ComponentController } from "./index";
+import { ComponentController, SensenHTMLElement } from "./index";
 import { CompilateErrorException, RenderEngine } from "./compilate";
 import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
 import { ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, TComponentHydratesEntry } from "./index.t";
@@ -365,7 +365,29 @@ export class ComponentHydrates<
             }
      
 
-            // console.warn('Compilate SnapCode Exp', snapMockup || echoMockup || mockup)
+
+            let $parentComponent = (this.component.$options.element instanceof SensenHTMLElement) 
+            
+                ? (
+                    
+                    '$parentComponent' in this.component.$options.element 
+
+                    ? this.component.$options.element.$parentComponent
+
+                    : undefined
+                    
+                )
+
+                : undefined
+            
+
+            // console.warn('Compilate SnapCode Exp', snapMockup || echoMockup || mockup);
+
+            // console.warn('Compilate Component', node );
+            
+            // console.log('Parent Component', $parentComponent );
+
+            // return;
             
 
             /**

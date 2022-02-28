@@ -10,6 +10,7 @@ export class SensenRouter {
         this.root = {};
         this.$options = $options;
         this.initialize();
+        SensenWindow.$SensenRouter = this;
     }
     get(activity) {
         if (typeof activity.$options?.route == 'string') {
@@ -59,7 +60,7 @@ export class SensenRouter {
     async navigate(slug, props) {
         const parsed = this.parseSlug(slug || this.$options.default);
         return new Promise(async (resolve, reject) => {
-            const activity = this.routes[parsed.name] || undefined;
+            const activity = this.routes[parsed.name];
             if (activity) {
                 const firstTime = !activity.isReady ? true : false;
                 const oldActivity = SensenWindow.$SceneActivity;

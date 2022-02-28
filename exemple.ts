@@ -18,6 +18,20 @@ import { UseVariable } from "./hook";
 
 
 
+export interface AppSensenRouterScheme extends SensenRouterScheme{
+    
+    'home': HomeActivityProps,
+
+    'about/default': AboutActivityProps,
+
+};
+
+declare let SensenRouterScheme : AppSensenRouterScheme
+
+
+
+
+
 
 const themeColor = (new SensenThemeColor())
 
@@ -215,9 +229,11 @@ const AppHeader = new Sensen.Component({
 
         toggleTone({self, event}){
 
-            console.log('Self', self, themeColor)
+            // console.log('Self', self, themeColor)
 
             themeColor.toggleTone()
+
+            // router.navigate('')
             
         },
 
@@ -383,11 +399,15 @@ const HomeActivity = new SceneActivity<HomeActivityProps>({
 
     methods:{
 
-        toggleTone({self, event}){
+        toggleTone({self, event, router}){
 
             self.state.test = "World"
 
             themeColor.toggleTone()
+
+            // router.navigate('')
+
+            router.navigate('homesdc')
 
         }
         
@@ -417,7 +437,7 @@ const AboutActivity = new SceneActivity<AboutActivityProps>({
 
     route: 'about/default',
 
-    template: './screens/about.html',
+    template: 'about.html',
     
     // arguments: ['sdsd'],
 
@@ -472,15 +492,7 @@ Sensen.Main(
     
         main(canvas){
     
-            type routerScheme = {
-    
-                'home': HomeActivityProps,
-            
-                'about/default': AboutActivityProps,
-            
-            }
-            
-            const router = (new SensenRouter<routerScheme>({
+            const router = (new SensenRouter<AppSensenRouterScheme>({
             
                 default:'home',
             
@@ -490,13 +502,14 @@ Sensen.Main(
             
             }))
                 
-                .get<HomeActivityProps>(HomeActivity)
+                .get<'home'>(HomeActivity)
                 
-                .get<AboutActivityProps>(AboutActivity)
+                .get<'about/default'>(AboutActivity)
                 
             .render();
             
             
+
             
         }
     

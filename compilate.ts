@@ -93,13 +93,13 @@ export async function RenderEngine<
     
 >(input: string, context: ComponentController<S, P, M>, dictionary: { [K: string] : any  } ){
 
-    const refactory = PropsMachine(input, context.props);
+    // const refactory = PropsMachine(input, context.props);
 
-    context.props = refactory.props
-    
     // context.props = refactory.props
+    
+    // // context.props = refactory.props
 
-    input = refactory.input
+    // input = refactory.input
 
 
     // console.log('>$ Render', context.props, dictionary, input)
@@ -132,19 +132,19 @@ export async function RenderEngine<
 
 export async function SockRenderEngine(input: string | null, context: {props?:{}}, dictionary: { [K: string] : any  } ){
      
-    if(typeof context == 'object'){
+    // if(typeof context == 'object'){
 
-        if('props' in context){
+    //     if('props' in context){
 
-            const refactory = PropsMachine(input||'', context.props);
+    //         const refactory = PropsMachine(input||'', context.props);
     
-            context.props = refactory.props;
+    //         context.props = refactory.props;
         
-            input = refactory.input;
+    //         input = refactory.input;
     
-        }
+    //     }
         
-    }
+    // }
     
 
     return render(`${ input }`, dictionary, {

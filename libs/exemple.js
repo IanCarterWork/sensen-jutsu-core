@@ -1,14 +1,15 @@
-import Sensen from "./index";
-import { SceneActivity } from "./activity";
-import { FxSlideHorizontal } from "./fx/preset";
-import { Jutsu } from "./jutsu";
-import { SensenRouter } from "./router";
-import SensenThemeColor from "./theme-color/index";
-import { SensenDefaultPalette } from "./theme-color/palette/default";
-import { SensenDarkTone } from "./theme-color/tone/dark";
-import { SensenLightTone } from "./theme-color/tone/light";
-import { SensenNightTone } from "./theme-color/tone/night";
-import { SensenSnowTone } from "./theme-color/tone/snow";
+import Sensen from "./index.js";
+import { SceneActivity } from "./activity.js";
+import { FxSlideHorizontal } from "./fx/preset.js";
+import { Jutsu } from "./jutsu.js";
+import { SensenRouter } from "./router.js";
+import SensenThemeColor from "./theme-color/index.js";
+import { SensenDefaultPalette } from "./theme-color/palette/default.js";
+import { SensenDarkTone } from "./theme-color/tone/dark.js";
+import { SensenLightTone } from "./theme-color/tone/light.js";
+import { SensenNightTone } from "./theme-color/tone/night.js";
+import { SensenSnowTone } from "./theme-color/tone/snow.js";
+;
 const themeColor = (new SensenThemeColor())
     .add(SensenDefaultPalette)
     .add(SensenNightTone)
@@ -100,8 +101,9 @@ const AppHeader = new Sensen.Component({
     state: {},
     methods: {
         toggleTone({ self, event }) {
-            console.log('Self', self, themeColor);
+            // console.log('Self', self, themeColor)
             themeColor.toggleTone();
+            // router.navigate('')
         },
     },
     appearance: {
@@ -167,9 +169,11 @@ const HomeActivity = new SceneActivity({
         }
     },
     methods: {
-        toggleTone({ self, event }) {
+        toggleTone({ self, event, router }) {
             self.state.test = "World";
             themeColor.toggleTone();
+            // router.navigate('')
+            router.navigate('homesdc');
         }
     },
     emit: {
@@ -182,7 +186,7 @@ const HomeActivity = new SceneActivity({
 const AboutActivity = new SceneActivity({
     name: 'about',
     route: 'about/default',
-    template: './screens/about.html',
+    template: 'about.html',
     // arguments: ['sdsd'],
     props: {
         title: 'About',

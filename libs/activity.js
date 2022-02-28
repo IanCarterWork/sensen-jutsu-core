@@ -10,13 +10,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SceneActivity_mockup;
-import { ComponentController, SensenHTMLElement } from "./index";
-import { SensenEmitter } from "./emitter";
-import { useScreenElements } from "./elements/activity";
-import { SensenTemplate } from "./template";
-import { ActivityWireframe } from "./wireframe/activity";
-import { SensenScript } from "./script";
-import { AppearanceSceneActivity } from "./appearance/activity";
+import { ComponentController, SensenHTMLElement } from "./index.js";
+import { SensenEmitter } from "./emitter.js";
+import { useScreenElements } from "./elements/activity.js";
+import { SensenTemplate } from "./template.js";
+import { ActivityWireframe } from "./wireframe/activity.js";
+import { SensenScript } from "./script.js";
+import { AppearanceSceneActivity } from "./appearance/activity.js";
 useScreenElements();
 export function WireframeTemplateMixer(template, wireframe, slot, clone, found = false) {
     /**
@@ -53,6 +53,7 @@ export function WireframeTemplateMixer(template, wireframe, slot, clone, found =
  * Sensen Screen
  */
 export class SceneActivity {
+    // router?: SensenRouter<SceneActivityProps>
     constructor($options) {
         this.$options = {};
         this.props = {};
@@ -69,7 +70,7 @@ export class SceneActivity {
         // this.state = {} as ComponentState
         this.state = this.$options.state || {};
         this.$options.appearance = this.$options.appearance || {};
-        this.$tagName = `activity-${this.$options.name}`;
+        this.$tagName = (`activity-${this.$options.name}`).toLowerCase();
         this.$element = undefined;
         this.methods = this.$options.methods || {};
         this.$appearance = AppearanceSceneActivity().bundle;

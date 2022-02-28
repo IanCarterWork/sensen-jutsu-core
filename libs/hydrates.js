@@ -1,6 +1,7 @@
-import { CompilateErrorException, RenderEngine } from "./compilate";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
-import { decodeHTMLEntities, StabilizeContent } from "./utilities";
+import { SensenHTMLElement } from "./index.js";
+import { CompilateErrorException, RenderEngine } from "./compilate.js";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js";
+import { decodeHTMLEntities, StabilizeContent } from "./utilities.js";
 export class ComponentHydratesStore {
     constructor() {
         this.entries = {};
@@ -170,7 +171,15 @@ export class ComponentHydrates {
                 resolve(null);
                 return;
             }
-            // console.warn('Compilate SnapCode Exp', snapMockup || echoMockup || mockup)
+            let $parentComponent = (this.component.$options.element instanceof SensenHTMLElement)
+                ? ('$parentComponent' in this.component.$options.element
+                    ? this.component.$options.element.$parentComponent
+                    : undefined)
+                : undefined;
+            // console.warn('Compilate SnapCode Exp', snapMockup || echoMockup || mockup);
+            // console.warn('Compilate Component', node );
+            // console.log('Parent Component', $parentComponent );
+            // return;
             /**
              * Rendering
              */

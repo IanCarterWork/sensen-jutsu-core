@@ -1,4 +1,4 @@
-import SensenColor from "./color";
+import SensenColor from "./color.js";
 export class SensenToneColor extends SensenColor {
     constructor(name, scheme, is = 'light') {
         super();

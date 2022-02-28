@@ -35,10 +35,10 @@ export function PropsMachine(input, props) {
  * Fragment rendering from String
  */
 export async function RenderEngine(input, context, dictionary) {
-    const refactory = PropsMachine(input, context.props);
-    context.props = refactory.props;
+    // const refactory = PropsMachine(input, context.props);
     // context.props = refactory.props
-    input = refactory.input;
+    // // context.props = refactory.props
+    // input = refactory.input
     // console.log('>$ Render', context.props, dictionary, input)
     return render(`${input}`, dictionary, {
         delimiter: `${SyDetr}`,
@@ -53,13 +53,13 @@ export async function RenderEngine(input, context, dictionary) {
     });
 }
 export async function SockRenderEngine(input, context, dictionary) {
-    if (typeof context == 'object') {
-        if ('props' in context) {
-            const refactory = PropsMachine(input || '', context.props);
-            context.props = refactory.props;
-            input = refactory.input;
-        }
-    }
+    // if(typeof context == 'object'){
+    //     if('props' in context){
+    //         const refactory = PropsMachine(input||'', context.props);
+    //         context.props = refactory.props;
+    //         input = refactory.input;
+    //     }
+    // }
     return render(`${input}`, dictionary, {
         delimiter: `${SyDetr}`,
         context: context,

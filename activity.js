@@ -53,6 +53,7 @@ export function WireframeTemplateMixer(template, wireframe, slot, clone, found =
  * Sensen Screen
  */
 export class SceneActivity {
+    // router?: SensenRouter<SceneActivityProps>
     constructor($options) {
         this.$options = {};
         this.props = {};
@@ -69,7 +70,7 @@ export class SceneActivity {
         // this.state = {} as ComponentState
         this.state = this.$options.state || {};
         this.$options.appearance = this.$options.appearance || {};
-        this.$tagName = `activity-${this.$options.name}`;
+        this.$tagName = (`activity-${this.$options.name}`).toLowerCase();
         this.$element = undefined;
         this.methods = this.$options.methods || {};
         this.$appearance = AppearanceSceneActivity().bundle;

@@ -1,6 +1,6 @@
-import { SockRenderEngine } from "./compilate";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
-import { StabilizeContent } from "./utilities";
+import { SockRenderEngine } from "./compilate.js";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js";
+import { StabilizeContent } from "./utilities.js";
 /**
  * Detect and run script in element in context with variables dictionary
  */

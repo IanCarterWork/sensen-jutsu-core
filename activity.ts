@@ -2,7 +2,7 @@
 import { ComponentController, SensenHTMLElement } from "./index";
 import { SensenAppearance, TAppearanceProps } from "./appearance/index";
 import { SensenEmitter } from "./emitter";
-import { ComponentMethodRaw, ComponentMethods, ComponentProps, ComponentState, SceneActivityOptionsWireframes, SceneActivityProps, TScreenConfig } from "./index.t";
+import { ComponentMethodRaw, ComponentMethods, ComponentProps, ComponentState, SceneActivityOptionsWireframes, SceneActivityProps, TSceneActivityOptions } from "./index.t";
 import { SceneActivityBody, useScreenElements } from "./elements/activity";
 import { SensenTemplate } from "./template";
 import { ActivityWireframe, ActivityWireframeState } from "./wireframe/activity";
@@ -11,6 +11,7 @@ import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSna
 import { FindExpressions, StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
 import { StabilizeContent } from "./utilities";
 import { AppearanceSceneActivity } from "./appearance/activity";
+import { SensenRouter } from "./router";
 
 
 useScreenElements()
@@ -94,7 +95,8 @@ export function WireframeTemplateMixer(
 /**
  * Scene Activity Parent
  */
-export interface SensenSceneActivities{
+
+export interface SensenSceneActivities extends ISensenSceneActivities{
 
 
     $options?: object;
@@ -136,7 +138,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
 
 
-    $options?: TScreenConfig<Props> = {} as TScreenConfig<Props>;
+    $options?: TSceneActivityOptions<Props> = {} as TSceneActivityOptions<Props>;
     
     props?: Props = {} as Props
 
@@ -169,8 +171,10 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
     #mockup: string = '';
     
 
+    // router?: SensenRouter<SceneActivityProps>
 
-    constructor($options: TScreenConfig<Props>){
+
+    constructor($options: TSceneActivityOptions<Props>){
 
         this.$options = $options || {}
 
@@ -181,7 +185,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
         this.$options.appearance = this.$options.appearance || {} as TAppearanceProps
 
-        this.$tagName = `activity-${ this.$options.name }`
+        this.$tagName = (`activity-${ this.$options.name }`).toLowerCase()
 
         this.$element = undefined
 
@@ -770,7 +774,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
                 
                         ComponentState, Props, ComponentMethodRaw<ComponentState, Props>
                 
-                    >((self.$options || {} as TScreenConfig<Props>), {
+                    >((self.$options || {} as TSceneActivityOptions<Props>), {
 
                         prefix: 'activity',
 

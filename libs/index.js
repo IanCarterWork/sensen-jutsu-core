@@ -10,13 +10,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _ComponentController_instances, _ComponentController_hydrates, _ComponentController_mutationObserver, _ComponentController_mutationObserved, _ComponentController_pending, _ComponentController_completed, _ComponentController_camouflage, _ComponentController_checkCompilatedDone;
-import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate";
-import { SensenEmitter } from "./emitter";
-import { FindExpressions } from "./expression";
-import { ComponentHydrates } from "./hydrates";
-import { SensenAppearance } from "./appearance/index";
-import { SensenMetricRandom } from "./metric-random";
-import { ComponentVariable } from "./hook";
+import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate.js";
+import { SensenEmitter } from "./emitter.js";
+import { FindExpressions } from "./expression.js";
+import { ComponentHydrates } from "./hydrates.js";
+import { SensenAppearance } from "./appearance/index.js";
+import { SensenMetricRandom } from "./metric-random.js";
+import { ComponentVariable } from "./hook.js";
 /**
  *
  */
@@ -40,6 +40,8 @@ export function CreateComponentMethodEvent(component, ev) {
     const _ = {};
     _.self = component;
     _.event = ev;
+    // @ts-ignore
+    _.router = window.$SensenRouter;
     return _;
 }
 /**
@@ -156,7 +158,7 @@ export class ComponentController {
      */
     constructor(options, params) {
         _ComponentController_instances.add(this);
-        this.$prefix = 's';
+        this.$prefix = 'sense';
         this.$templating = true;
         this.$tagName = '';
         this.props = {};
@@ -181,6 +183,8 @@ export class ComponentController {
         this.$make();
     }
     $makeProps() {
+        // @ts-ignore
+        // console.warn('Get Parent Component', this.$options.element?.$parentComponent?.props?.title )
         const props = {};
         /**
          * Merge Element Atributes
@@ -393,40 +397,52 @@ export class ComponentController {
      */
     $compilate() {
         if (this.$options.element instanceof HTMLElement) {
-            const found = FindExpressions(this.$options.element, (record) => {
-                var _a;
-                __classPrivateFieldSet(this, _ComponentController_pending, (_a = __classPrivateFieldGet(this, _ComponentController_pending, "f"), _a++, _a), "f");
-                /**
-                 * Find State to auto-compilate
-                 */
-                if (typeof this.state == 'object') {
-                    const value = record.mockup?.textContent;
-                    const sMatches = [
-                        ...(value || '').matchAll(new RegExp(`(${Object.keys(this.state).join('|')})`, 'g')),
-                        ...(value || '').matchAll(new RegExp(`this\\.state\\.(${Object.keys(this.state).join(')|this\\.state\\.(')})`, 'g')),
-                        // ...(value||'').matchAll(new RegExp(`this\\.props\\.${ Object.keys(this.props).join('|this\\.props\\.') }`, 'g')),
-                    ];
-                    if (sMatches.length) {
-                        sMatches.map(match => {
-                            const recordClone = Object.assign({}, record);
-                            const purge = match.filter(v => v != undefined);
-                            const slot = purge[1];
+            if (this.$options.element.children.length) {
+                Object.values(this.$options.element.children).forEach(child => {
+                    FindExpressions(child, (record) => {
+                        var _a;
+                        __classPrivateFieldSet(this, _ComponentController_pending, (_a = __classPrivateFieldGet(this, _ComponentController_pending, "f"), _a++, _a), "f");
+                        if (record.node instanceof HTMLElement) {
                             // @ts-ignore
-                            purge.input = match.input;
-                            recordClone.match = purge;
-                            __classPrivateFieldGet(this, _ComponentController_hydrates, "f")?.$state.push(slot, recordClone);
-                        });
-                    }
-                }
-                /** * Emit Event */
-                this.$emitter?.dispatch('expressionDetected', record);
-            });
+                            record.node.$parentComponent = this;
+                            if (record.node instanceof SensenHTMLElement) {
+                                console.warn('Stop $Compilate', record);
+                                // return; 
+                            }
+                        }
+                        /**
+                         * Find State to auto-compilate
+                         */
+                        if (typeof this.state == 'object') {
+                            const value = record.mockup?.textContent;
+                            const sMatches = [
+                                ...(value || '').matchAll(new RegExp(`(${Object.keys(this.state).join('|')})`, 'g')),
+                                ...(value || '').matchAll(new RegExp(`this\\.state\\.(${Object.keys(this.state).join(')|this\\.state\\.(')})`, 'g')),
+                                // ...(value||'').matchAll(new RegExp(`this\\.props\\.${ Object.keys(this.props).join('|this\\.props\\.') }`, 'g')),
+                            ];
+                            if (sMatches.length) {
+                                sMatches.map(match => {
+                                    const recordClone = Object.assign({}, record);
+                                    const purge = match.filter(v => v != undefined);
+                                    const slot = purge[1];
+                                    // @ts-ignore
+                                    purge.input = match.input;
+                                    recordClone.match = purge;
+                                    __classPrivateFieldGet(this, _ComponentController_hydrates, "f")?.$state.push(slot, recordClone);
+                                });
+                            }
+                        }
+                        /** * Emit Event */
+                        this.$emitter?.dispatch('expressionDetected', record);
+                    });
+                });
+            }
             /**
              * No Expression detected
              */
-            if (!found.length) {
-                __classPrivateFieldGet(this, _ComponentController_instances, "m", _ComponentController_checkCompilatedDone).call(this, []);
-            }
+            // if(!found.length){
+            //     this.#checkCompilatedDone([]);
+            // }
         }
         /** * Emit Event */
         this.$emitter?.dispatch('compilationReady', this);
@@ -452,7 +468,7 @@ export class ComponentController {
         });
         this.$emitter?.listen('mutationObserved', (args) => {
             if (args.emit.target) {
-                __classPrivateFieldGet(this, _ComponentController_hydrates, "f")?.hydratesNode(args.emit.target);
+                // this.#hydrates?.hydratesNode(args.emit.target)
             }
         });
         this.$emitter?.listen('mutationsObserved', (args) => {
@@ -466,6 +482,7 @@ export class ComponentController {
          */
         this.$emitter?.listen('expressionDetected', ($) => {
             const promised = [];
+            // console.warn('ChildNode', $); debugger;
             if ($.emit) {
                 if ($.emit.type == 'echo') {
                     promised.push(CompilateEcho(this, $.emit));
@@ -474,10 +491,6 @@ export class ComponentController {
                     promised.push(CompilateSnapCode(this, $.emit));
                 }
                 else if ($.emit.type == 'attribute.echo') {
-                    // if($.emit.node === this.$options.element){
-                    //     console.warn('Record Attribute echo ', $.emit.node === this.$options.element, $.emit.attribute)
-                    //     return false;
-                    // }
                     promised.push(CompilateEchoAttributes(this, $.emit));
                 }
                 else if ($.emit.type == 'attribute.snapcode') {
@@ -573,7 +586,7 @@ export class Component {
         this.$options = options;
         this.$options.appearance = this.$options.appearance || {};
         this.$appearance = new SensenAppearance(this.$options.appearance);
-        this.$tagName = `s-${this.$options.name}`;
+        this.$tagName = `sense-${this.$options.name}`;
         this.$appearance.mount();
         this.$create();
     }

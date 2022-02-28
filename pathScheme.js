@@ -6,11 +6,13 @@ function SensenURLScheme(base = '/') {
         '@Tone': `${base || '/'}sensen/tone`,
         '@Themes': `${base || '/'}sensen/themes`,
         '@Plugins': `${base || '/'}sensen/plugins`,
+        '@PluginsJS': `${base || '/'}sensen/plugins/js`,
+        '@PluginsCSS': `${base || '/'}sensen/plugins/css`,
         '@Assets': `${base || '/'}assets`,
-        '@CSSAssets': `${base || '/'}assets/css`,
-        '@JSAssets': `${base || '/'}assets/js`,
-        '@FontsAssets': `${base || '/'}assets/fonts`,
-        '@ImagesAssets': `${base || '/'}assets/images`,
+        '@AssetsCSS': `${base || '/'}assets/css`,
+        '@AssetsJS': `${base || '/'}assets/js`,
+        '@AssetsFonts': `${base || '/'}assets/fonts`,
+        '@AssetsImages': `${base || '/'}assets/images`,
         '@App': `${base || '/'}`,
     };
 }

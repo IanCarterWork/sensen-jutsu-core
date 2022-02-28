@@ -9,6 +9,7 @@ import { SensenDarkTone } from "./theme-color/tone/dark.js";
 import { SensenLightTone } from "./theme-color/tone/light.js";
 import { SensenNightTone } from "./theme-color/tone/night.js";
 import { SensenSnowTone } from "./theme-color/tone/snow.js";
+;
 const themeColor = (new SensenThemeColor())
     .add(SensenDefaultPalette)
     .add(SensenNightTone)
@@ -100,8 +101,9 @@ const AppHeader = new Sensen.Component({
     state: {},
     methods: {
         toggleTone({ self, event }) {
-            console.log('Self', self, themeColor);
+            // console.log('Self', self, themeColor)
             themeColor.toggleTone();
+            // router.navigate('')
         },
     },
     appearance: {
@@ -167,9 +169,11 @@ const HomeActivity = new SceneActivity({
         }
     },
     methods: {
-        toggleTone({ self, event }) {
+        toggleTone({ self, event, router }) {
             self.state.test = "World";
             themeColor.toggleTone();
+            // router.navigate('')
+            router.navigate('homesdc');
         }
     },
     emit: {
@@ -182,7 +186,7 @@ const HomeActivity = new SceneActivity({
 const AboutActivity = new SceneActivity({
     name: 'about',
     route: 'about/default',
-    template: './screens/about.html',
+    template: 'about.html',
     // arguments: ['sdsd'],
     props: {
         title: 'About',

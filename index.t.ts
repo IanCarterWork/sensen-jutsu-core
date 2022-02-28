@@ -5,6 +5,7 @@ import { TDirectiveAttribute } from "./directive"
 import { SensenEmitterArguments } from "./emitter"
 import { SensenFxTransition } from "./fx/index"
 import { ComponentVariable } from "./hook"
+import { SensenRouter } from "./router"
 
 
 
@@ -103,7 +104,13 @@ export type ComponentMethodEvent<
 
     self: ComponentController<S, P, M>;
 
-    event: Event
+    event: Event;
+
+    router: SensenRouter<SensenRouterScheme>;
+
+        
+        
+        // [X in keyof P['route'] ] : P
     
 }
 
@@ -180,7 +187,13 @@ export type TComponentOptions<
 
     appearance?: TAppearanceProps;
 
-    methods?: ComponentMethods<State, Props, Methods>
+    methods?: {
+
+        [M in keyof Methods] : (ev: ComponentMethodEvent<State, Props, Methods> & { router?: SensenRouter<{}> }) => void
+        
+    }
+
+    // methods?: ComponentMethods<State, Props, Methods>
 
     template?: string | true;
 
@@ -320,7 +333,7 @@ export type ParseSnapCodeBlock = {
  * Screen
  */
 
- export type SceneActivityProps = {
+export interface SceneActivityProps extends ISceneActivityProps{
 
     [K: string]: any,
 
@@ -375,7 +388,7 @@ export type SceneActivityRouteName = string;
 
 
 
-export type TScreenConfig<P extends SceneActivityProps> = TComponentOptions<{}, P, {}> & {
+export type TSceneActivityOptions<P extends SceneActivityProps> = TComponentOptions<{}, P, {}> & {
 
     name: string;
 
