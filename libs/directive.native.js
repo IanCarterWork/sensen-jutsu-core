@@ -1,5 +1,5 @@
-import { CreateComponentMethodEvent } from "./index.js";
-import { DirectiveAttributes } from "./directive.js";
+import { CreateComponentMethodEvent } from "./index.js.js";
+import { DirectiveAttributes } from "./directive.js.js";
 /**
  * Directive Configurations
  */

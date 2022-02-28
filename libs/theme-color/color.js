@@ -1,4 +1,4 @@
-import SensenColoring from "./coloring.js";
+import SensenColoring from "./coloring.js.js";
 export default class SensenColor {
     constructor() {
         this.nature = '@palette';

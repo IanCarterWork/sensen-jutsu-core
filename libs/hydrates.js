@@ -1,7 +1,7 @@
-import { SensenHTMLElement } from "./index.js";
-import { CompilateErrorException, RenderEngine } from "./compilate.js";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js";
-import { decodeHTMLEntities, StabilizeContent } from "./utilities.js";
+import { SensenHTMLElement } from "./index.js.js";
+import { CompilateErrorException, RenderEngine } from "./compilate.js.js";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js.js";
+import { decodeHTMLEntities, StabilizeContent } from "./utilities.js.js";
 export class ComponentHydratesStore {
     constructor() {
         this.entries = {};

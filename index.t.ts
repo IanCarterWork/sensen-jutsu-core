@@ -189,7 +189,7 @@ export type TComponentOptions<
 
     methods?: {
 
-        [M in keyof Methods] : (ev: ComponentMethodEvent<State, Props, Methods> & { router?: SensenRouter<{}> }) => void
+        [M in keyof Methods] : (ev: ComponentMethodEvent<State, Props, Methods> ) => void
         
     }
 

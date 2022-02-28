@@ -1,6 +1,6 @@
-import { SensenHTMLElement } from "./index.js";
-import { SensenAppearance } from "./appearance/index.js";
-import { ThemeColor } from "./theme-color/index.js";
+import { SensenHTMLElement } from "./index.js.js";
+import { SensenAppearance } from "./appearance/index.js.js";
+import { ThemeColor } from "./theme-color/index.js.js";
 export class KuchiyoceElement extends SensenHTMLElement {
     constructor(props) {
         super(props);

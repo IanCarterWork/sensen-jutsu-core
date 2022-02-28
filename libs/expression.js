@@ -1,5 +1,5 @@
-import { NativeDirectiveAttributes } from "./directive.native.js";
-import { ArrayRange } from "./utilities.js";
+import { NativeDirectiveAttributes } from "./directive.native.js.js";
+import { ArrayRange } from "./utilities.js.js";
 /**
  * Expressions
  */

@@ -1,4 +1,4 @@
-import { FxPresenter } from "./fx/preset.js";
+import { FxPresenter } from "./fx/preset.js.js";
 const SensenWindow = {};
 // export type RouterStates = {
 //     [K : SceneActivityRouteName] : SensenSceneActivities
