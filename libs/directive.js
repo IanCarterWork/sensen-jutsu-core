@@ -20,3 +20,4 @@ export class DirectiveAttributes {
     }
 }
 DirectiveAttributes.Availables = {};
+window.GlobalDirectiveAttributes = DirectiveAttributes;

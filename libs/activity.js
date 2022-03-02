@@ -10,13 +10,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SceneActivity_mockup;
-import { ComponentController, SensenHTMLElement } from "./index.js.js";
-import { SensenEmitter } from "./emitter.js.js";
-import { useScreenElements } from "./elements/activity.js.js";
-import { SensenTemplate } from "./template.js.js";
-import { ActivityWireframe } from "./wireframe/activity.js.js";
-import { SensenScript } from "./script.js.js";
-import { AppearanceSceneActivity } from "./appearance/activity.js.js";
+import { ComponentController, SensenHTMLElement } from "./index.js";
+import { SensenEmitter } from "./emitter.js";
+import { useScreenElements } from "./elements/activity.js";
+import { SensenTemplate } from "./template.js";
+import { ActivityWireframe } from "./wireframe/activity.js";
+import { SensenScript } from "./script.js";
+import { AppearanceSceneActivity } from "./appearance/activity.js";
 useScreenElements();
 export function WireframeTemplateMixer(template, wireframe, slot, clone, found = false) {
     /**
@@ -117,8 +117,8 @@ export class SceneActivity {
         return this;
     }
     async $deepRender(element, data) {
-        const wireframe = this.$getWireframe(this.$options?.options?.wireframe || 'basic');
-        const template = (new DOMParser()).parseFromString(data, 'text/html');
+        const wireframe = this.$getWireframe(this.$options?.options?.wireframe || 'basic') || {};
+        // const template = (new DOMParser()).parseFromString(data, 'text/html');
         let otherElements = [];
         /**
          * Find preset Element
@@ -126,74 +126,113 @@ export class SceneActivity {
         let findHeader = false;
         let findMenu = false;
         let findBody = false;
-        let headerFound = {};
-        let menuFound = {};
-        let bodyFound = {};
+        let headerFound;
+        let menuFound;
+        let bodyFound;
         /**
-         * Get not preset element
+         * Insertion
          */
-        otherElements = Object.values(template.body.children)
-            /**
-             * Find Header
-             */
-            .map(child => {
-            if (child.tagName.toLowerCase() == 'scene-header' && findBody === false) {
-                headerFound = child;
-                findHeader = true;
-            }
-            return child;
-        })
-            /**
-             * Find Menu
-             */
-            .map(child => {
-            if (child.tagName.toLowerCase() == 'scene-menu' && findBody === false) {
-                menuFound = child;
-                findMenu = true;
-            }
-            return child;
-        })
-            /**
-             * Find Body
-             */
-            .map(child => {
-            if (child.tagName.toLowerCase() == 'scene-body' && findBody === false) {
-                bodyFound = child;
-                findBody = true;
-            }
-            return child;
-        })
-            /**
-             * Push other Element
-             */
-            .filter(child => (findBody && child.tagName.toLowerCase() != 'scene-body') &&
-            child.tagName.toLowerCase() != 'scene-header' &&
-            child.tagName.toLowerCase() != 'scene-menu');
+        element.insertAdjacentHTML('beforeend', data);
+        /**
+         * Wireframe Cleaner
+         */
+        const $header = element.querySelector('scene-header');
+        const $body = element.querySelector('scene-body');
+        const $menu = element.querySelector('scene-menu');
+        if (!('header' in wireframe)) {
+            $header?.parentNode?.removeChild($header);
+        }
+        if (!('body' in wireframe)) {
+            $body?.parentNode?.removeChild($body);
+        }
+        if (!('menu' in wireframe)) {
+            $menu?.parentNode?.removeChild($menu);
+        }
+        // /**
+        //  * Get not preset element
+        //  */
+        // otherElements = Object.values(template.body.children)
+        // /**
+        //  * Find Header
+        //  */
+        // .map(child=>{
+        //     if( child.tagName.toLowerCase() == 'scene-header' && findBody === false ){ 
+        //         headerFound = child as HTMLElement;
+        //         findHeader = true; 
+        //     }
+        //     return child as HTMLElement;
+        // })
+        // /**
+        //  * Find Menu
+        //  */
+        // .map(child=>{
+        //     if( child.tagName.toLowerCase() == 'scene-menu' && findBody === false ){ 
+        //         menuFound = child as HTMLElement;
+        //         findMenu = true; 
+        //     }
+        //     return child as HTMLElement;
+        // })
+        // /**
+        //  * Find Body
+        //  */
+        // .map(child=>{
+        //     if( child.tagName.toLowerCase() == 'scene-body' && findBody === false ){ 
+        //         bodyFound = child as HTMLElement;
+        //         findBody = true; 
+        //     }
+        //     return child as HTMLElement;
+        // })
+        // /**
+        //  * Push other Element
+        //  */
+        // .filter(child=> 
+        //     (findBody && child.tagName.toLowerCase() != 'scene-body') &&
+        //     child.tagName.toLowerCase() != 'scene-header' &&
+        //     child.tagName.toLowerCase() != 'scene-menu'
+        // );
         /**
          * Make header in wireframe if not exists
          */
-        WireframeTemplateMixer(template.body, wireframe, 'header', headerFound, findHeader)(template.body, wireframe, 'menu', menuFound, findMenu)(template.body, wireframe, 'body', bodyFound, findBody);
+        // WireframeTemplateMixer(
+        //     template.body,
+        //     wireframe,
+        //     'header',
+        //     headerFound,
+        //     findHeader
+        // )(
+        //     template.body,
+        //     wireframe,
+        //     'menu',
+        //     menuFound,
+        //     findMenu
+        // )(
+        //     template.body,
+        //     wireframe,
+        //     'body',
+        //     bodyFound,
+        //     findBody
+        // )
         /**
          * Wireframe injection
          */
-        if (wireframe) {
-            await Object.values(wireframe).map(async (child) => {
-                element.appendChild(child);
-            });
-        }
-        if (otherElements.length) {
-            otherElements.map(child => {
-                element.append(child);
-            });
-        }
+        // if(wireframe){                        
+        //     await Object.values(wireframe).map(async child=>{
+        //         console.warn('Move', child)
+        //         element.appendChild(child)
+        //     })
+        // }
+        // if(otherElements.length){
+        //     otherElements.map(child=>{
+        //         element.append(child)
+        //     })
+        // }
         if ('$controller' in element) {
             if (element.$controller instanceof ComponentController) {
                 element.$controller
                     .$observers({
                     excludeTags: Object.keys(window.SensenAvailableComponents).map(k => k.toLowerCase())
                 })
-                    .$makeProps()
-                    .$compilate();
+                    .$makeProps();
             }
         }
         return this;

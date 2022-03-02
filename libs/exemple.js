@@ -1,14 +1,14 @@
-import Sensen from "./index.js.js";
-import { SceneActivity } from "./activity.js.js";
-import { FxSlideHorizontal } from "./fx/preset.js.js";
-import { Jutsu } from "./jutsu.js.js";
-import { SensenRouter } from "./router.js.js";
-import SensenThemeColor from "./theme-color/index.js.js";
-import { SensenDefaultPalette } from "./theme-color/palette/default.js.js";
-import { SensenDarkTone } from "./theme-color/tone/dark.js.js";
-import { SensenLightTone } from "./theme-color/tone/light.js.js";
-import { SensenNightTone } from "./theme-color/tone/night.js.js";
-import { SensenSnowTone } from "./theme-color/tone/snow.js.js";
+import Sensen from "./index.js";
+import { SceneActivity } from "./activity.js";
+import { FxSlideHorizontal } from "./fx/preset.js";
+import { Jutsu } from "./jutsu.js";
+import { SensenRouter } from "./router.js";
+import SensenThemeColor from "./theme-color/index.js";
+import { SensenDefaultPalette } from "./theme-color/palette/default.js";
+import { SensenDarkTone } from "./theme-color/tone/dark.js";
+import { SensenLightTone } from "./theme-color/tone/light.js";
+import { SensenNightTone } from "./theme-color/tone/night.js";
+import { SensenSnowTone } from "./theme-color/tone/snow.js";
 ;
 const themeColor = (new SensenThemeColor())
     .add(SensenDefaultPalette)
@@ -173,12 +173,13 @@ const HomeActivity = new SceneActivity({
             self.state.test = "World";
             themeColor.toggleTone();
             // router.navigate('')
-            router.navigate('homesdc');
+            // router.navigate('homesdc')
+            console.log('toggleTone ', router);
         }
     },
     emit: {
-        ready(activity) {
-            // console.warn('Activity is Ready', activity)
+        connected(activity) {
+            console.error('Activity is Ready', activity);
         }
     },
     appearance: {},

@@ -26,7 +26,7 @@ export function WireframeTemplateMixer(
 
     slot: keyof ActivityWireframeState ,
     
-    clone: HTMLElement, 
+    clone?: HTMLElement, 
     
     found: boolean = false
     
@@ -298,9 +298,9 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
     async $deepRender(element: SensenHTMLElement<Props>, data: string){
 
-        const wireframe = this.$getWireframe(this.$options?.options?.wireframe||'basic')
+        const wireframe = this.$getWireframe(this.$options?.options?.wireframe||'basic') || {}
 
-        const template = (new DOMParser()).parseFromString(data, 'text/html');
+        // const template = (new DOMParser()).parseFromString(data, 'text/html');
 
         let otherElements: HTMLElement[] = []
 
@@ -315,87 +315,115 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
         let findBody = false;
 
 
-        let headerFound: HTMLElement = {} as HTMLElement;
+        let headerFound: HTMLElement | undefined;
 
-        let menuFound: HTMLElement = {} as HTMLElement;
+        let menuFound: HTMLElement | undefined;
 
-        let bodyFound: HTMLElement = {} as HTMLElement;
+        let bodyFound: HTMLElement | undefined;
+        
+
+        
+        
+        /**
+         * Insertion
+         */
+        element.insertAdjacentHTML('beforeend', data)
+
+
+        /**
+         * Wireframe Cleaner
+         */
+
+        const $header = element.querySelector('scene-header')
+
+        const $body = element.querySelector('scene-body')
+
+        const $menu = element.querySelector('scene-menu')
+        
+        
+        if(!('header' in wireframe)){ $header?.parentNode?.removeChild($header); }
+
+        if(!('body' in wireframe)){ $body?.parentNode?.removeChild($body); }
+
+        if(!('menu' in wireframe)){ $menu?.parentNode?.removeChild($menu); }
+        
+        
+        
+        
+
+        // /**
+        //  * Get not preset element
+        //  */
+        // otherElements = Object.values(template.body.children)
+
+
+        // /**
+        //  * Find Header
+        //  */
+        // .map(child=>{
+
+        //     if( child.tagName.toLowerCase() == 'scene-header' && findBody === false ){ 
+
+        //         headerFound = child as HTMLElement;
+                
+        //         findHeader = true; 
+            
+        //     }
+
+        //     return child as HTMLElement;
+            
+        // })
+
+
+        // /**
+        //  * Find Menu
+        //  */
+        // .map(child=>{
+
+        //     if( child.tagName.toLowerCase() == 'scene-menu' && findBody === false ){ 
+
+        //         menuFound = child as HTMLElement;
+                
+        //         findMenu = true; 
+            
+        //     }
+
+        //     return child as HTMLElement;
+            
+        // })
         
 
 
-        /**
-         * Get not preset element
-         */
-        otherElements = Object.values(template.body.children)
+        // /**
+        //  * Find Body
+        //  */
+        // .map(child=>{
 
+        //     if( child.tagName.toLowerCase() == 'scene-body' && findBody === false ){ 
 
-        /**
-         * Find Header
-         */
-        .map(child=>{
-
-            if( child.tagName.toLowerCase() == 'scene-header' && findBody === false ){ 
-
-                headerFound = child as HTMLElement;
+        //         bodyFound = child as HTMLElement;
                 
-                findHeader = true; 
+        //         findBody = true; 
             
-            }
+        //     }
 
-            return child as HTMLElement;
+        //     return child as HTMLElement;
             
-        })
-
-
-        /**
-         * Find Menu
-         */
-        .map(child=>{
-
-            if( child.tagName.toLowerCase() == 'scene-menu' && findBody === false ){ 
-
-                menuFound = child as HTMLElement;
-                
-                findMenu = true; 
-            
-            }
-
-            return child as HTMLElement;
-            
-        })
+        // })
         
 
-
-        /**
-         * Find Body
-         */
-        .map(child=>{
-
-            if( child.tagName.toLowerCase() == 'scene-body' && findBody === false ){ 
-
-                bodyFound = child as HTMLElement;
-                
-                findBody = true; 
+        // /**
+        //  * Push other Element
+        //  */
+        // .filter(child=> 
             
-            }
+        //     (findBody && child.tagName.toLowerCase() != 'scene-body') &&
 
-            return child as HTMLElement;
+        //     child.tagName.toLowerCase() != 'scene-header' &&
+
+        //     child.tagName.toLowerCase() != 'scene-menu'
             
-        })
-        
-
-        /**
-         * Push other Element
-         */
-        .filter(child=> 
-            
-            (findBody && child.tagName.toLowerCase() != 'scene-body') &&
-
-            child.tagName.toLowerCase() != 'scene-header' &&
-
-            child.tagName.toLowerCase() != 'scene-menu'
-            
-        );
+        // );
 
 
         
@@ -403,43 +431,43 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
          * Make header in wireframe if not exists
          */
 
-        WireframeTemplateMixer(
+        // WireframeTemplateMixer(
         
-            template.body,
+        //     template.body,
         
-            wireframe,
+        //     wireframe,
         
-            'header',
+        //     'header',
         
-            headerFound,
+        //     headerFound,
         
-            findHeader
+        //     findHeader
         
-        )(
+        // )(
         
-            template.body,
+        //     template.body,
         
-            wireframe,
+        //     wireframe,
         
-            'menu',
+        //     'menu',
         
-            menuFound,
+        //     menuFound,
         
-            findMenu
+        //     findMenu
         
-        )(
+        // )(
         
-            template.body,
+        //     template.body,
         
-            wireframe,
+        //     wireframe,
         
-            'body',
+        //     'body',
         
-            bodyFound,
+        //     bodyFound,
         
-            findBody
+        //     findBody
         
-        )
+        // )
 
 
 
@@ -447,26 +475,28 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
          * Wireframe injection
          */
 
-        if(wireframe){                        
+        // if(wireframe){                        
 
-            await Object.values(wireframe).map(async child=>{
+        //     await Object.values(wireframe).map(async child=>{
 
-                element.appendChild(child)
-                    
-            })
-
-
-        }
-
-        if(otherElements.length){
-
-            otherElements.map(child=>{
-
-                element.append(child)
+        //         console.warn('Move', child)
                 
-            })
+        //         element.appendChild(child)
+                    
+        //     })
+
+
+        // }
+
+        // if(otherElements.length){
+
+        //     otherElements.map(child=>{
+
+        //         element.append(child)
+                
+        //     })
             
-        }
+        // }
 
 
         if('$controller' in element){
@@ -483,7 +513,7 @@ export class SceneActivity<Props extends SceneActivityProps> implements SensenSc
 
                     .$makeProps()
                     
-                    .$compilate()
+                    // .$compilate()
 
                 ;
 

@@ -1,3 +1,4 @@
+import { TDirectiveAttributes } from "./directive";
 import { NativeDirectiveAttributes } from "./directive.native";
 import { SensenHTMLElement } from "./index";
 import { ExpressionRecord, ParseSnapCodeBlock } from "./index.t";
@@ -124,6 +125,118 @@ export function CreateExpressionRecord(state: ExpressionRecord) : ExpressionReco
 
 
 
+
+
+/**
+ * Test node compilation
+ */
+
+export function isNodeCompilated(node : Node | Element){
+
+    const content = node.textContent;
+
+    
+    /**
+     * Check SnapCode Expression
+     */
+    if(content?.match(SyntaxSnapCode)){
+
+        return true;
+        
+    }
+
+    /**
+     * Check Echo Expression
+     */
+    else if(content?.match(SyntaxEcho)){
+
+        return true;
+        
+    }
+
+    /**
+     * Check Directive Expression
+     */
+    else{
+
+        const availables = window.GlobalDirectiveAttributes.Availables as TDirectiveAttributes
+
+        let found = false;
+
+
+        if(availables){
+
+
+            if(!(node instanceof HTMLElement)){
+
+                Object.values(availables).map(directive=>{
+
+                    if(!found && directive.expression && content?.match(directive.expression)){
+    
+                        found = true;
+                        
+                    }
+                    
+                })
+                
+            }
+
+            else{
+
+                const children = node.querySelectorAll('*');
+
+                if(children.length){
+
+                    children.forEach(child=>{
+
+                        if(found){ return;}
+
+                        Object.values(child.attributes).map(attribute=>{
+
+                            if(found){ return;}
+         
+                            Object.values(availables).map(directive=>{
+            
+                                if(
+                                    
+                                    !found && 
+                                    
+                                    directive.expression && 
+                                    
+                                    attribute.name.match(directive.expression)
+                                    
+                                ){
+                
+                                    found = true;
+                                    
+                                }
+                                
+                            })
+                            
+                        })
+                        
+                    })
+                    
+                }
+                
+                
+            }
+            
+
+        }
+        
+
+        return found;
+        
+    }
+    
+    
+}
+
+
+
+
+
 /**
  * Parse Attributes
  */
@@ -133,13 +246,13 @@ export function ParseAttributesExpression(node: HTMLElement, callback: (record: 
     callback = typeof callback == 'function' ? callback : (()=>{});
 
 
+    
     if(node.attributes){
-            
+        
         if(node.attributes.length){
     
             Object.values(node.attributes).map(attribute=>{
     
-
                 /**
                  * Find Directive
                  */
@@ -314,6 +427,7 @@ export function ParseSnapCodeExpression(node: HTMLElement, callback: (record: Ex
 
         node.childNodes.forEach(child=>{
 
+
             const m: ParseSnapCodeBlock[] = []
 
             if(child instanceof Text){
@@ -324,6 +438,8 @@ export function ParseSnapCodeExpression(node: HTMLElement, callback: (record: Ex
     
                     if(matches.length){
     
+                        // console.log('Text subChild', child)
+                            
                         m.push( { node: child, matches } )
 
                         // record.snapcode?.push( { node: child, matches } )
@@ -332,6 +448,39 @@ export function ParseSnapCodeExpression(node: HTMLElement, callback: (record: Ex
     
                 }
 
+            }
+
+            if(child instanceof HTMLElement){
+
+                ParseAttributesExpression(child as HTMLElement, callback)
+                
+                if(child instanceof HTMLElement){
+
+                    const children = child.querySelectorAll('*')
+
+                    if(children.length){
+
+                        children.forEach(subChild=>{
+
+                            // console.log('subChild', subChild)
+                            FindExpressions(subChild as HTMLElement, callback)
+                            
+                        })
+                        
+                    }
+
+                    else{
+
+                        // console.log('NO subChild', child)
+                        FindExpressions(child as HTMLElement, callback)
+                            
+                    }
+                    
+                }
+                
+                // FindExpressions(child as HTMLElement, callback)
+                // ParseAttributesExpression(child as HTMLElement, callback)
+                
             }
 
 
@@ -412,34 +561,47 @@ export function FindExpressions(
         
         nodes.forEach(child=>{
 
-    
-            // if( child instanceof SensenHTMLElement ){
-    
-            //     console.warn('Find >', child)
-                    
-            // }
 
-            // else{
+            /** * Find SnapCode */
+            const snapcode = ParseSnapCodeExpression(child as HTMLElement, reCallback);
 
-                
-                /** * Find SnapCode */
-                const snapcode = ParseSnapCodeExpression(child as HTMLElement, reCallback);
+
+            /** * Find Deep */
+            if(!snapcode){
+
+                FindExpressions(child as HTMLElement, reCallback)
     
+            }
+
+
+            else{
+
+                // FindExpressions(child as HTMLElement, reCallback)
+
+                if(child instanceof HTMLElement){
+
+                    const children = child.querySelectorAll('*')
+
+                    ParseAttributesExpression(child, callback)
     
-                /** * Find Deep */
-                if(!snapcode){
+                    if(children.length){
+
+                        child.childNodes.forEach(subChild=>{
+
+                            // FindExpressions(subChild as HTMLElement, reCallback)
     
-                    FindExpressions(child as HTMLElement, reCallback)
-        
-                }
-    
-                else{
-    
-                    // console.warn('Stop Find on', child)
+                            // console.warn('Stop Find on', subChild, child)
+
+                        })
+                        
+                    }
                     
                 }
                 
-            // }
+                
+            }
+            
+
         
         })
         
@@ -448,20 +610,11 @@ export function FindExpressions(
 
     if(!nodes.length){
 
-        // if( node instanceof SensenHTMLElement ){
-
-        //     console.warn('Find inenr', node)
-                
-        // }
-
-        // else{
-    
-            /**
-             * Find Echo
-             */
-            ParseEchoExpression(node, reCallback)
-            
-        // }
+        /**
+         * Find Echo
+         */
+        ParseEchoExpression(node, reCallback)
+        
         
     }
     

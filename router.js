@@ -10,7 +10,7 @@ export class SensenRouter {
         this.root = {};
         this.$options = $options;
         this.initialize();
-        SensenWindow.$SensenRouter = this;
+        window.$SensenRouter = this;
     }
     get(activity) {
         if (typeof activity.$options?.route == 'string') {
@@ -57,15 +57,16 @@ export class SensenRouter {
             search: ex[1] || ''
         };
     }
-    async navigate(slug, props) {
+    async navigate(slug, props, canvas) {
         const parsed = this.parseSlug(slug || this.$options.default);
         return new Promise(async (resolve, reject) => {
             const activity = this.routes[parsed.name];
+            const $canvas = canvas || this.canvas;
             if (activity) {
                 const firstTime = !activity.isReady ? true : false;
                 const oldActivity = SensenWindow.$SceneActivity;
                 activity.render(props);
-                if (activity.$element instanceof HTMLElement && this.canvas instanceof HTMLElement) {
+                if (activity.$element instanceof HTMLElement && $canvas instanceof HTMLElement) {
                     // console.warn('Set EXIT Animation on', SensenWindow.$SceneActivity )
                     // if(SensenWindow.$SceneActivity){
                     //     if(SensenWindow.$SceneActivity.$options?.options?.transition){
@@ -74,7 +75,7 @@ export class SensenRouter {
                     // }
                     this.activity = activity;
                     if (this.activity.$element instanceof HTMLElement) {
-                        this.canvas?.appendChild(this.activity.$element);
+                        $canvas?.appendChild(this.activity.$element);
                         // @ts-ignore
                         SensenWindow.$SceneActivity = activity;
                     }

@@ -1,4 +1,4 @@
-import { SensenAppearance } from "./index.js.js";
+import { SensenAppearance } from "./index.js";
 import { ThemeColor } from "../theme-color/index";
 export function AppearanceSceneActivity() {
     const bundle = (new SensenAppearance());

@@ -14,7 +14,13 @@
  */
 export function StabilizeContent(content: string | null) : string{
 
-    return (content||'').replace(/&gt;/g, `>`).replace(/&lt;/g, `<`);
+    return (content||'')
+    
+        .replace(/&gt;/g, `>`).replace(/&lt;/g, `<`)
+
+        // .replace(/&#34;/g, `"`)
+        
+    ;
 
 }
 

@@ -7,7 +7,11 @@ import { ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord } 
  */
 
 
-export type TDirectiveAttribute = {
+
+
+
+
+export type TDirectiveAttribute = IDirectiveAttributes & {
     name: string;
     expression: string | null;
     main: <
@@ -30,7 +34,7 @@ export type TDirectiveAttributes = {
 
 
 
- export class DirectiveAttributes{
+export class DirectiveAttributes{
 
 
     static Availables: TDirectiveAttributes = {} as TDirectiveAttributes;
@@ -80,4 +84,7 @@ export type TDirectiveAttributes = {
     
 }
 
+
+
+window.GlobalDirectiveAttributes = DirectiveAttributes
 

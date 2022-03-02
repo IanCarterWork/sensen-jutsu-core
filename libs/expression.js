@@ -1,5 +1,5 @@
-import { NativeDirectiveAttributes } from "./directive.native.js.js";
-import { ArrayRange } from "./utilities.js.js";
+import { NativeDirectiveAttributes } from "./directive.native.js";
+import { ArrayRange } from "./utilities.js";
 /**
  * Expressions
  */
@@ -61,6 +61,63 @@ export function CreateExpressionRecord(state) {
         state.mockup = state.node.cloneNode(true);
     }
     return state;
+}
+/**
+ * Test node compilation
+ */
+export function isNodeCompilated(node) {
+    const content = node.textContent;
+    /**
+     * Check SnapCode Expression
+     */
+    if (content?.match(SyntaxSnapCode)) {
+        return true;
+    }
+    /**
+     * Check Echo Expression
+     */
+    else if (content?.match(SyntaxEcho)) {
+        return true;
+    }
+    /**
+     * Check Directive Expression
+     */
+    else {
+        const availables = window.GlobalDirectiveAttributes.Availables;
+        let found = false;
+        if (availables) {
+            if (!(node instanceof HTMLElement)) {
+                Object.values(availables).map(directive => {
+                    if (!found && directive.expression && content?.match(directive.expression)) {
+                        found = true;
+                    }
+                });
+            }
+            else {
+                const children = node.querySelectorAll('*');
+                if (children.length) {
+                    children.forEach(child => {
+                        if (found) {
+                            return;
+                        }
+                        Object.values(child.attributes).map(attribute => {
+                            if (found) {
+                                return;
+                            }
+                            Object.values(availables).map(directive => {
+                                if (!found &&
+                                    directive.expression &&
+                                    attribute.name.match(directive.expression)) {
+                                    found = true;
+                                }
+                            });
+                        });
+                    });
+                }
+            }
+        }
+        return found;
+    }
 }
 /**
  * Parse Attributes
@@ -176,10 +233,29 @@ export function ParseSnapCodeExpression(node, callback) {
                 if (child.textContent) {
                     const matches = [...child.textContent.matchAll(SyntaxSnapCode)];
                     if (matches.length) {
+                        // console.log('Text subChild', child)
                         m.push({ node: child, matches });
                         // record.snapcode?.push( { node: child, matches } )
                     }
                 }
+            }
+            if (child instanceof HTMLElement) {
+                ParseAttributesExpression(child, callback);
+                if (child instanceof HTMLElement) {
+                    const children = child.querySelectorAll('*');
+                    if (children.length) {
+                        children.forEach(subChild => {
+                            // console.log('subChild', subChild)
+                            FindExpressions(subChild, callback);
+                        });
+                    }
+                    else {
+                        // console.log('NO subChild', child)
+                        FindExpressions(child, callback);
+                    }
+                }
+                // FindExpressions(child as HTMLElement, callback)
+                // ParseAttributesExpression(child as HTMLElement, callback)
             }
             if (m.length) {
                 record.snapcode = m;
@@ -213,10 +289,6 @@ export function FindExpressions(node, callback) {
      */
     if (nodes.length) {
         nodes.forEach(child => {
-            // if( child instanceof SensenHTMLElement ){
-            //     console.warn('Find >', child)
-            // }
-            // else{
             /** * Find SnapCode */
             const snapcode = ParseSnapCodeExpression(child, reCallback);
             /** * Find Deep */
@@ -224,21 +296,25 @@ export function FindExpressions(node, callback) {
                 FindExpressions(child, reCallback);
             }
             else {
-                // console.warn('Stop Find on', child)
+                // FindExpressions(child as HTMLElement, reCallback)
+                if (child instanceof HTMLElement) {
+                    const children = child.querySelectorAll('*');
+                    ParseAttributesExpression(child, callback);
+                    if (children.length) {
+                        child.childNodes.forEach(subChild => {
+                            // FindExpressions(subChild as HTMLElement, reCallback)
+                            // console.warn('Stop Find on', subChild, child)
+                        });
+                    }
+                }
             }
-            // }
         });
     }
     if (!nodes.length) {
-        // if( node instanceof SensenHTMLElement ){
-        //     console.warn('Find inenr', node)
-        // }
-        // else{
         /**
          * Find Echo
          */
         ParseEchoExpression(node, reCallback);
-        // }
     }
     return recorder;
 }

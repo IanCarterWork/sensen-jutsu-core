@@ -173,12 +173,13 @@ const HomeActivity = new SceneActivity({
             self.state.test = "World";
             themeColor.toggleTone();
             // router.navigate('')
-            router.navigate('homesdc');
+            // router.navigate('homesdc')
+            console.log('toggleTone ', router);
         }
     },
     emit: {
-        ready(activity) {
-            // console.warn('Activity is Ready', activity)
+        connected(activity) {
+            console.error('Activity is Ready', activity);
         }
     },
     appearance: {},

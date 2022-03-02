@@ -1,4 +1,4 @@
-import { SensenFxEngine } from "./index.js.js";
+import { SensenFxEngine } from "./index.js";
 export class FxPresenter {
     async entry(widget) {
         return new Promise((done, fail) => {

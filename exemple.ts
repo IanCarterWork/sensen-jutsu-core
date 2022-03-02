@@ -407,7 +407,9 @@ const HomeActivity = new SceneActivity<HomeActivityProps>({
 
             // router.navigate('')
 
-            router.navigate('homesdc')
+            // router.navigate('homesdc')
+
+            console.log('toggleTone ', router)
 
         }
         
@@ -415,9 +417,9 @@ const HomeActivity = new SceneActivity<HomeActivityProps>({
     
 
     emit:{ 
-        ready(activity){
+        connected(activity){
 
-            // console.warn('Activity is Ready', activity)
+            console.error('Activity is Ready', activity)
             
         }
     },

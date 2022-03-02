@@ -91,6 +91,79 @@ declare interface Window {
 
     // $SceneActivity : ISceneActivity
 
-    $SensenRouter: ISensenRouter
+    $SensenRouter: ISensenRouter;
+
+    $SensenComponentsTemplateCaches : {
+
+        [Name : string] : string | 0 | undefined
+        
+    };
+
+    $SensenComponentsTemplateLoader : {
+
+        [Name : string] : Promise<Response>
+        
+    };
+
+    GlobalDirectiveAttributes: IGlobalDirectiveAttributes;
+
 
 }
+
+
+
+
+
+declare interface HTMLElement{
+
+    directiveStateNone: boolean;
+
+}
+
+
+declare interface  Node{
+
+    directiveStateNone: boolean;
+
+}
+
+
+
+
+
+
+
+
+declare type IDirectiveAttributes = {
+
+    name: string;
+
+    expression: string | null;
+
+    main: Function;
+    
+}
+
+
+declare type IDirectiveAttributesAvailable = {
+
+    [K: string]: IDirectiveAttributes
+
+}
+
+
+
+declare interface IGlobalDirectiveAttributes{
+
+    Availables: IDirectiveAttributesAvailable
+
+    Define: Function;
+
+    Merge: Function;
+
+    Retrive: (key: string) => void;
+
+    Retrives: Function;
+    
+}
+

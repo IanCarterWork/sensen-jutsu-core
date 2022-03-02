@@ -15,6 +15,18 @@
         
     </div>
 
+
+    <div>
+
+        {% if(this.props.title) { %}
+
+        <button type="button" @click="this.methods.toggleTone">Change Tone in condition</button>
+
+        {% } %}
+        
+    </div>
+    
+
     <article>
 
         <sense-TextInput prop:activityTitle="-{{ this.props.title }}" prop:title="Me & You"></sense-TextInput>

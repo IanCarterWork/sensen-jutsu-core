@@ -1,6 +1,6 @@
 import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate";
 import { SensenEmitter } from "./emitter";
-import { FindExpressions } from "./expression";
+import { FindExpressions, isNodeCompilated } from "./expression";
 import type { ComponentMethodEvent, ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, SceneActivityProps, SceneActivityEmitter, TComponentOptions, TSceneActivityOptions, TComponentObserversParams } from "./index.t";
 import { ComponentHydrates } from "./hydrates";
 import { SensenAppearance, TAppearanceProps } from "./appearance/index";
@@ -84,14 +84,11 @@ export function CreateComponentMethodEvent<
     
 >(component: ComponentController<S, P, M>, ev: Event){
 
-    const _ : ComponentMethodEvent<S, P, M> = {} as ComponentMethodEvent<S, P, M>
+    const _ : ComponentMethodEvent<S, P, M> = {router: window.$SensenRouter} as ComponentMethodEvent<S, P, M>
     
     _.self = component;
 
     _.event = ev;
-
-    // @ts-ignore
-    _.router = window.$SensenRouter;
     
     return _;
 
@@ -360,6 +357,8 @@ export class ComponentController<
 
     template?: string;
 
+    templateCaches?: string | 0;
+
 
     #pending: number = 0;
 
@@ -491,7 +490,7 @@ export class ComponentController<
 
                             .$makeProps()
                 
-                            .$compilate()
+                            // .$compilate()
         
                         ;
 
@@ -519,6 +518,16 @@ export class ComponentController<
 
         return new Promise<string | 0 | undefined>((resolve, reject)=>{
 
+            // console.log('Caches', this.$options.name, window.$SensenComponentsTemplateCaches[ this.$options.name ])
+
+            if(window.$SensenComponentsTemplateCaches[this.$options.name]){
+
+                resolve(window.$SensenComponentsTemplateCaches[this.$options.name]);
+
+                return;
+                
+            }
+
             if( this.$templating === true ){
 
 
@@ -533,6 +542,8 @@ export class ComponentController<
     
                         if('innerHTML' in this.$options.element){
     
+                            window.$SensenComponentsTemplateCaches[this.$options.name] = this.$options.element.innerHTML;
+                    
                             resolve(this.$options.element.innerHTML)
     
                             return;
@@ -540,6 +551,8 @@ export class ComponentController<
                         }
     
                     }
+
+                    window.$SensenComponentsTemplateCaches[this.$options.name] = undefined;
                     
                     resolve(undefined);
     
@@ -558,7 +571,15 @@ export class ComponentController<
                     /**
                      * If Template is String HTML code
                      */
-                    if(check){ resolve(this.$options.template); return; }
+                    if(check){ 
+                        
+                        window.$SensenComponentsTemplateCaches[this.$options.name] = this.$options.template;
+                    
+                        resolve(this.$options.template); 
+                        
+                        return; 
+
+                    }
     
     
     
@@ -570,25 +591,45 @@ export class ComponentController<
     
                     const path = `${ url.origin }${ (url.pathname == '/') ? '' : url.pathname }/sensen/components/${ this.$options.template }`
     
-    
-                    fetch(path).then(d=>{ if(d.status == 404){ return undefined } return d.text() })
+
+                    if(window.$SensenComponentsTemplateCaches[ path ]){
+
+                        // resolve(window.$SensenComponentsTemplateCaches[ path ]);
+
+                        console.warn('FOund', path )
+        
+                        return;
+                        
+                    }
+        
+
+
+                    ComponentTemplateLoader.Get(path)
+                    
+                    // const f = fetch(path).then(d=>{ if(d.status == 404){ return undefined } return d.text() })
+                    
+                        .then(d=>{ if(d.status == 404){ return undefined } return d.text() })
     
                         .then(data=>{
     
-                            if(data){
-    
-                                resolve(data)
-    
-                            }
+                            window.$SensenComponentsTemplateCaches[path] = data;
+                    
+                            if(data){ resolve(data); }
     
                             else{ resolve(undefined); }
-    
                     
                         })
     
-                        .catch(er=>{ resolve(undefined); })
+                        .catch(er=>{ 
+
+                            window.$SensenComponentsTemplateCaches[path] = undefined;
+                    
+                            resolve(undefined); 
+                        
+                        })
     
-    
+                    ;
+        
                     return;
                     
                 }
@@ -598,6 +639,8 @@ export class ComponentController<
 
             else{
 
+                window.$SensenComponentsTemplateCaches[this.$options.name] = 0;
+                    
                 resolve(0)
                 
             }
@@ -754,28 +797,92 @@ export class ComponentController<
                     records.forEach(record=>{
 
 
-                        if(excludeTags?.length){
 
-                            if(record.target instanceof SensenHTMLElement){
+                        if(record.type == 'characterData' || record.type == 'childList'){
 
-                                if(excludeTags.indexOf( record.target.tagName.toLowerCase() ) > - 1){
-
-                                    // console.warn('Exclude tag', record.target)
-
-                                    return;
-                                    
-                                }
+                            
+                            /**
+                             * Check Compilation
+                             */
+                            if(!isNodeCompilated(record.target)){
+        
+                                /** * Emit Event */
+                                this.$emitter?.dispatch('mutationObserved', record);
+        
+                                return;
 
                             }
                             
-                            
+
+                            /**
+                             * Compilate : SensenHTMLElement
+                             */
+                            else if(record.target instanceof SensenHTMLElement){
+
+                                if(record.target.$controller instanceof ComponentController){
+
+                                    record.target.$controller.$compilate(record.target);
+            
+                                    /** * Emit Event */
+                                    this.$emitter?.dispatch('mutationObserved', record);
+            
+                                    return;
+
+                                }
+
+                            }
+
+                            /**
+                             * Compilate : Embebeded Component
+                             */
+                            else if(record.target instanceof HTMLElement){
+
+                                this.$compilate(record.target)
+                                        
+                                /** * Emit Event */
+                                this.$emitter?.dispatch('mutationObserved', record);
+        
+                                return;
+                            }
+
+                            /**
+                             * Compilate : Another
+                             */
+                            else{
+
+                            }
+                        
+                        }
+
+                        else{
+    
+                            /** * Emit Event */
+                            this.$emitter?.dispatch('mutationObserved', record);
+    
                         }
 
 
-                        if(record.type == 'attributes'){
+                        // if(excludeTags?.length){
+
+                        //     if(record.target instanceof SensenHTMLElement){
+
+                        //         if(excludeTags.indexOf( record.target.tagName.toLowerCase() ) > - 1){
+
+                        //             return;
+                                    
+                        //         }
+
+                        //     }
+                            
+                            
+                        // }
+
+                    
+
+                        // if(record.type == 'attributes'){
                                     
 
-                            if(record.attributeName && this.$options.element instanceof HTMLElement){
+                        //     if(record.attributeName && this.$options.element instanceof HTMLElement){
 
                                 // if(record.attributeName in this.props){
 
@@ -802,15 +909,12 @@ export class ComponentController<
 
                                 // }
                                 
-                            }
+                        //     }
 
                             
-                        }
+                        // }
 
                         
-
-                        /** * Emit Event */
-                        this.$emitter?.dispatch('mutationObserved', record);
 
                     })
                     
@@ -833,9 +937,9 @@ export class ComponentController<
 
                 characterData: true,
 
-                characterDataOldValue: true,
+                // characterDataOldValue: true,
 
-                attributeOldValue: true,
+                // attributeOldValue: true,
 
                 attributeFilter: Object.keys(this.props)
 
@@ -896,16 +1000,19 @@ export class ComponentController<
     /**
      * Compilate transactions
      */
-    $compilate(){
+    $compilate(node?: HTMLElement){
+
+        const $element : string | HTMLElement | undefined | null = node || this.$options.element;
 
 
-        if(this.$options.element instanceof HTMLElement){
+
+        if($element instanceof HTMLElement){
 
 
-            if(this.$options.element.children.length){
+            if($element.children.length){
 
                 
-                Object.values(this.$options.element.children).forEach(child=>{
+                Object.values($element.children).forEach(child=>{
 
         
                     FindExpressions(child as HTMLElement, (record)=>{
@@ -920,7 +1027,7 @@ export class ComponentController<
                             
                             if(record.node instanceof SensenHTMLElement){ 
 
-                                console.warn('Stop $Compilate', record)
+                                // console.warn('Stop $Compilate', record)
                                 
                                 // return; 
                             
@@ -1076,14 +1183,12 @@ export class ComponentController<
 
         this.$emitter?.listen<MutationRecord>('mutationObserved', (args)=>{
 
-            
-            if(args.emit.target){
+            // if(args.emit.target){
 
                 // this.#hydrates?.hydratesNode(args.emit.target)
 
-            }
+            // }
 
-            
         })
 
         this.$emitter?.listen('mutationsObserved', (args)=>{
@@ -1427,6 +1532,43 @@ export class Component<
 
 
 }
+
+
+
+
+
+
+/**
+ * Utilities
+ */
+window.$SensenComponentsTemplateCaches = window.$SensenComponentsTemplateCaches || {}
+
+window.$SensenComponentsTemplateLoader = window.$SensenComponentsTemplateLoader || {}
+
+
+export class ComponentTemplateLoader{
+
+    static Get(path: string){
+
+        if(typeof window.$SensenComponentsTemplateLoader[path] == 'undefined'){
+
+            window.$SensenComponentsTemplateLoader[path] = fetch(path);
+
+            return window.$SensenComponentsTemplateLoader[path]
+            
+        }
+        
+        else{
+            
+            return window.$SensenComponentsTemplateLoader[path]
+
+        }
+
+        
+    }
+    
+}
+
 
 
 

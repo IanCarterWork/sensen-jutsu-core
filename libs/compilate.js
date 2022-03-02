@@ -1,6 +1,6 @@
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression, SyDetr, SyntaxEcho, SyntaxEchoReverse } from "./expression.js.js";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression, SyDetr, SyntaxEcho, SyntaxEchoReverse } from "./expression.js";
 import { render } from "ejs";
-import { decodeHTMLEntities, StabilizeContent } from "./utilities.js.js";
+import { decodeHTMLEntities, StabilizeContent } from "./utilities.js";
 export function PropsMachine(input, props) {
     if (typeof props == 'object') {
         const output = {};

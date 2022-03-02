@@ -55,7 +55,7 @@ export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter
         
         this.initialize()
 
-        SensenWindow.$SensenRouter = this;
+        window.$SensenRouter = this;
         
     }
 
@@ -166,7 +166,9 @@ export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter
     
     
 
-    async navigate(slug: (keyof B), props?: B[ typeof slug ] ){
+    
+
+    async navigate(slug: (keyof B), props?: B[ typeof slug ], canvas?: HTMLElement ){
 
         const parsed = this.parseSlug(slug || this.$options.default)
 
@@ -175,6 +177,8 @@ export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter
         return new Promise<typeof SceneActivity>(async (resolve: Function, reject: Function)=>{
     
            const activity : SceneActivity<B[typeof slug]> = this.routes[ parsed.name as keyof B ];
+
+           const $canvas : HTMLElement | undefined = canvas || this.canvas
 
 
             if(activity){
@@ -186,7 +190,7 @@ export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter
 
                 activity.render(props)
                 
-                if(activity.$element instanceof HTMLElement && this.canvas instanceof HTMLElement){
+                if(activity.$element instanceof HTMLElement && $canvas instanceof HTMLElement){
 
 
 
@@ -208,7 +212,7 @@ export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter
 
                     if(this.activity.$element instanceof HTMLElement){
                     
-                        this.canvas?.appendChild(this.activity.$element);
+                        $canvas?.appendChild(this.activity.$element);
 
                         // @ts-ignore
                         SensenWindow.$SceneActivity = activity as SceneActivity<SceneActivityProps>;

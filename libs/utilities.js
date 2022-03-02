@@ -5,7 +5,8 @@
  * Content Statibilzation
  */
 export function StabilizeContent(content) {
-    return (content || '').replace(/&gt;/g, `>`).replace(/&lt;/g, `<`);
+    return (content || '')
+        .replace(/&gt;/g, `>`).replace(/&lt;/g, `<`);
 }
 /**
  * Array Refactor from key to key

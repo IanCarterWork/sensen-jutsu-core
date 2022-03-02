@@ -1,5 +1,5 @@
-import { SensenPaletteColor } from "./palette-color.js.js";
-import { SensenToneColor } from "./tone-color.js.js";
+import { SensenPaletteColor } from "./palette-color.js";
+import { SensenToneColor } from "./tone-color.js";
 export class ThemeColor {
     /**
      * ThemeColor Variable Name
