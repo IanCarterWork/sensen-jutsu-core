@@ -23,7 +23,7 @@ module.exports = {
 
 	entry: {
 		
-		basic: './libs/exemple.js',
+		basic: './sandbox/sandbox.js',
 	
 	},
 
@@ -68,7 +68,7 @@ module.exports = {
 		
 			title: 'Sensen Jutsu',
 		
-			template: './exemple/exemple.basic.htm',
+			template: './sandbox/index.htm',
 		
 			viewport: 'user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi, viewport-fit=cover',
 		
@@ -89,7 +89,7 @@ module.exports = {
     
 		filename: 'sensen.[name].js',
     
-		path: path.resolve(__dirname, './public'),
+		path: path.resolve(__dirname, './sandbox-build'),
     
 		clean: false,
     

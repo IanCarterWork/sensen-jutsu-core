@@ -1,46 +1,16 @@
-import { SceneActivity } from "./activity";
-import { ComponentController } from "./index";
-import { ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord } from "./index.t";
-
-/**
- * Directives
- */
+import { SensenElement } from "./index";
 
 
 
 
 
-
-export type TDirectiveAttribute = IDirectiveAttributes & {
-    name: string;
-    expression: string | null;
-    main: <
-        
-        S extends ComponentState, 
-        
-        P extends ComponentProps,
-    
-        M extends ComponentMethodRaw<S, P>
-
-    >(component: ComponentController<S, P, M>, record: ExpressionRecord) => void;
-
-    // parser?: <V>(args: {}) => string;
-
-}
-
-export type TDirectiveAttributes = {
-    [K: string]: TDirectiveAttribute
-}
+export class Directives{
 
 
-
-export class DirectiveAttributes{
-
-
-    static Availables: TDirectiveAttributes = {} as TDirectiveAttributes;
+    static Availables: TDirectives = {} as TDirectives;
 
 
-    static Define(state: TDirectiveAttribute){
+    static Define(state: TDirective){
 
         this.Availables[ state.name ] = state
 
@@ -49,7 +19,7 @@ export class DirectiveAttributes{
     }
 
 
-    static Merge(...directives: TDirectiveAttribute[]){
+    static Merge(...directives: TDirective[]){
 
         directives.map(directive=>{
 
@@ -75,16 +45,134 @@ export class DirectiveAttributes{
     }
 
 
-    static Retrives(directive: TDirectiveAttribute & TDirectiveAttribute & typeof DirectiveAttributes.Availables){
+    static Retrives(directive?: TDirective & TDirective & typeof Directives.Availables){
 
-        return this.Merge(directive).Availables
+        return this.Merge(directive || {} as TDirective).Availables
         
+    }
+    
+    
+
+
+    static parseArguments({
+
+        args, 
+
+        component, 
+        
+        record, 
+        
+        event,
+
+        
+    } : DirectiveCallBackInput){
+
+        if(!args){ return this }
+
+        if(!args.length){ return this }
+
+        /**
+         * Find Directives
+         */
+        Object.values(this.Availables||{})
+
+            .filter(directive=>directive.type == '-attribute.argument')
+
+            .map(directive=>{
+
+                args.map(arg=>{
+
+                    if(
+                        
+                        arg && 
+
+                        directive.expression && 
+                        
+                        arg.match(new RegExp(directive.expression, 'g'))
+
+                    ){
+
+                        directive.main({ component, record, event, args })
+
+                    }
+                    
+                })
+
+            })
+        
+        return this;
+
     }
     
     
 }
 
 
+window.$GlobalDirectives = window.$GlobalDirectives || Directives
 
-window.GlobalDirectiveAttributes = DirectiveAttributes
+export const CommonDirectives = window.$GlobalDirectives
 
+
+
+
+
+
+
+/**
+ * PreventDefault Argument
+ */
+CommonDirectives.Define({
+
+    name:'action.arguments',
+
+    type:'-attribute.argument',
+    
+    expression:'prevent',
+    
+    main: ({component, record, args, event})=>{
+
+        event?.preventDefault();
+        
+    },
+    
+})
+
+
+/**
+ * StopImmediatePropagation Argument
+ */
+ CommonDirectives.Define({
+
+    name:'action.arguments',
+
+    type:'-attribute.argument',
+    
+    expression:'stopImmediate',
+    
+    main: ({component, record, args, event})=>{
+
+        event?.stopImmediatePropagation();
+        
+    },
+    
+})
+
+
+/**
+ * StopPropagation Argument
+ */
+CommonDirectives.Define({
+
+    name:'action.arguments',
+
+    type:'-attribute.argument',
+    
+    expression:'stop',
+    
+    main: ({component, record, args, event})=>{
+
+        event?.stopPropagation();
+        
+    },
+    
+})

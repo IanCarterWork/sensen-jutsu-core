@@ -1,369 +1,650 @@
-import { SceneActivity, SensenSceneActivities } from "./activity";
-import { SensenFxEngine } from "./fx/index";
-import { FxPresenter } from "./fx/preset";
-import { SceneActivityProps, SceneActivityRouteName, TSceneActivityOptions, TSensenWindow } from "./index.t";
-
-
-const SensenWindow = {} as TSensenWindow
-
-
-export type RouterConfig = IRouterConfig & {
-
-    default: string;
-
-    canvas: string | HTMLElement;
-
-    baseURL?: string;
-    
-}
-
-
-interface Window{
-
-    SceneActivity: typeof SceneActivity;
-    
-}
-
-
-// export type RouterStates = {
-
-//     [K : SceneActivityRouteName] : SensenSceneActivities
-
-// }
+import { SensenElement } from "./index";
+import { isClass } from "./utilities";
 
 
 
 
-export class SensenRouter<B extends SensenRouterScheme> implements ISensenRouter{
 
 
-    $options: RouterConfig;
+export class SensenRouter implements SensenRouter{
 
-    routes: { [x in keyof B ] : SceneActivity<B[x]> } = {} as { [x in keyof B] : SceneActivity<B[x]> };
-    
-    activity: SceneActivity<B[ keyof B]> = {} as SceneActivity<B[ keyof B]>
-    
-    root: HTMLElement = {} as HTMLElement;
-    
-    canvas?: HTMLElement;
+
+    routes: SensenRouterRoutes = {} as SensenRouterRoutes;
+
+    currentComponent?: InstanceType<typeof SensenElement>;
+
+    currentRoute?: SensenRouterRoute;
 
 
 
-    constructor($options: RouterConfig){
-
-        this.$options = $options;
+    constructor(
         
+        public options : SensenRouterOptions
+        
+    ){
+
         this.initialize()
 
-        window.$SensenRouter = this;
+    }
+    
+    
+
+    add(route : SensenRouterRoute) : this{
+
+        const key = route.uri as keyof SensenRouterScheme
+        
+        this.routes[ key ] = route
+
+        return this
         
     }
 
 
 
-    get<K extends keyof B>(activity :  SceneActivity<B[K]> ){
+    initialize() : this{
 
-        if(typeof activity.$options?.route == 'string'){
 
-            const key = activity.$options.route as K
+        if(!(this.options.canvas instanceof SensenElement)){
+
+            throw (`SensenRouter : The canvas is not a SensenElement`)
             
-            this.routes[ key ] = activity as SceneActivity<B[K]>
-
         }
 
-        return this;
-        
-    }
-    
 
-
-
-    initialize(){
-
-        this.canvas = (this.$options.canvas instanceof HTMLElement)
-
-            ? this.$options.canvas
-
-            : document.querySelector(this.$options.canvas) as HTMLElement
-
-        ;
-
-        
-        return this;
-        
-    }
-    
-
-
-    clean(){
-
-        if(this.canvas instanceof HTMLElement){
-
-            this.canvas.innerHTML = ''
-
-        }
-        
-        return this;
-        
-    }
-    
-
-
-    render(){
-
-        this.clean();
-        
         window.addEventListener('hashchange', ()=>{
 
-            const slug = (location.hash || '').substring(1);
-
-            this.navigate(slug)
+            const uri = (location.hash ? location.hash.substring(1) : this.options.default) as keyof SensenRouterScheme
             
+            const route = this.routes[ uri ] || undefined
+
+            if(route){
+
+                const $canvas = route.canvas || this.options.canvas
+                
+                this.navigate( 
+                    
+                    route.method, 
+                    
+                    route.uri, 
+                    
+                    {}, 
+                    
+                    $canvas instanceof SensenElement ? $canvas : undefined  
+                    
+                )
+            
+            }
+
+            else{
+
+                history.go(-1)
+
+                history.replaceState({}, document.title, location.href )
+
+                console.error(route)
+
+                throw ('SensenRouter : Route not found')
+                
+            }
+            
+            // this.navigate( route.method, route.uri, {} )
+
         })
-
         
-        if(location.hash){
 
-            // console.warn('Go to view', location.hash.substring(1))
-
-            this.navigate(location.hash.substring(1))
-
-        }
-
-        else if(this.$options.default){
-
-            // console.warn('Go to default view', this.$options.default)
-
-            this.navigate(this.$options.default)
-            
-        }
-
-        else{
-
-            alert('Router UnBoot, \nAjouter une route par default ')
-            
-        }
+        return this
         
-        return this;
-
     }
 
+    clean() : this{
 
+        return this
+        
+    }
 
-    parseSlug(slug: keyof B){
+    concateURI(slug : keyof SensenRouterScheme) : SensenRouterURI{
 
         const ex = (`${ slug }`).split('?')
 
         return {
 
-            name: ex[0],
+            name: ex[0] as keyof SensenRouterScheme,
 
             search: ex[1]||''
 
         }
+        
+    }
+
+
+    isDeployed(instance : InstanceType<typeof SensenElement>) : boolean{
+
+        if(instance instanceof SensenElement && instance.$application instanceof SensenElement){
+
+            const query = `${ instance.$application?.tagName } > ${ instance.tagName }`;
+
+            return instance.$application?.querySelector( query ) ? true : false;
+    
+        }
+
+        return false;
+        
+    }
+    
+
+
+    stabilizeUI(){
+
+        const $canvas = this.options.canvas
+
+        if($canvas instanceof HTMLElement){
+
+            if($canvas.children.length){
+    
+                Object.values($canvas.children).forEach(child=>{
+
+                    if(child instanceof HTMLElement){
+
+                        child.style.display = 'block';
+                        
+                    }
+                    
+                })
+                
+            }
+    
+        }
+        
+        return this;
 
     }
     
     
 
-    
+    navigate(
 
-    async navigate(slug: (keyof B), props?: B[ typeof slug ], canvas?: HTMLElement ){
-
-        const parsed = this.parseSlug(slug || this.$options.default)
-
+        method: SensenRouterMethod,
         
+        uri : keyof SensenRouterScheme, 
         
-        return new Promise<typeof SceneActivity>(async (resolve: Function, reject: Function)=>{
-    
-           const activity : SceneActivity<B[typeof slug]> = this.routes[ parsed.name as keyof B ];
+        state : SensenElementState,
 
-           const $canvas : HTMLElement | undefined = canvas || this.canvas
+        canvas?: InstanceType<typeof SensenElement>
+        
+    ) : Promise<
+        
+        SensenRouterRoute
+        
+    >{
 
+        const $uri = this.concateURI(uri);
 
-            if(activity){
-                
-                const firstTime = !activity.isReady ? true : false;
+        const $canvas = canvas || this.options.canvas || undefined;
 
-                const oldActivity = SensenWindow.$SceneActivity;
-                
-
-                activity.render(props)
-                
-                if(activity.$element instanceof HTMLElement && $canvas instanceof HTMLElement){
+        const $method = method || 'get';
 
 
+        return new Promise<
+            
+            SensenRouterRoute
+            
+        >((resolved, rejected) => {
 
-                    // console.warn('Set EXIT Animation on', SensenWindow.$SceneActivity )
-
-                    // if(SensenWindow.$SceneActivity){
-
-                    //     if(SensenWindow.$SceneActivity.$options?.options?.transition){
-
-                    //         console.log('Fx Transition', SensenWindow.$SceneActivity.$options?.options?.transition)
-                            
-                    //     }
-
-                        
-                    // }
-                    
-                    
-                    this.activity = activity;
-
-                    if(this.activity.$element instanceof HTMLElement){
-                    
-                        $canvas?.appendChild(this.activity.$element);
-
-                        // @ts-ignore
-                        SensenWindow.$SceneActivity = activity as SceneActivity<SceneActivityProps>;
-
-                    }
+            const route = this.routes[ $uri.name as keyof SensenRouterScheme ] || undefined
 
 
+            if(route && this.currentRoute && route.uri == this.currentRoute.uri){
 
-                    /**
-                     * Exit Reverse Transition
-                     */
-                    if(oldActivity && oldActivity.$options?.options?.transition && firstTime){
+                if(route.component instanceof SensenElement){
 
-                        if(oldActivity.$options.options.transition.exit instanceof FxPresenter){
+                    route.component.$render(state);
 
-                            oldActivity.$options?.options?.transition.exit.exitReverse(
-
-                                oldActivity.$element
-                                
-                            ).then(r=>{
-
-                            }).catch(er=>{
-
-                                console.error('Transition Error', er)
-                                
-                            })
-
-                        }
-
-                        
-                    }
-
-                    
-                    /**
-                     * Exit Reverse Transition
-                     */
-                    if(oldActivity && oldActivity.$options?.options?.transition && !firstTime){
-
-                        if(oldActivity.$options.options.transition.exit instanceof FxPresenter){
-
-                            oldActivity.$options?.options?.transition.exit.exit(
-
-                                oldActivity.$element
-                                
-                            ).then(r=>{
-
-                            }).catch(er=>{
-
-                                console.error('Transition Error', er)
-                                
-                            })
-
-                        }
-
-                        
-                    }
-
-
-                    
-                    
-                    
-
-                    /**
-                     * Entry Reverse Transition
-                     */
-                    if(activity.$options?.options?.transition && !firstTime){
-
-                        if(activity.$options.options.transition.entry instanceof FxPresenter){
-
-                            activity.$options?.options?.transition.entry.entryReverse(
-
-                                activity.$element
-                                
-                            ).then(r=>{
-
-
-                                if(oldActivity && oldActivity.$element){ 
-                                    
-                                    oldActivity.$element.innerHTML = '' 
-
-                                    oldActivity.isReady = false;
-                                
-                                }
-                                
-                            }).catch(er=>{
-
-                                console.error('Transition Error', er)
-                                
-                            })
-
-                        }
-
-                        
-                    }
-                    
-
-                    /**
-                     * Entry Transition
-                     */
-                    if(activity.$options?.options?.transition && firstTime){
-
-                        if(activity.$options.options.transition.entry instanceof FxPresenter){
-
-                            activity.$options?.options?.transition.entry.entry(
-
-                                activity.$element
-                                
-                            ).then(r=>{
-
-                                if(oldActivity && oldActivity.$element){ 
-                                    
-                                    oldActivity.$element.innerHTML = '' 
-                                
-                                }
-                                
-                            }).catch(er=>{
-
-                                console.error('Transition Error', er)
-                                
-                            })
-
-                        }
-
-                        
-                    }
-
-
-                    
-                    
                 }
 
-                else{
+                resolved(route)
 
-                    throw (`This activity has not available "$element" `)
-                    
-                }
-
-    
-            }
-
-            else{
-
-                throw (`Sensen Router say route < \n${ slug } > not found`)
-                    
             }
             
+            
+            else if(route ){
+
+
+                if(route.component instanceof SensenElement && $canvas instanceof SensenElement){
+
+                    this.switch(
+    
+                        $canvas,
+                            
+                        route.component,
+    
+                        this.currentComponent,
+
+                        state
+    
+                    ).then(current=>{
+    
+                        this.switchDone({ uri : $uri.name, route, current, canvas: $canvas });
+                        
+                    })
+    
+    
+                }
+    
+                else if(route.component && isClass(route.component)){
+    
+                    // @ts-ignore
+                    const $instance = (new route.component(state))
+                    
+                    if($instance instanceof SensenElement && $canvas instanceof SensenElement){
+
+                        route.component = $instance
+    
+                        this.switch(
+    
+                            $canvas,
+                            
+                            $instance,
+    
+                            this.currentComponent,
+
+                            state
+    
+                        ).then(current=>{
+
+                            this.switchDone({ uri : $uri.name, route, current, canvas: $canvas });
+                            
+                        })
+                        
+                    }
+    
+                    else{
+    
+                        throw (`SensenRouter : Route component is not a SensenElement Class instance"`)
+                     
+                    }
+    
+                }
+    
+                else{
+                   
+                    throw (`SensenRouter : Route component not found"`)
+                     
+                }
+                
+            }
+
+            else{ 
+
+                console.error('Route', route)
+                
+                throw (`SensenRouter : Route not found (${ uri }) `); 
+            
+            }
+
+            
+
         });
         
     }
 
+
+
+    switchDone({ uri, route, current, canvas } : SensenRouterSwitchRequest){
+
+        if(current instanceof SensenElement){
+
+            const _uri = `#${ uri }`
+
+            this.currentComponent = current;
+
+            this.currentRoute = route;
+
+            route.canvas = canvas;
+
+            if(this.getCurrentURI() && this.getCurrentURI() != _uri){ return this; }
+
+            else{ location.href = `${ _uri }`; }
+
+            
+        }
+
+        return this;
+
+    }
     
+    
+
+    switch(
+
+        canvas: InstanceType<typeof SensenElement>,
+        
+        entry: InstanceType<typeof SensenElement>, 
+        
+        exit?: InstanceType<typeof SensenElement>,
+
+        state?: SensenElementState
+
+        
+    ){
+
+        return new Promise<typeof entry>((resolved, rejected)=>{
+
+            if(canvas instanceof SensenElement){
+
+                if(entry instanceof SensenElement){
+
+                    const deployed = this.isDeployed(entry);
+
+                    const firstTime = !entry.$showing
+
+                    entry.style.position = 'absolute';
+
+                    entry.style.top = '0';
+
+                    entry.style.left = '0';
+
+
+
+                    if(exit instanceof SensenElement){
+
+                        exit.style.position = 'absolute';
+
+                        exit.style.top = '0';
+
+                        exit.style.left = '0';
+    
+                        exit.$destroy(firstTime ? false : true ).then(element=>{
+
+                            if(!firstTime){ exit.$showing = false }
+
+                        })
+
+                    }
+            
+                    if(deployed){
+
+                        entry.style.removeProperty('display');
+
+                        entry.$render(state);
+                        
+                    }
+                    
+                    if(!deployed){
+                        
+                        canvas.appendChild( entry )
+
+                    }
+
+                    entry.$showing = true
+
+                    entry.$build(firstTime ? true : false)
+
+                    .then(element=>{
+
+                        resolved(entry)
+
+                    })
+    
+            
+                }
+    
+                else{ 
+
+                    rejected(entry)
+                    
+                    throw (`SensenRouter : The entry component is not a SensenElement`) 
+                    
+                }
+                
+            }
+            
+            else{ 
+
+                rejected(entry)
+                
+                throw (`SensenRouter : The canvas is not a SensenElement`) 
+            
+            }
+            
+        })
+
+    }
+
+
+
+    getCurrentURI() : string | undefined {
+
+        return location.hash ? location.hash.substring(1) : undefined
+        
+    }
+    
+
+
+    run(state?: SensenElementState) : this{
+
+        const index = this.getCurrentURI() || this.options.default || Object.keys( this.routes )[0] || undefined
+
+
+        if(index){
+
+            const route = this.routes[ index as keyof SensenRouterScheme ] || undefined
+
+            if(route){
+                
+                this.navigate( route.method, route.uri, {} )
+
+            }
+
+            else{
+
+                throw (`SensenRouter : Default route nod found"`)
+                
+            }
+            
+        }
+
+        else{
+
+            throw (`SensenRouter : No default route in "option"`)
+            
+        }
+        
+
+        return this
+        
+    }
+
+
+
+
+    get(
+        
+        slug : keyof SensenRouterScheme, 
+        
+        state : SensenElementState,
+
+        canvas?: HTMLElement
+        
+    ) : Promise<
+        
+        SensenRouterRoute
+        
+    >{
+
+        return this.navigate.apply(this, [
+            
+            'get', slug, state, canvas instanceof SensenElement ? canvas : undefined
+
+        ])
+        
+    }
+
+
+    post(
+        
+        slug : keyof SensenRouterScheme, 
+        
+        state : SensenElementState,
+
+        canvas?: HTMLElement
+        
+    ) : Promise<
+        
+        SensenRouterRoute
+        
+    >{
+
+        return this.navigate.apply(this, [
+            
+            'post', slug, state, canvas instanceof SensenElement ? canvas : undefined
+
+        ])
+        
+    }
+
+    
+    put(
+        
+        slug : keyof SensenRouterScheme, 
+        
+        state : SensenElementState,
+
+        canvas?: HTMLElement
+        
+    ) : Promise<
+        
+        SensenRouterRoute
+        
+    >{
+
+        return this.navigate.apply(this, [
+            
+            'put', slug, state, canvas instanceof SensenElement ? canvas : undefined
+
+        ])
+        
+    }
+
+
     
 }
 
+
+
+
+// CommonDirectives.Define({
+
+//     name:'action',
+
+//     type:'-attribute',
+    
+//     expression:'@',
+    
+//     main: (component: SensenElement<SensenElementProps, SensenElementState>, record: ExpressionRecord)=>{
+    
+//         /**
+//          * HTMLElement Only
+//          */
+//         if(record.node instanceof HTMLElement && component instanceof SensenElement){
+            
+//             const alreadyKey = `directiveState${ record.directive?.expression }` as keyof HTMLElement;
+
+//             const args = Array.isArray(record.arguments) ? record.arguments : [];
+
+
+//             /**
+//              * Evité les abus de définition
+//              */
+//             if(record.node[ alreadyKey ]){ return ; }
+            
+//             /**
+//              * Definition de l'évènement 
+//              */
+//             record.node.addEventListener(`${ record.name }`, (ev: Event)=>{
+                
+//                 record.matches?.map(match=>{
+
+//                     const attrib = (
+                        
+//                         ('attributes' in record.node) 
+                        
+//                         ? record.node.getAttribute(match?.input||'')
+        
+//                         : ''
+        
+//                     )?.trim();
+    
+
+//                     if(args.indexOf('prevent') > -1){ ev.preventDefault() }
+        
+//                     if(args.indexOf('stop') > -1){ ev.stopPropagation() }
+        
+//                     // const attrib = value as keyof typeof component.state;
+        
+        
+//                     /**
+//                      * Check Component methods
+//                      */
+//                     const isMethod = attrib?.indexOf(`this.methods.`) == 0;
+                    
+//                     const _event = CreateComponentMethodEvent<
+
+//                         typeof component.$props,
+
+//                         typeof component.$state
+                    
+//                     >(component, ev)
+        
+        
+        
+//                     if(isMethod && component.$methods){
+        
+//                         const method = component.$methods[ 
+                            
+//                             attrib.substring((`this.methods.`).length) 
+                        
+//                         ];
+                        
+//                         /** * Check is transaction function */
+//                         if(typeof method == 'function'){
+                            
+//                             method.apply(component.$state, [_event])
+                            
+//                         }
+                        
+//                     }
+        
+//                     else{
+        
+//                         if(typeof attrib == 'string' && attrib in window){
+        
+
+//                             const fn = (window[attrib as keyof Window] || (()=>{})) as Function
+        
+//                             if(typeof fn == 'function'){
+                                
+//                                 fn.apply(window, [_event])
+        
+//                             }
+                            
+//                         }
+                        
+//                     }
+
+//                 })
+                
+//             }, args.indexOf('capture') > -1 ? true : false)
+    
+
+
+//             // @ts-ignore
+//             record.node[ alreadyKey ] = true;
+
+
+//         }
+        
+    
+//     },
+    
+
+// })

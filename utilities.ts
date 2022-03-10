@@ -83,16 +83,29 @@ export function encodeHTMLEntities(input: string){
 
 
 
+/**
+ * Object is Empty
+ */
+
+
+export function isEmptyObject($object : object) : boolean{
+
+    return Object.values($object).length > 0;
+    
+}
+
+
+
 
 /**
  * Clone Object
  */
 
-export function CloneObject<T>(input: T, deep: boolean = true){
+export function CloneObject<T>(input: T, deep: boolean = true) : T{
 
     if(deep == false){
 
-        return {...input}
+        return {...input} as T
         
     }
 
@@ -111,7 +124,7 @@ export function CloneObject<T>(input: T, deep: boolean = true){
 
             if(typeof $[1] == 'object'){
 
-                o[ name ] = CloneObject(value, true);
+                o[ name ] = CloneObject<typeof value>(value, true);
                 
             }
 
@@ -129,6 +142,37 @@ export function CloneObject<T>(input: T, deep: boolean = true){
     }
     
 }
+
+
+
+
+
+
+/**
+ * Check if Instance Function is a true Function but not Class Funciton
+ */
+
+export function isFunction(instance : Function | object) : boolean {
+    
+    const props = Object.getOwnPropertyNames(instance);
+    
+    return (!props.includes('prototype') || props.includes('arguments'));
+    
+}
+
+
+/**
+ * Check if Instance Function is a true Class but not Funciton
+ */
+
+export function isClass(instance : Function | object) : boolean {
+    
+    return !isFunction(instance);
+    
+}
+
+
+
 
 
 
@@ -231,3 +275,5 @@ export function CloneObject<T>(input: T, deep: boolean = true){
 //     return null;
 
 // }
+
+

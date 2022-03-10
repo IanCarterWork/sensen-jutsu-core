@@ -1,68 +1,1268 @@
-import { CompilateEcho, CompilateEchoAttributes, CompilateSnapCode, CompilateSnapCodeAttributes } from "./compilate";
+import { FxPresenter, FxSlideHorizontal } from "./animation/preset";
+import { SensenAppearance } from "./appearance";
+import { CommonDirectives } from "./directive";
 import { SensenEmitter } from "./emitter";
-import { FindExpressions, isNodeCompilated } from "./expression";
-import type { ComponentMethodEvent, ComponentMethodRaw, ComponentProps, ComponentState, ExpressionRecord, SceneActivityProps, SceneActivityEmitter, TComponentOptions, TSceneActivityOptions, TComponentObserversParams } from "./index.t";
-import { ComponentHydrates } from "./hydrates";
-import { SensenAppearance, TAppearanceProps } from "./appearance/index";
-import { SensenTemplate } from "./template";
-import { SensenMetricRandom } from "./metric-random";
-import { ComponentVariable } from "./hook";
+import { FindGlobalExpressions, FindStateData, isCompilable, isCompilableContent } from "./expression";
+import { SensenRawRender, SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
+import { SensenRouter } from "./router";
+import { SensenState } from "./state";
+import { CloneObject } from "./utilities";
+
+
+
+window.$SensenComponents = window.$SensenComponents || {}
+
+window.$SensenRouter = window.$SensenRouter || {}
+
+
+/**
+ * Sensen Component
+ */
+
+
+export function RawComponent<State extends SensenElementState>(
+    
+    $ : ComponentAttributes<State>,
+    
+    config?: RawComponentConfig
+    
+){
+
+    const $initial = {...($ || {})} as ComponentAttributes<State>
+
+    $initial.state = {...$initial.state} as State
+
+
+    return class extends SensenElement<State> implements SensenElement<State> {
+
+        $observations = {} as MutationObserver
+
+        $emitter : SensenEmitter
+    
+        $tnamespace ?: string;
+    
+        $anamespace ?: string;
+        
+        $state : State = {} as State;
+    
+        $methods? : SensenElementMethods<State>
+
+        $appearance ?: SensenAppearance
+        
+
+        constructor( $state : State = {} as State ){
+
+            super($state);
+
+
+            this.$emitter = new SensenEmitter();
+            
+            this.$tnamespace =  config?.namespace?.prefix || "sense";
+            
+            this.$anamespace = config?.namespace?.attribute ||"state";
+            
+            this.$controller = CloneObject<typeof $initial>($initial, true);
+
+
+            this.$methods = this.$controller.methods || {} as SensenElementMethods<State>
+
+            this.$state = Object.assign({}, { ...(this.$controller.state||{}), ...($state||{}) }) as State;
+
+
+            this.$stateMirrors = this.$stateMirrors || {} as SensenStateMirrors
+        
+            this.$stateHydrates = new SensenState(this.$state)
+            
+            this.$state = this.$stateHydrates.state as State
+
+            
+            
+            this.$appearance = new SensenAppearance(this.$controller.appearance);
+
+            this.$appearance.mount().bind(this)
+
+            console.warn('Appearance', this.$appearance.$UiD )
+            
+
+            this.$hydrators();
+
+            this.$construct()
+
+        }
+
+
+
+        $construct(): this {
+
+            this.$emitter.listen<typeof this>('begin', ({ emit, type })=>{
+
+                emit.style.display = 'none';
+    
+            })
+
+            this.$emitter.listen<typeof this>('done', ({ emit, type })=>{
+
+                emit.style.removeProperty('display');
+    
+            })
+
+            if(this.$controller?.construct ) {
+
+                this.$controller?.construct({
+                    
+                    element: this,
+        
+                    router: window.$SensenRouter,
+        
+                    children: this.children,
+        
+                    state: this.$state || {} as State,
+                    
+                })
+
+            }
+            
+            return this;
+            
+        }
+        
+
+
+        $hydrators(){
+
+            this.$stateHydrates = new SensenState(this.$state)
+            
+            this.$stateHydrates.$emitter
+            
+                .listen<SensenStateHydrates>('hydrates', ({ emit })=>{
+    
+                    if(this.$stateMirrors && this.$stateMirrors[ emit.slot ]){
+
+                        if(this.$controller?.state){
+
+                            this.$controller.state[ emit.slot as keyof State ] = this.$state[emit.slot];
+    
+                            const records = this.$stateMirrors[ emit.slot ];
+                             
+                            if(records.length){
+
+                                this.$emitter.dispatch('hydrates', records)
+        
+                                records.map(record=>{
+        
+                                    this.$compilateRecord(record)
+        
+                                    this.$emitter.dispatch('hydrate', record)
+        
+                                })
+                                
+                            }
+               
+                        }
+
+                    }
+    
+                })
+    
+            return this;
+            
+        }
+
+
+
+        $willMount(args : any) : void | Promise<any>{
+
+            this.$emitter.dispatch('connected', this)
+        
+            return this.$controller?.mount ? this.$controller?.mount({
+                
+                element: this as SensenElement<State>,
+    
+                router: window.$SensenRouter,
+    
+                children: this.children,
+    
+                state: this.$state || {} as State,
+                
+            }) : undefined;
+            
+        }
+    
+
+        $willUnMount(args : any)  : void | Promise<any>{
+
+            this.$emitter.dispatch('disconnected', this)
+        
+            return this.$controller?.unmount ? this.$controller?.unmount({
+                
+                element: this,
+    
+                router: window.$SensenRouter,
+    
+                children: this.children,
+    
+                state: this.$state || {} as State,
+                
+            }) : undefined;
+            
+        }
+    
+
+        $willAdopted? (args : any)  : void | Promise<any>{
+
+            this.$emitter.dispatch('adopted', this)
+        
+            return this.$controller?.adopted ? this.$controller?.adopted({
+                
+                element: this,
+    
+                router: window.$SensenRouter,
+    
+                children: this.children,
+    
+                state: this.$state || {} as State,
+                
+            }) : undefined;
+            
+        }
+        
+
+
+        $render(state?: State): Promise<string | Response> | object | Function | string | null | undefined {
+            
+            const _state = (state || this.$state ) as State
+
+            const render = this.$controller?.render({
+                
+                element: this,
+
+                router: window.$SensenRouter,
+
+                children: this.children,
+
+                state: _state || {} as State,
+                
+            });
+
+
+            this.$setStates(_state)
+            
+
+            if(typeof render == 'string'){
+
+                this.innerHTML = `${ render }`
+                
+            }
+            
+            else if(!render){
+
+                if(this.innerHTML){
+
+                    this.innerHTML = `${ this.innerHTML }`
+
+                }
+
+            }
+
+            else{
+
+                if(render instanceof HTMLElement){
+
+                    this.appendChild(render);
+                    
+                }
+                
+            }
+            
+            this.$emitter.dispatch('done', this);
+        
+            return render;
+            
+        }
+        
+    
+    }
+
+
+}
+
+
+export function Component<State extends SensenElementState >($ : ComponentAttributes<State>){
+
+    const config : RawComponentConfig = {
+
+        namespace: {
+            
+            prefix: 'sense',
+
+            attribute: 'state'
+            
+        }
+        
+    }
+
+    const index = `sense-${ $.name }`
+
+    window.$SensenComponents[ index ] = RawComponent<State>($, config)
+
+    SensenElement.$use('sense', $.name, window.$SensenComponents[ index ]);
+    
+    return window.$SensenComponents[ index ];
+    
+}
 
 
 
 
 /**
- * Metric
+ * Sensen Element
  */
+export class SensenElement<
 
- export type MetricTAlphaNum = 'a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 0 1 2 3 4 5 6 7 8 9';
+    // Props extends SensenElementProps, 
+    
+    State extends SensenElementState
+    
+> extends HTMLElement implements SensenElement< State & SensenElementState >{
 
- export type MetricTAlphaNumL = 'a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9';
+
+    $showing?:boolean = false
+
+    $inTransition?:boolean = false
+
+    // new( $props : Props ) : this
+
+    $observations = {} as MutationObserver
+
+    $emitter : SensenEmitter
+
+    $tnamespace ?: string;
+
+    $anamespace ?: string;
+    
+
+    $application ?: KuchiyoceElement;
+
+    $parentComponent ?: object
+    
+    $controller ?: ComponentAttributes<State>;
+
+    // $state : State = {} as State;
+
+
+    $stateHydrates ?: SensenState 
+        
+    $stateMirrors ?: SensenStateMirrors
+    
+
+    mountResponseResolved?: any
+
+    mountResponseRejected?: any
+
+    $router ?: InstanceType<typeof SensenRouter>
+
+
+    // $appearance ?: SensenAppearance
+    
+
+
+    $methods?: SensenElementMethods<State> = {} as SensenElementMethods<State>
+
+
+
+    $willMount? (args : any) : void | Promise<any>{}
+
+    $willUnMount? (args : any) : void | Promise<any>{}
+
+    $willAdopted? (args : any) : void | Promise<any>{}
+    
+    
+    constructor( public $state : State ){
+        
+        super();
+
+        // this.$appearance = new SensenAppearance();
+
+        this.$emitter = new SensenEmitter();
+
+        this.$tnamespace = `${ this.$tnamespace || 'sense' }-`;
+        
+        this.$anamespace = `${ this.$anamespace || 'state' }:`;
+
+        this.$stateMirrors = {}
+            
+    }
+    
+
+
+
+    $mountManipulation(
+        
+        method: SensenElementMountMethods, 
+
+        callback: Function
+        
+    ){
+
+
+        this.mountResponseResolved = undefined;
+
+        this.mountResponseRejected = undefined;
+
+
+        if(method in this && typeof this[method] == 'function'){
+
+            this.mountResponseResolved = (this[method]||(()=>{})).apply(this, [null]);
+
+            if(this.mountResponseResolved instanceof Promise){
+
+                this.mountResponseResolved
+                
+                    .then(r=>this.mountResponseResolved = r)
+
+                    .catch(er=>{
+
+                        this.mountResponseRejected = er
+
+                        console.error(`Sensen Component mount failed\n`, er)
+                        
+                    })
+
+                    .finally(()=> callback())
+                
+            }
+
+            else{ callback(); }
+
+        }
+
+        else{ callback(); }
+
+        return this;
+        
+    }
+    
+    
+
+
+    connectedCallback(){
+
+        // console.warn('Props', `${ JSON.stringify(this.$props) }`)
+
+        // console.warn('Props->', `${ JSON.stringify(this.getAttribute('prop:world')) }`)
+
+        // this.$router = this.$application?.$router || undefined;
+
+        this.$mountManipulation('$willMount', ()=> {this.#connectedProtocol()})
+        
+    }
+    
+
+
+
+
+    adoptedCallback(){
+
+        this.$mountManipulation('$willAdopted', ()=> {})
+        
+    }
+
+
+
+
+
+    disconnectedCallback(){
+
+        this.$mountManipulation('$willUnMount', ()=> {})
+        
+        // this.$showing = false
+        
+    }
+
+
+
+    
+
+
+
+
+    $setSafeProps(value : any){
+
+        switch(typeof value){
+
+            case 'object': return JSON.stringify(value); break;
+
+            default: return `${ value }`; break;
+            
+        }
+        
+    }
+    
+    
+
+
+    $destroy(moment: boolean = true) : Promise<this>{
+
+        return new Promise<typeof this>((resolved)=>{
+
+            const callback = ()=>{
+
+                this.style.display = 'none';
+    
+                this.innerHTML = ''
+                
+                resolved(this)
+                
+                this.$emitter.dispatch('destroy', this)
+    
+                this.$inTransition = false
+                    
+                // this.$showing = false
+
+            }
+  
+
+            if(!this.$inTransition && this.$controller?.transition && 'ondestroy' in this.$controller.transition ){
+                
+                this.$inTransition = true
+                  
+
+                if(
+                    
+                    this.$controller.transition.ondestroy && 
+                    
+                    ('exit' in this.$controller.transition.ondestroy || 'exitReverse' in this.$controller.transition.ondestroy)
+                    
+                ){
+
+                    const $display = getComputedStyle(this).display || 'inline'; 
+
+                    if($display.match(/inline/)){ this.style.display = 'block'; }
+        
+
+                    if(moment === true && typeof this.$controller.transition.ondestroy.exit == 'function'){
+
+                        this.$controller.transition.ondestroy.exit( this )
+
+                        .then(done=>callback())
+
+                    }
+
+                    if(moment === false && typeof this.$controller.transition.ondestroy.exitReverse == 'function'){
+
+                        this.$controller.transition.ondestroy.exitReverse( this )
+
+                        .then(done=>callback())
+
+                    }
+                    
+                }
+
+                else{ callback() }
+                
+                
+            }
+            
+            else{ 
+
+                this.$inTransition = true
+                  
+                callback() 
+            
+            }
+            
+            
+        })
+        
+    }
+    
+    
+
+
+    $build(moment: boolean = true, host?: HTMLElement) : Promise<this>{
+
+        return new Promise<typeof this>((resolved)=>{
+
+            const hosted = (host instanceof HTMLElement) ? host.appendChild(this) : false
+
+            const callback = ()=>{
+
+                this.style.removeProperty('display');
+
+                resolved(this);
+                
+                this.$emitter.dispatch('build', this)
+
+                this.$inTransition = false
+                    
+                // this.$showing = true
+
+            }
  
- export type MetricTAlphaNumU = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 0 1 2 3 4 5 6 7 8 9';
- 
- export type MetricTAlphaU = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z';
- 
- export type MetricTAlphaL = 'a b c d e f g h i j k l m n o p q r s t u v w x y z';
- 
- export type MetricTNum = '0 1 2 3 4 5 6 7 8 9';
- 
- export type MetricTHex = 'a b c d e f A B C D E F';
- 
+
+
+            if(!this.$inTransition && this.$controller?.transition && 'onbuild' in this.$controller.transition ){
+                
+                this.$inTransition = true
+                   
+                if(
+                    
+                    this.$controller.transition.onbuild && 
+                    
+                    ('entry' in this.$controller.transition.onbuild || 'entryReverse' in this.$controller.transition.onbuild)
+                    
+                ){
+
+                    const $display = getComputedStyle(this).display || 'inline'; 
+
+                    if($display.match(/inline/)){ this.style.display = 'block'; }
+        
+
+
+                    if(moment === true && typeof  this.$controller.transition.onbuild.entry == 'function'){
+
+                        this.$controller.transition.onbuild.entry( this )
+
+                        .then(done=> callback() )
+
+                    }
+
+                    if(moment === false && typeof  this.$controller.transition.onbuild.entryReverse == 'function'){
+
+                        this.$controller.transition.onbuild.entryReverse( this )
+
+                        .then(done=> callback() )
+
+                    }
+                    
+
+                }
+
+                else{ callback() }
+                
+                
+            }
+            
+            else{ 
+
+                this.$inTransition = true
+                  
+                callback() 
+            
+            }
+            
+
+            
+        })
+        
+    }
+    
+
+
+
+    #connectedProtocol(){
+
+        this
+            
+            .$initialize()
+            
+            .$observers()
+            
+            .$listeners()
+            
+            .$render()
+
+            // .$render(this.$syncProps())
+
+        ;
+    
+
+        this.$emitter.dispatch('build', this)
+
+        // this.$showing = true
+
+        return this;
+        
+    }
+
+
+
+    $initialize(state ?: State){
+
+        return this;
+        
+    }
+
+
+    
+
+    $render(state ?: State) : Function | object | string | undefined | null{
+
+        throw (`Sensen Element : Any "$render" method detected`);
+        
+    }
+
+
+
+    $listeners(){
+
+        if(this instanceof KuchiyoceElement){
+
+            this.$emitter.listen<MutationRecord>('contentChanges', ({ emit })=>{
+    
+                if(
+                    
+                    emit.target instanceof SensenElement &&
+
+                    this instanceof KuchiyoceElement
+
+                ){
+
+                    // emit.target.$syncProps()
+
+                    emit.target.$compilate()
+
+                    this.$bewitchment(emit.target)
+                    
+                }
+
+            });
+
+
+        }
+            
+            
+        if(!(this instanceof KuchiyoceElement)){
+              
+            this.$emitter.listen<MutationRecord>('contentChanges', ({ emit })=>{
+    
+                if(!(emit.target instanceof KuchiyoceElement)){
+                    
+                    if(emit.target instanceof SensenElement){
+
+                        // emit.target.$syncProps()
+
+                        emit.target.$compilate()
+
+                    }
+
+    
+                }
+
+            })
+              
+        }
+
+        
+
+        return this;
+        
+    }
+    
 
 
 
 
+    $compilateRecord(record : ExpressionRecord){
 
 
-export type TObjectEmbed<T> = { 
-    [K in keyof T]?: T[K] | number
+        if(record.type == 'attribute'){
+
+            if(record.node instanceof SensenElement){
+
+                // record.node.$syncProps();
+                
+            }
+            
+            SensenDataRender(
+                
+                (
+
+                    record.attribute ? record.attribute.value || ''
+                    
+                    : (record.mockup ? record.mockup.nodeValue || '' : '')
+                    
+                ),
+                
+                (record.node instanceof SensenElement && record.node.$parentComponent instanceof SensenElement) 
+                
+                    ? record.node.$parentComponent 
+                    
+                    : this,
+                
+                (record.node instanceof SensenElement && record.node.$parentComponent instanceof SensenElement) 
+                
+                    ? (record.node.$parentComponent.$controller || {} as ComponentAttributes<SensenElementState>) 
+                    
+                    : (this.$controller || {} as ComponentAttributes<State>),
+                
+                record
+
+            ).then(compilate=>{
+
+                if(record.node instanceof HTMLElement){
+
+
+                    record.node.setAttribute(
+
+                        `${ record.attribute?.name  }`,
+                        
+                        `${ compilate }`
+                        
+                    )
+
+                    
+                }
+                
+            })
+
+        }
+
+
+
+
+        else if(record.type == 'echo' || record.type == 'snapcode'){
+       
+            // console.warn('$Props', `${ this.$props.world }`, record.node, this.$controller?.props?.world )
+
+            SensenNodeRender(
+                
+                record.mockup || record.node,
+                
+                this,
+                
+                this.$controller || {} as ComponentAttributes<State>,
+                
+                record
+
+            ).then(compilate=>{
+
+                // console.log("Compilate Content", compilate)
+
+                if(record.node instanceof Text){
+
+                    record.node.textContent = `${ compilate }`
+                    
+                }
+
+                else if(record.node instanceof HTMLElement){
+
+                    record.node.innerHTML = `${ compilate }`
+                    
+                }
+                
+            })
+            
+        }
+
+
+
+
+        else if(record.type == 'directive'){
+
+            if(!('directive' in record)){
+                throw (`Corrupted directive : not found`);
+            }
+
+            if(typeof record.directive?.main != 'function'){
+                throw (`Corrupted directive : < ${ record.directive?.name } >`);
+            }
+
+            record.directive.main({component : this, record})
+           
+        }
+
+
+
+        return this;
+        
+    }
+    
+
+
+
+    $compilate(){
+
+        const expressions = FindGlobalExpressions(
+            
+            this, 
+
+            (record)=>{
+
+                /** * Find State var */
+                
+                FindStateData<State>( this, record )
+
+                this.$compilateRecord( record )
+                
+            },
+            
+            
+        )
+
+        if(expressions.length){
+
+            expressions.map(child=>{
+
+            })
+            
+        }
+
+
+
+        this.$setStates();
+            
+        
+
+        return this;
+        
+    }
+    
+    
+    
+
+
+    $observers(){
+
+        
+        if(this.$observations instanceof MutationObserver){
+
+            this.$observations.disconnect();
+            
+        }
+        
+
+        this.$observations = new MutationObserver((records)=>{
+
+            if(records){
+
+                this.$emitter.dispatch('changes', [records]);
+
+                if(records.length){
+
+                    records.map(record=>{
+
+
+                        switch(record.type){
+
+
+                            case 'attributes':
+
+
+                                if(record.attributeName){
+
+                                    const check = record.attributeName.match(new RegExp(`${ this.$anamespace }:`, 'g'))
+                            
+                                    const value = this.getAttribute(record.attributeName) 
+                            
+                                    if(check && this.$anamespace){
+                            
+                                        const slot = record.attributeName.toLowerCase().substring(this.$anamespace.length + 1) as keyof State
+                            
+                                        if(slot){
+                            
+                                            this.$state[ slot ] = (this.$setSafeProps(value)) as State[ keyof State]
+                                            
+                                        }
+                                        
+                                    }
+                                    
+                                    
+
+                                    this.$emitter.dispatch('propChange', {
+    
+                                        old: record.oldValue,
+    
+                                        value: this.getAttribute(record.attributeName),
+
+                                        name: record.attributeName,
+                                        
+                                    } as SensenElementPropEntry);
+    
+                                }
+
+                            break;
+
+
+                            case 'characterData':
+                            case 'childList':
+
+                                if(record.target instanceof SensenElement){
+
+                                    record.target.$application = this.$application;
+                                    
+                                }
+
+                                record.addedNodes.forEach(child=>{
+
+                                    if(child instanceof SensenElement){
+
+                                        child.$application = this.$application
+
+                                        child.$parentComponent = this
+                                        
+                                    }
+                                    
+                                    this.$emitter.dispatch('addedChild', child)
+                                    
+                                });
+
+                                record.removedNodes.forEach(child=>{
+
+                                    this.$emitter.dispatch('removedChild', child)
+                                    
+                                });
+
+
+                                this.$emitter.dispatch('contentChanges', record)
+                                    
+
+                            break;
+                            
+                            
+                        }
+
+                        
+                    })
+                    
+                    this.$emitter.dispatch('changesDone', records);
+                    
+                }
+    
+
+            }
+            
+        })
+        
+        
+        this.$observations.observe(this,{
+            
+            subtree: true,
+
+            childList: true,
+
+            characterData: true,
+
+            attributes: true,
+
+            // attributeFilter: Object.entries(this.$state || {})
+
+            //     .map($=>`${ this.$anamespace }${ $[0] }`)
+
+        })
+
+
+        return this;
+        
+    }
+
+
+
+    $setStates(state ?: State){
+
+        const $state = (state || {}) as State;
+
+        return new Promise<State>((resolved)=>{
+
+            const promises : Promise<State[keyof State]>[] = []
+
+            const defaultState = {...this.$controller?.state, /* ...(state||{})  */ }
+
+            
+            
+            Object.entries( defaultState ).map($=>
+                
+                promises.push(
+
+                    new Promise<State[ keyof State] >((next)=>{
+
+                        const rawname = $[0] as keyof State
+
+                        const name = `state:${ rawname }`
+                        
+                        const value = ($state[ rawname ] || this.getAttribute(`${ name }`)) as State[ keyof State ]
+
+                        if(value){
+
+                            this.$state[ rawname ] = value;
+
+                            this.setAttribute(name, this.$setSafeProps(value))
+                            
+                        }
+                        
+                        next(value)
+                        
+                    })
+                    
+                )
+
+            )
+            
+            
+
+
+            Promise.allSettled(promises)
+
+            .then(results=>{
+
+                resolved(this.$state)
+                
+            })
+            
+            
+        })
+        
+    }
+
+
+    static $use($namspace: string, $name: string, $klass: CustomElementConstructor){
+
+        const _name = `${ $namspace }-${ $name }`;
+
+        if(!customElements.get(_name) && $klass){
+
+            customElements.define(_name, $klass)
+            
+        }
+
+        return this;
+    }
+
+
 }
 
- 
- 
+
 
 
 
 /**
- * 
+ * Sensen Kuchiyoce Element
  */
-export function SetDataLikeType(data: any){
+export class KuchiyoceElement extends SensenElement<SensenElementState>{
 
-    /**
-     * Object
-     */
-    try{ return JSON.parse(data); } catch(e){ }
+    $tnamespace = 'sensen'
+
+    $anamespace = 'prop'
+
     
 
-    /**
-     * Boolean
-     */
+    constructor(
+        
+        public $params : KuchiyoceParameter
+        
+    ){
+
+        super($params.state || {} as SensenElementState);
+
+        if(!this.parentNode){
+
+            document.body.insertBefore(this, document.body.firstChild)
+            
+        }
+
+    }
+
+
+
+    $bewitchment(element? : SensenElement<SensenElementState>){
+
+
+        if(element){
+
+            element.$application = this;
+
+        }
+
+        else{
+    
+            const children = this.querySelectorAll('*')
+    
+            if(children.length){
+    
+                children.forEach(child=>{
+    
+                    if(child instanceof SensenElement){
+    
+                        child.$application = this;
+                        
+                    }
+                    
+                })
+                
+            }
+
+        }
+        
+
+        return this;
+        
+    }
+    
     
 
-    return data;
+    $render(state?: typeof this.$params.state): null {
+
+        const render = this.$params.main(
+            
+            state || this.$params.state || {children:''},
+
+            this
+            
+        )
+
+
+        if(typeof render == 'string'){
+
+            this.innerHTML = render;
+            
+        }
+
+        if(render instanceof SensenRouter){
+
+            this.$router = render;
+            
+        }
+
+        else{
+
+            if(render instanceof HTMLElement){
+
+                this.appendChild(render)
+
+            }
+
+        }
+        
+        this.$bewitchment();
+
+        return null
+        
+    }
+
+
     
 }
+
+
+
+
+
+export class Jutsu{
+
+
+    static Kuchiyoce<T extends SensenElementState>(name: string, params : KuchiyoceParameter){
+
+        // params.props = params.props || {} as T
+
+        KuchiyoceElement.$use('sensen', name, KuchiyoceElement)
+
+        return new KuchiyoceElement(params);
+        
+    }
+    
+    
+}
+
 
 
 
@@ -74,1538 +1274,171 @@ export function SetDataLikeType(data: any){
  * Create Component Method Event
  */
 
-export function CreateComponentMethodEvent<
+ export function CreateComponentMethodEvent<
     
-    S extends ComponentState, 
-        
-    P extends ComponentProps,
+    State extends SensenElementState
     
-    M extends ComponentMethodRaw<S, P>
-    
->(component: ComponentController<S, P, M>, ev: Event){
+>(component: SensenElement<State>, event: Event){
 
-    const _ : ComponentMethodEvent<S, P, M> = {router: window.$SensenRouter} as ComponentMethodEvent<S, P, M>
-    
-    _.self = component;
+ const _ : ComponentRenderDependencies<State> = {
 
-    _.event = ev;
-    
-    return _;
+    event,
+                    
+    element: component,
+
+    router: window.$SensenRouter,
+
+    children: component.children,
+
+    state: component.$state,
 
 }
-
-
-
-
-
-/**
- * Sensen HTML Element
- */
-export class SensenHTMLElement<P> extends HTMLElement{
-
-    $EUiD: string = '';
-
-    isReady: boolean = false;
-
-
-    $controller?: object
-
-    $parentComponent?: object
-
-
-    $initializeEUiD(){
-
-        this.$EUiD = this.$EUiD || `${ SensenMetricRandom.CreateAplpha(16).join('') }`;
-
-        return this.$EUiD;
-
-    }
-
-
-
-    /**
-     * Properties name
-     */
-    static get observedAttributes() {return []; }
-
-
-    /**
-     * Dynamic var
-     */
-    props : P = {} as P;
-    
-    
-    /**
-     * New Construct
-     */
-    constructor(props : P){
-
-        super();
-
-        // this.props = props;
-        
-    }
-
-
-    /**
-     * When Element is connected
-     */
-    connectedCallback(){}
-
-
-    /**
-     * When Element is Adopted by other DOM
-     */
-    adoptedCallback(){}
-
-
-    /**
-     * Whene Element is Disconnected to the current DOM
-     */
-    disconnectedCallback(){
-
-        this.classList.forEach(cl=>{
-
-            const refs = document.querySelectorAll(`[sensen-appearance="${ cl }"]`)
-
-            if(refs){
-
-                refs.forEach(ref=> ref.parentElement?.removeChild(ref) )
-                
-            }
-
-            
-        })
-
-    }
-    
-
-
-    /**
-     * Whene Element change properties
-     */
-    attributeChangedCallback(name: string, value: string, oldValue: string){
-
-    }
-    
-
-
-    /**
-     * Utilities
-     */
-
-    // $initializeProps(){
-
-    //     if(this.props){
-
-    //         Object.entries(this.props).map(prop=>{
-
-    //             if(
-    //                 typeof prop[1] == 'string' || typeof prop[1] == 'number' || typeof prop[1] == 'boolean'
-    //             ){
-
-    //                 this.setAttribute(prop[0], `${ prop[1] }`)
-
-    //             }
-
-    //             else if(typeof prop[1] == 'object'){
-
-    //                 this.setAttribute(prop[0], JSON.stringify(prop[1]))
-
-    //             }
-                
-    //         })
-
-    //     }
-
-    //     return this;
-        
-    // }
-
-
-    // $fromAttributesProps(props?: P){
-
-    //     this.props = props || this.props;
-
-    //     if(this.props){
-
-    //         Object.entries(this.props).map(prop=>{
-
-    //             const get = prop[1] || this.getAttribute(`${ prop[0] }`);
-
-    //             const name = prop[0] as keyof P
-
-    //             this.props[ name ] = get as typeof prop[1];
-
-    //             this.setAttribute(`${ prop[0] }`, get || '')
-    
-    //         })
-            
-    //     }
-
-    //     return this.props;
-
-    // }
-
-
-    // $toAttributesProps(props?: P){
-
-    //     if(props){
-
-    //         Object.entries(props).map(prop=>{
-
-    //             if(!(prop[0] in this.props)){ return; }
-
-    //             const name = prop[0] as keyof P
-
-    //             if(
-    //                 typeof prop[1] == 'string' || typeof prop[1] == 'number' || typeof prop[1] == 'boolean'
-    //             ){
-
-    //                 this.setAttribute(`${ name }`, `${ prop[1] }`)
-
-    //             }
-
-    //             else if(typeof prop[1] == 'object'){
-
-    //                 this.setAttribute(`${ name }`, JSON.stringify(prop[1]))
-
-    //             }
-                
-    //             this.props[ name ] = prop[1]
-                
-    //         })
-            
-    //     }
-
-    //     return props;
-
-    // }
-
-    
-    
-    
-
-
-    /**
-     * Abstracts
-     */
-    render(props?: P){return this;}
-
-    
-    show(){return this;}
-
-    
-    hide(){return this;}
-    
-    
-}
-
-
-
-
-
-
-
-
-
-
-/**
- * Sensen Component Controller
- */
-
-window.SensenAvailableComponents = {}
-
-export class ComponentController<
-
-    State extends ComponentState, 
-    
-    Props extends ComponentProps,
-    
-    Methods extends ComponentMethodRaw<State, Props>
-
->{
-
-    $prefix : string = 'sense';
-    
-    $templating: boolean = true;
-
-
-    $tagName : string = '';
-
-    state : { [S in keyof State] : State[S] };
-
-    props : { [P in keyof Props] : Props[P] } = {} as { [P in keyof Props] : Props[P] };
-
-    methods : { [M in keyof Methods] : Methods[M] } = {} as { [M in keyof Methods] : Methods[M] };
-
-    $options : TComponentOptions<State, Props, Methods> = {} as TComponentOptions<State, Props, Methods>
-    
-    $emitter? : SensenEmitter;
-
-    // $klass? : CustomElementConstructor;
-    
-    isReady: boolean = false;
-
-
-    #hydrates? : ComponentHydrates<State, Props, Methods>;
-    
-    #mutationObserver? : MutationObserver;
-
-    #mutationObserved? : MutationRecord[];
-
-
-    template?: string;
-
-    templateCaches?: string | 0;
-
-
-    #pending: number = 0;
-
-    #completed: number = 0;
-    
-
-    /**
-     * New Construct
-     */
-     constructor(options: TComponentOptions<State, Props, Methods>, params?:{
-
-        prefix?: string,
-
-        templating?: boolean,
-         
-     }){
-
-        params = (params && typeof params == 'object') ? params : {}
-        
-
-        this.$prefix = params.prefix || this.$prefix;
-
-        this.$templating = (params.templating === false) ? false : this.$templating;
-
-        
-        this.$options = options;
-
-
-        this.state = Object.assign({}, this.$options.state||{}) as State
-        
-        this.methods = Object.assign({}, this.$options.methods||{}) as Methods
-        
-        this.$tagName = `${ this.$prefix }-${ this.$options.name }`
-
-
-        this.$emitter = new SensenEmitter();
-        
-        this.#hydrates = new ComponentHydrates<typeof this.state, Props, Methods>(this)
-        
-
-        this.$make();
-        
-    }
-
-
-
-    $makeProps(){
-
-        // @ts-ignore
-        // console.warn('Get Parent Component', this.$options.element?.$parentComponent?.props?.title )
-
-
-        const props : Props = {} as Props;
-
-
-
-        /**
-         * Merge Element Atributes
-         */
-
-        Object.entries(this.$options.props||{}).map($=>{
-
-            if(this.$options.element instanceof SensenHTMLElement){
-                
-                let get = this.$options.element.getAttribute(`prop:${ $[0] }`)
-
-                if($[1] instanceof ComponentVariable){ 
-                    
-                    $[1].trigger();
-
-                    $[1].value = get || $[1].value;
-
-                    props[ $[0] as keyof Props ] = $[1].value as Props[ keyof Props ]
-
-                }
-
-                else{
-
-                    props[ $[0] as keyof Props ] = (get || $[1]) as Props[ keyof Props ]
-                    
-                }
-
-                this.$options.element.setAttribute(`prop:${ $[0] }`, `${ props[ $[0] as keyof Props ] }`)
-
-            }
-        
-            
-        })
-        
-        
-        this.props = props;
-
-        
-        return this;
-
-    }
-
-
-
-    $make(){
-
-        this
-         
-            .#camouflage()
-        
-            .$emitting()
-
-            .$makeTemplate()
-                
-                .then(tpl=>{
-
-                    if(this.$templating === true){
-
-                        if(tpl){
-        
-                            this.template = tpl;
-        
-                            if(this.$options.element instanceof HTMLElement){
-        
-                                this.$options.element.innerHTML = tpl;
-                                
-                            }
-                            
-                        }
-            
-                        this
-                    
-                            .$observers()
-
-                            .$makeProps()
-                
-                            // .$compilate()
-        
-                        ;
-
-                    }
-
-    
-        
-                })
-            
-        ;
-        
-
-        return this;
-        
-    }
-    
-    
-
-
-
-    /**
-     * set Template
-     */
-    $makeTemplate(){
-
-        return new Promise<string | 0 | undefined>((resolve, reject)=>{
-
-            // console.log('Caches', this.$options.name, window.$SensenComponentsTemplateCaches[ this.$options.name ])
-
-            if(window.$SensenComponentsTemplateCaches[this.$options.name]){
-
-                resolve(window.$SensenComponentsTemplateCaches[this.$options.name]);
-
-                return;
-                
-            }
-
-            if( this.$templating === true ){
-
-
-                this.$options.template = (this.$options.template === true) 
-
-                    ? `${ this.$options.name }.html` : this.$options.template;
-        
-
-                if(typeof this.$options.template != 'string'){
-
-                    if(this.$options.element instanceof HTMLElement){
-    
-                        if('innerHTML' in this.$options.element){
-    
-                            window.$SensenComponentsTemplateCaches[this.$options.name] = this.$options.element.innerHTML;
-                    
-                            resolve(this.$options.element.innerHTML)
-    
-                            return;
-    
-                        }
-    
-                    }
-
-                    window.$SensenComponentsTemplateCaches[this.$options.name] = undefined;
-                    
-                    resolve(undefined);
-    
-                    return;
-                    
-                }
-    
-                else{
-    
-                    /**
-                     * Check 
-                     */
-                    const check = this.$options.template.match(/<\/?[^>]+>/gi);
-    
-    
-                    /**
-                     * If Template is String HTML code
-                     */
-                    if(check){ 
-                        
-                        window.$SensenComponentsTemplateCaches[this.$options.name] = this.$options.template;
-                    
-                        resolve(this.$options.template); 
-                        
-                        return; 
-
-                    }
-    
-    
-    
-                    /**
-                     * Else, it's file path
-                     */
-    
-                    const url = new URL(location.href)
-    
-                    const path = `${ url.origin }${ (url.pathname == '/') ? '' : url.pathname }/sensen/components/${ this.$options.template }`
-    
-
-                    if(window.$SensenComponentsTemplateCaches[ path ]){
-
-                        // resolve(window.$SensenComponentsTemplateCaches[ path ]);
-
-                        console.warn('FOund', path )
-        
-                        return;
-                        
-                    }
-        
-
-
-                    ComponentTemplateLoader.Get(path)
-                    
-                    // const f = fetch(path).then(d=>{ if(d.status == 404){ return undefined } return d.text() })
-                    
-                        .then(d=>{ if(d.status == 404){ return undefined } return d.text() })
-    
-                        .then(data=>{
-    
-                            window.$SensenComponentsTemplateCaches[path] = data;
-                    
-                            if(data){ resolve(data); }
-    
-                            else{ resolve(undefined); }
-                    
-                        })
-    
-                        .catch(er=>{ 
-
-                            window.$SensenComponentsTemplateCaches[path] = undefined;
-                    
-                            resolve(undefined); 
-                        
-                        })
-    
-                    ;
-        
-                    return;
-                    
-                }
-                
-    
-            }
-
-            else{
-
-                window.$SensenComponentsTemplateCaches[this.$options.name] = 0;
-                    
-                resolve(0)
-                
-            }
  
+ return _;
 
-            
-            
-        })
-        
-    }
+}
+
+
+
+CommonDirectives.Define({
+
+    name:'action',
+
+    type:'-attribute',
     
+    expression:'@',
     
-
-
-
-    /**
-     * Camouflage
-     */
-    #camouflage(){
-
-        this.$emitter?.listen<typeof this>('start', ()=>{
-
-            if(this.$options.element instanceof HTMLElement){
-
-                this.$options.element.style.display = 'none';
-
-            }
-            
-        })
-
-        this.$emitter?.listen<typeof this>('ready', ()=>{
-
-            if(this.$options.element instanceof HTMLElement){
-
-                // @ts-ignore
-                this.$options.element.style.display = null;
-
-            }
-            
-        })
-
-
-        return this;
-        
-    }
+    main: ({ component, record } : DirectiveCallBackInput)=>{
     
-
-
-
-    /**
-     * Initialize
-     */
-
-    $initialize(){
-
-        this.$initializeElement();
-
-        /** * Emit Event */
-        this.$emitter?.dispatch('start', this);
-
-        return this;
-        
-    }
-
-
-
-    $initializeElement(props?: TComponentOptions<State, Props, Methods>){
-
-        const $props = props || this.$options || null;
-
-        const self = this;
-
-
-        if($props){
-
-            // this.$tagName = `s-${ $props.name }`
-
+        if(component instanceof SensenElement && record){
 
             /**
-             * Find current Element sent
+             * HTMLElement Only
              */
-            if(this.$options.element){
-
-                if(typeof this.$options.element == 'string'){
-
-                    this.$options.element = document.querySelector(`${ this.$options.element }`) as SensenHTMLElement<Props>
+            if(record.node instanceof HTMLElement && component instanceof SensenElement){
+                
+                const alreadyKey = `directiveState${ record.directive?.expression }` as keyof HTMLElement;
+    
+                const args = Array.isArray(record.arguments) ? record.arguments : [];
+    
+    
+                /**
+                 * Evité les abus de définition
+                 */
+                if(record.node[ alreadyKey ]){ return ; }
+                
+                /**
+                 * Definition de l'évènement 
+                 */
+                record.node.addEventListener(`${ record.name }`, (ev: Event)=>{
                     
-                }
-                
-            }
-
-            
-            /**
-             * Define custom Element
-             */
-            if(this.$options.element instanceof HTMLElement){
-
-                this.$options.element?.setAttribute('is', `${ this.$tagName }`)
-
-            }
-            
-            if(!(this.$options.element instanceof HTMLElement)){
-
-                this.$options.element = document.createElement(`${ this.$tagName }`) as SensenHTMLElement<Props>
-
-            }
-
-
-            /** * Emit Event */
-            this.$emitter?.dispatch('elementReady', this);
-
-            
-        }
-
-
-        return this;
-        
-    }
-
-
-
-
-
-
-
-
-
-    /**
-     * DOM Observer
-     */
-    $observers(params?: TComponentObserversParams){
-
-        const $params : TComponentObserversParams = params || {} as TComponentObserversParams
-
-
-        $params.excludeTags = params?.excludeTags || []
-
-        // console.warn('Self Props', this.props)
-
-
-        if(this.$options.element instanceof HTMLElement){
-               
-            this.#mutationObserver = new MutationObserver((records)=>{
-
-                if(records){
-
-                    this.#mutationObserved = records
-
-                    const excludeTags = $params.excludeTags
-
-                    // const excludeTags = Object.keys(window.SensenAvailableComponents).map(k=>k.toLowerCase())
-
-
-                    records.forEach(record=>{
-
-
-
-                        if(record.type == 'characterData' || record.type == 'childList'){
-
+                    record.matches?.map(match=>{
+    
+                        const attrib = (
                             
-                            /**
-                             * Check Compilation
-                             */
-                            if(!isNodeCompilated(record.target)){
-        
-                                /** * Emit Event */
-                                this.$emitter?.dispatch('mutationObserved', record);
-        
-                                return;
-
-                            }
+                            ('attributes' in record.node) 
                             
-
-                            /**
-                             * Compilate : SensenHTMLElement
-                             */
-                            else if(record.target instanceof SensenHTMLElement){
-
-                                if(record.target.$controller instanceof ComponentController){
-
-                                    record.target.$controller.$compilate(record.target);
+                            ? record.node.getAttribute(match?.input||'')
             
-                                    /** * Emit Event */
-                                    this.$emitter?.dispatch('mutationObserved', record);
+                            : ''
             
-                                    return;
-
-                                }
-
-                            }
-
-                            /**
-                             * Compilate : Embebeded Component
-                             */
-                            else if(record.target instanceof HTMLElement){
-
-                                this.$compilate(record.target)
-                                        
-                                /** * Emit Event */
-                                this.$emitter?.dispatch('mutationObserved', record);
+                        )?.trim();
         
-                                return;
-                            }
-
-                            /**
-                             * Compilate : Another
-                             */
-                            else{
-
-                            }
-                        
-                        }
-
-                        else{
     
-                            /** * Emit Event */
-                            this.$emitter?.dispatch('mutationObserved', record);
+                        CommonDirectives.parseArguments({
     
-                        }
-
-
-                        // if(excludeTags?.length){
-
-                        //     if(record.target instanceof SensenHTMLElement){
-
-                        //         if(excludeTags.indexOf( record.target.tagName.toLowerCase() ) > - 1){
-
-                        //             return;
-                                    
-                        //         }
-
-                        //     }
-                            
-                            
-                        // }
-
-                    
-
-                        // if(record.type == 'attributes'){
-                                    
-
-                        //     if(record.attributeName && this.$options.element instanceof HTMLElement){
-
-                                // if(record.attributeName in this.props){
-
-                                //     const key = record.attributeName as keyof Props
-
-                                //     const value = this.$options.element.getAttribute(record.attributeName)
-
-                                //     // @ts-ignore
-                                //     this.props[ key ] = value;
-
-                                //     if(this.$options.element instanceof SensenHTMLElement){
-
-                                //         this.$options.element.props[ key ] = SetDataLikeType(value) as Props[ typeof key ];
-
-                                //     }
-
+                            args,
+    
+                            component,
+    
+                            record,
+    
+                            event : ev,
+    
+                        });
             
-                                //     /** * Emit Event */
-                                //     this.$emitter?.dispatch('propsChanged', {
-                                //         name: record.attributeName,
-                                //         value,
-                                //         oldValue: record.oldValue
-                                //     });
 
-                                // }
-                                
-                        //     }
-
-                            
-                        // }
-
-                        
-
-                    })
-                    
-                    /** * Emit Event */
-                    this.$emitter?.dispatch('mutationsObserved', records);
-
-                }
-    
-                
-            })
-
-    
-            this.#mutationObserver.observe(this.$options.element,{
-                
-                childList: true,
-                
-                subtree: true,
-                
-                attributes: true,
-
-                characterData: true,
-
-                // characterDataOldValue: true,
-
-                // attributeOldValue: true,
-
-                attributeFilter: Object.keys(this.props)
-
-            })
+                        // if(args.indexOf('prevent') > -1){ ev.preventDefault() }
+            
+                        // if(args.indexOf('stop') > -1){ ev.stopPropagation() }
             
             
-            /** * Emit Event */
-            this.$emitter?.dispatch('mutationObservationReady', this.#mutationObserver);
-
-        }
-
-
-
-
-        return this;
-        
-    }
-    
-
-
-
-
-
-
-    hydratesState(slot: keyof State){
-
-        const store = this.#hydrates?.$state.retrieve( slot )
-
-        
-        if(store?.length){
-            
-            store.map(record=>{
-                
-                this.#hydrates?.hydratesRecord(record)
-
-                    .then((data)=>{
-        
-                        /** * Emit Event */
-                        this.$emitter?.dispatch('stateHydrated', {record, data});
-        
-                    })
-                
-            })
-            
-        }
-
-
-        return this;
-        
-    }
-
-
-
-
-
-
-
-    /**
-     * Compilate transactions
-     */
-    $compilate(node?: HTMLElement){
-
-        const $element : string | HTMLElement | undefined | null = node || this.$options.element;
-
-
-
-        if($element instanceof HTMLElement){
-
-
-            if($element.children.length){
-
-                
-                Object.values($element.children).forEach(child=>{
-
-        
-                    FindExpressions(child as HTMLElement, (record)=>{
-        
-                        this.#pending++;
-                        
-    
-                        if(record.node instanceof HTMLElement){
-    
-                            // @ts-ignore
-                            record.node.$parentComponent = this;
-                            
-                            if(record.node instanceof SensenHTMLElement){ 
-
-                                // console.warn('Stop $Compilate', record)
-                                
-                                // return; 
-                            
-                            }
-        
-                        }
-    
-    
-
                         /**
-                         * Find State to auto-compilate
+                         * Check Component methods
                          */
-        
-                        if(typeof this.state == 'object'){
-        
-                            const value = record.mockup?.textContent;
-        
+                        const isMethod = attrib?.indexOf(`this.methods.`) == 0;
+    
+                        // const isRouter = attrib?.indexOf(`$router.`) == 0;
+                        
+                        const _event = CreateComponentMethodEvent<typeof component.$state>(component, ev)
+            
+            
+            
+                        if(isMethod && component.$methods){
+            
+                            const method = component.$methods[ 
+                                
+                                attrib.substring((`this.methods.`).length) 
                             
-                            const sMatches = [
-        
-                                ...(value||'').matchAll(new RegExp(`(${ Object.keys(this.state).join('|') })`, 'g')),
-        
-                                ...(value||'').matchAll(new RegExp(`this\\.state\\.(${ Object.keys(this.state).join(')|this\\.state\\.(') })`, 'g')),
-        
-                                // ...(value||'').matchAll(new RegExp(`this\\.props\\.${ Object.keys(this.props).join('|this\\.props\\.') }`, 'g')),
-        
-                            ]
-        
-        
-                            if(sMatches.length){
-        
-                                sMatches.map(match=>{
-        
-                                    const recordClone = Object.assign({}, record)
-        
-                                    const purge = match.filter(v=>v!=undefined)
-        
-                                    const slot = purge[1] as keyof State
-        
-                                    // @ts-ignore
-                                    purge.input = match.input
-        
-                                    recordClone.match = purge;
-        
-                                    this.#hydrates?.$state.push(slot, recordClone)
-                                    
-                                })
+                            ];
+                            
+                            /** * Check is transaction function */
+                            if(typeof method == 'function'){
+                                
+                                method.apply(component.$state, [_event])
                                 
                             }
-        
+                            
                         }
-        
-
-        
-                        /** * Emit Event */
-                        this.$emitter?.dispatch('expressionDetected', record);
-        
-                    })
-        
-                    
-                    
-                })
-                
-                
-            }
-            
-            
-
-
-            /**
-             * No Expression detected
-             */
-
-            // if(!found.length){
-
-            //     this.#checkCompilatedDone([]);
-                
-            // }
-            
-            
-        }
-
-        /** * Emit Event */
-        this.$emitter?.dispatch('compilationReady', this);
-
-        return this;
-        
-    }
-
-
-
-
-
-
-    #checkCompilatedDone(lot: (ExpressionRecord | undefined)[]){
-
-        if(this.#pending == this.#completed){
     
-            /** * Emit Event */
-            this.$emitter?.dispatch('compilated', lot);
-
-            if(!this.isReady){ 
-                
-                this.isReady = true; 
-                
-                /** * Emit Event */
-                this.$emitter?.dispatch('ready', this);
     
-            }
-
-            
-        }
-
-        return this;
-
-    }
-
-
-
-
-
-
-    /**
-     * Emitting
-     */
-    $emitting(){
-
-
-        /**
-         * Model : Begin
-         */
-
-        this.$emitter?.listen<typeof this>('elementReady', (args)=>{
-            
-        })
-
-        /**
-         * Model : End
-         */
-
-
-
-        /**
-         * Mutations Observers : Begin
-         */
-
-        this.$emitter?.listen<MutationObserver>('mutationObservationReady', (args)=>{
-
-            // console.warn('Mutation Observed', args)
-            
-        })
-
-
-        this.$emitter?.listen<MutationRecord>('mutationObserved', (args)=>{
-
-            // if(args.emit.target){
-
-                // this.#hydrates?.hydratesNode(args.emit.target)
-
-            // }
-
-        })
-
-        this.$emitter?.listen('mutationsObserved', (args)=>{
-
-            // console.warn('Mutations Observed', args)
-            
-        })
-
-        /**
-         * Mutations Observers : End
-         */
-
-
-
-
-
-
-        /**
-         * Compilate Record : Begin
-         */
-
-        this.$emitter?.listen<ExpressionRecord>('expressionDetected', ($)=>{
-
-            const promised: (Promise<ExpressionRecord> | undefined)[] = []
-
-            
-            // console.warn('ChildNode', $); debugger;
-        
-
-            if($.emit){
-
-                if($.emit.type == 'echo'){
-
-                    promised.push(CompilateEcho(this, $.emit))
-    
-                }
-
-                else if($.emit.type == 'snapcode'){
-
-                    promised.push(CompilateSnapCode(this, $.emit))
-    
-                }
-
-                else if($.emit.type == 'attribute.echo'){
-
-                    promised.push(CompilateEchoAttributes(this, $.emit))
-    
-                }
-
-                else if($.emit.type == 'attribute.snapcode'){
-
-                    promised.push(CompilateSnapCodeAttributes(this, $.emit))
-    
-                }
-
-                else if($.emit.type == 'directive'){
-
-                    promised.push(
-
-                        new Promise<ExpressionRecord>((r,j)=>{
-
-                            if(!('directive' in $.emit)){
-                                throw (`Corrupted directive : not found`);
-                            }
-
-                            if(typeof $.emit.directive?.main != 'function'){
-                                throw (`Corrupted directive : < ${ $.emit.directive?.name } >`);
-                            }
-    
-                            $.emit.directive.main(this, $.emit)
-                           
-                            r($.emit)
-        
-                        })
-
-                    )
-    
-                }
-    
-            }
-
-
-            if(promised.length){
-
-                Promise.all(promised)
-
-                    .then(lot=>{
-        
-                        this.#completed++;
-
-                        // console.warn('Compilated', lot)
-
-                        this.#checkCompilatedDone(lot);
-
-                    })
-    
-                ;
-                
-    
-            }
-
-            if(!promised.length){
-
-                this.#checkCompilatedDone([]);
-                
-            }
-            
-        })
-
-        this.$emitter?.listen<typeof this>('compilate', (args)=>{
-
-            // console.warn('Expression Recorded', args.emit)
-            
-        })
-
-
-        /**
-         * Compilate Record : End
-         */
-
-
-
-
-
-
-        /**
-         * Custom Emitter Listener : Begin
-         */
-
-        if(this.$options.emit){
-
-            Object.entries(this.$options.emit).map(e=>{
-
-                if(typeof e[1] == 'function'){
-
-                    const self = this;
-
-                    this.$emitter?.listen(e[0], function(){ 
+                        else{
+
+                            SensenRender<SensenElementState>(
+                                
+                                `<${ SyntaxDelimiter } ${ attrib } ${ SyntaxDelimiter }>`, 
+                                
+                                component, component
+                                
+                            )
+                            
+                        }
                         
-                        // @ts-ignore
-                        e[1].apply(this, [arguments[0]]) 
-                    
+            
+                        // else{
+            
+                        //     if(typeof attrib == 'string' && attrib in window){
+            
+    
+                        //         const fn = (window[attrib as keyof Window] || (()=>{})) as Function
+            
+                        //         if(typeof fn == 'function'){
+                                    
+                        //             fn.apply(window, [_event])
+            
+                        //         }
+                                
+                        //     }
+                            
+                        // }
+    
                     })
                     
-                }
-                
-            })
-            
-        }
-
-        /**
-         * Custom Emitter Listener : End
-         */
-
-
-
-
-        return this;
-
-    }
-
+                }, args.indexOf('capture') > -1 ? true : false)
+        
     
     
+                // @ts-ignore
+                record.node[ alreadyKey ] = true;
     
-}
-
-
-
-
-
-
-
-
-
-/**
- * Sensen Component
- */
-
-export class Component<
-
-    State extends ComponentState, 
     
-    Props extends ComponentProps,
-    
-    Methods extends ComponentMethodRaw<State, Props>
-    
->{
-
-    $tagName : string = '';
-
-    $options : TComponentOptions<State, Props, Methods> = {} as TComponentOptions<State, Props, Methods>
-
-    $klass? : CustomElementConstructor;
-    
-
-    $appearance : SensenAppearance;
-
-
-    /**
-     * New Construct
-     */
-     constructor(options: TComponentOptions<State, Props, Methods>){
-
-        this.$options = options;
-
-        this.$options.appearance = this.$options.appearance || {} as TAppearanceProps
-        
-        this.$appearance = new SensenAppearance(this.$options.appearance)
-        
-        this.$tagName = `sense-${ this.$options.name }`;
-
-        
-        this.$appearance.mount()
-
-        this.$create();
-
-    }
-
-
-
-
-    $create(){
-
-
-        if(!customElements.get(this.$tagName)){
-
-            const self = this;
-
-
-            this.$klass = class extends SensenHTMLElement<Props>{
-
-
-                $controller: ComponentController<State, Props, Methods> = {} as ComponentController<State, Props, Methods>
-
-    
-                constructor(props: Props){
-    
-                    super(props);
-
-
-                    this.props = {} as Props
-
-                    this.$initialize()
-
-                    /** * Emit Event */
-                    this.$controller.$emitter?.dispatch('construct', this.$controller);
-
-                }
-                
-        
-                $initialize(){
-        
-                    const $options = Object.assign({}, self.$options)
-                    
-                    
-                    $options.element = this;
-
-
-                    this.$controller = new ComponentController<State, Props, Methods>($options)
-
-
-    
-                    /** * Emit Event */
-                    this.$controller.$emitter?.dispatch('connected', this.$controller);
-
-
-                    /**
-                     * Set Appearance
-                     */
-                    this.classList.add(self.$appearance.$UiD)
-                    
-                    
-                    return this;
-                    
-                }
-
-
-
-    
-                connectedCallback(){
-        
-                    /** * Emit Event */
-                    this.$controller.$emitter?.dispatch('connected', this.$controller);
-                    
-                }
-        
-        
-                adoptedCallback(){
-        
-                    /** * Emit Event */
-                    this.$controller.$emitter?.dispatch('adopted', this.$controller);
-                    
-                }
-        
-        
-                disconnectedCallback(){
-
-                    /** * Emit Event */
-                    this.$controller.$emitter?.dispatch('disconnected', this.$controller);
-                    
-                }
-        
-        
-                attributeChangedCallback(name: string, value:string, oldValue:string){
-
-                    console.log('Props changed', name, value, oldValue)
-        
-                    /** * Emit Event */
-                    this.$controller.$emitter?.dispatch('nPropsChanged', { name, value, oldValue });
-                    
-                }
-        
-                
             }
-    
-    
-
-            window.SensenAvailableComponents[ this.$tagName ] = this.$klass;
-    
-            customElements.define(this.$tagName.toLowerCase(), this.$klass )
-    
             
         }
-
-
-        return this;
-        
-    }
-    
-    
-
-
-    use(){
-
-        return this;
-        
-    }
-
-
-
-
-
-}
-
-
-
-
-
-
-/**
- * Utilities
- */
-window.$SensenComponentsTemplateCaches = window.$SensenComponentsTemplateCaches || {}
-
-window.$SensenComponentsTemplateLoader = window.$SensenComponentsTemplateLoader || {}
-
-
-export class ComponentTemplateLoader{
-
-    static Get(path: string){
-
-        if(typeof window.$SensenComponentsTemplateLoader[path] == 'undefined'){
-
-            window.$SensenComponentsTemplateLoader[path] = fetch(path);
-
-            return window.$SensenComponentsTemplateLoader[path]
             
-        }
-        
-        else{
-            
-            return window.$SensenComponentsTemplateLoader[path]
-
-        }
-
-        
-    }
     
-}
-
-
-
-
-
-
-/**
- * Exportations
- */
-
- export default class Sensen {
-
-    static Component = Component;
-
-
-
-
-    static Main(data: any){
-
-        switch( typeof data ){
-
-            case 'object':
-
-                if(data instanceof SensenHTMLElement){
-
-                    document.body.insertBefore( data, document.body.firstChild );
-                    
-                }
-
-            break;
-            
-        }
-
-
-        return this;
-        
-    }
+    },
     
-}
 
+})
 

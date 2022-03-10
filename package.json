@@ -1,6 +1,7 @@
 {
   "name": "sensen-jutsu",
-  "version": "0.0.63",
+  "version": "0.0.64",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "prepare": "yarn version",
@@ -10,13 +11,8 @@
     "serve": "npx webpack serve --hot --config webpack.config.js ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Yannick GOBOU",
+  "author": "",
   "license": "ISC",
-  "browser": {
-    "fs": false,
-    "path": false,
-    "os": false
-  },
   "devDependencies": {
     "@babel/core": "^7.17.2",
     "@babel/preset-env": "^7.16.11",
@@ -35,9 +31,5 @@
   "dependencies": {
     "@types/ejs": "^3.1.0",
     "ejs": "^3.1.6"
-  },
-  "directories": {
-    "lib": "lib"
-  },
-  "description": ""
+  }
 }

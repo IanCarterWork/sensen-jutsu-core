@@ -1,6 +1,3 @@
-import { MetricTAlphaL, MetricTAlphaNum, MetricTAlphaNumL, MetricTAlphaNumU, MetricTAlphaU, MetricTNum } from "./index";
-
-
 
 
 export class SensenMetricRandom{

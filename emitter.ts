@@ -1,55 +1,4 @@
 
-
-/**
- * Type
- */
-
-export type SensenEmitterType = string
-
-export type SensenEmitterArguments<T> = {
-    
-    emit: T;
-    
-    type : string;
-    
-}
-
-export type SensenEmitterCallback<T> = ((arg: SensenEmitterArguments<T>) => Promise< T | SensenEmitterArguments<T> > | boolean | void)
-
-export type SensenEmitterError = {
-    code: number;
-    message: string;
-}
-
-export type SensenEmitterErrorCallback = ((arg: SensenEmitterError) => void)
-
-export type SensenEmitterEntries = {
-
-    [K: SensenEmitterType] : SensenEmitterCallback<any>[] 
-
-}
-
-export type EmitterDispatcherProps<T> = {
-        
-    instance : SensenEmitter, 
-    
-    type : SensenEmitterType, 
-    
-    args: any,
-    
-    callback: SensenEmitterCallback<T>,
-    
-    resolve? : SensenEmitterCallback<T>,
-    
-    reject? : (err : SensenEmitterErrorCallback ) => void,
-
-}
-
-
-
-
-
-
 /**
  * Sensen Event Emitter Response
  */
@@ -61,13 +10,10 @@ export function EmitterResponse<T>(type: string, emit: any) : SensenEmitterArgum
 
 
 
-
-
-
 /**
  * Sensen Event Emitter
  */
- export class SensenEmitter{
+ export class SensenEmitter implements ISensenEmitter{
 
 
     entries: SensenEmitterEntries
@@ -76,13 +22,9 @@ export function EmitterResponse<T>(type: string, emit: any) : SensenEmitterArgum
 
     dispatcher: SensenEmitterType[]
 
-
     returned?: any
      
 
-
-
-    
 
     constructor(){
 

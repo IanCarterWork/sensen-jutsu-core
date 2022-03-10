@@ -1,9 +1,3 @@
-./exemple
-./webpack.config.js
-./public
-./vscode
-./exemple.ts
-./exemple.d.ts
-./exemple.js
-./exemple.js.map
-./libs
+./sandbox
+./sandbox-build
+.DS_Store

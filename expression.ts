@@ -1,127 +1,8 @@
-import { TDirectiveAttributes } from "./directive";
-import { NativeDirectiveAttributes } from "./directive.native";
-import { SensenHTMLElement } from "./index";
-import { ExpressionRecord, ParseSnapCodeBlock } from "./index.t";
+import { CommonDirectives } from "./directive";
+import { SensenElement } from "./index";
+import { SyntaxDelimiter, SyntaxEcho, SyntaxSnapCode } from "./render";
 import { ArrayRange } from "./utilities";
 
-
-/**
- * Expressions
- */
-
-
-
-
-export const SyntaxEcho = new RegExp('{{(.*?)}}', 'g')
-
-export const SyntaxSnapCode = new RegExp('{%(.*?)%}', 'g')
-
-export const SyDetr = '%sn'
-
-
-export const SyntaxEchoReverse = new RegExp(`\<${ SyDetr }=(.*?)${ SyDetr }\>`, 'g')
-
-
-
-export const DirectiveAttributes = NativeDirectiveAttributes
-
-
-
-
-/**
- * Stabilize Echo Expression
- */
-
-export function StabilizeEchoExpression(content: string | null, stop?: boolean){
-
-    const echos = [...(content||'').matchAll(SyntaxEcho)]
-     
-    if(echos.length){
-        
-        echos.map(m=>{
-            
-            content = (content||'').replace(
-                new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
-                `<${SyDetr}=${ m[1] } ${SyDetr}>` 
-            )
-                
-        })
-            
-    }
-
-    else{ if(stop){ return null; } }
-
-    return content;
-
-}
-
-export function UnStabilizeEchoExpression(content: string | null, stop?: boolean){
-
-    const echos = [...(content||'').matchAll(SyntaxEchoReverse)]
-     
-    if(echos.length){
-        
-        echos.map(m=>{
-            
-            content = (content||'').replace(
-                new RegExp( `${ m[0] }` , 'g' ), 
-                `{{${ m[1] }}}`
-            )
-                
-        })
-            
-    }
-
-    else{ if(stop){ return null; } }
-
-    return content;
-
-}
-
-
-
-
-/**
- * Stabilize SnapCode Expression
- */
-export function StabilizeSnapCodeExpression(content: string | null, stop?: boolean){
-
-    const echos = [...(content||'').matchAll(SyntaxSnapCode)]
-     
-    if(echos.length){
-        
-        echos.map(m=>{
-            
-            content = (content||'').replace(
-                new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
-                `<${SyDetr}${ m[1] } ${SyDetr}>` 
-            )
-                
-        })
-            
-    }
-
-    else{ if(stop){ return null; } }
-
-    return content;
-
-}
-
-
-
-
-
-export function CreateExpressionRecord(state: ExpressionRecord) : ExpressionRecord{
-
-    if((state.node instanceof HTMLElement || state.node instanceof Node) && !state.mockup){
-
-        state.mockup = state.node.cloneNode(true)
-
-    }
-
-    return state
-
-}
 
 
 
@@ -131,7 +12,39 @@ export function CreateExpressionRecord(state: ExpressionRecord) : ExpressionReco
  * Test node compilation
  */
 
-export function isNodeCompilated(node : Node | Element){
+ export function isCompilableContent(content : any){
+    
+    content = `${ content }`
+    
+    /**
+     * Check SnapCode Expression
+     */
+    if(content?.match(SyntaxSnapCode)){
+
+        return true;
+        
+    }
+
+    /**
+     * Check Echo Expression
+     */
+    else if(content?.match(SyntaxEcho)){
+
+        return true;
+        
+    }
+
+    return false;
+
+}
+
+
+
+/**
+ * Test node compilation
+ */
+
+ export function isCompilable(node : Node | Element){
 
     const content = node.textContent;
 
@@ -157,468 +70,337 @@ export function isNodeCompilated(node : Node | Element){
     /**
      * Check Directive Expression
      */
-    else{
+//     else{
 
-        const availables = window.GlobalDirectiveAttributes.Availables as TDirectiveAttributes
+//         const availables = CommonDirectives.Availables as TDirectives
 
-        let found = false;
-
-
-        if(availables){
+//         let found = false;
 
 
-            if(!(node instanceof HTMLElement)){
+//         if(availables){
 
-                Object.values(availables).map(directive=>{
 
-                    if(!found && directive.expression && content?.match(directive.expression)){
+//             // if(!(node instanceof HTMLElement)){
+
+//             //     Object.values(availables).map(directive=>{
+
+//             //         if(!found && directive.expression && content?.match(directive.expression)){
     
-                        found = true;
+//             //             found = true;
+                        
+//             //         }
+                    
+//             //     })
+                
+//             // }
+// /* 
+//             else{
+
+//                 const children = node.querySelectorAll('*');
+
+//                 if(children.length){
+
+//                     children.forEach(child=>{
+
+//                         if(found){ return;}
+
+//                         Object.values(child.attributes).map(attribute=>{
+
+//                             if(found){ return;}
+         
+//                             Object.values(availables)
+
+//                             .filter(directive=>directive.type == '-attribute')
+                            
+//                             .map(directive=>{
+            
+//                                 if(
+
+//                                     !found && 
+                                    
+//                                     directive.expression && 
+                                    
+//                                     attribute.name.match(directive.expression)
+                                    
+//                                 ){
+                
+//                                     found = true;
+                                    
+//                                 }
+                                
+//                             })
+                            
+//                         })
+                        
+//                     })
+                    
+//                 }
+                
+                
+//             }
+//              */
+
+//         }
+        
+
+//         return found;
+        
+//     }
+    
+    
+
+    return false;
+    
+}
+
+
+
+
+
+export function StabilizeEchoExpression(content: string | null, stop?: boolean){
+
+    const echos = [...(content||'').matchAll(SyntaxEcho)]
+     
+    if(echos.length){
+        
+        echos.map(m=>{
+            
+            content = (content||'').replace(
+          
+                new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
+          
+                `<${ SyntaxDelimiter }=${ m[1] } ${ SyntaxDelimiter }>` 
+
+            )
+                
+        })
+            
+    }
+
+    else{ if(stop){ return null; } }
+
+    return content;
+
+}
+
+export function StabilizeSnapCodeExpression(content: string | null, stop?: boolean){
+
+    const echos = [...(content||'').matchAll( SyntaxSnapCode )]
+     
+    if(echos.length){
+        
+        echos.map(m=>{
+            
+            content = (content||'').replace(
+                
+                new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
+                
+                `<${ SyntaxDelimiter }${ m[1] } ${ SyntaxDelimiter }>` 
+
+            )
+                
+        })
+            
+    }
+
+    else{ if(stop){ return null; } }
+
+    return content;
+
+}
+
+
+
+
+
+
+
+export function FindAttributesExpression(
+
+    element: HTMLElement,
+
+    callback: (record : ExpressionRecord) => void,
+    
+){
+
+    let found : ChildNode[] = [];
+
+
+    if(element.attributes.length){
+
+        Object.values(element.attributes).map(att=>{
+
+            /**
+             * Find Directive
+             */
+            
+                Object.values(CommonDirectives.Availables||{})
+
+                .filter(directive=>directive.type == '-attribute')
+        
+                .map(directive=>{ 
+
+                    const matches = [...att.name.matchAll(new RegExp(`^${ directive.expression }`, 'gi'))]
+
+                    if(matches.length){
+
+                        const split = att.name?.substring((directive.expression||'')?.length).split('.')
+
+                        callback({
+                            node: element,
+                            name: split[0],
+                            directive,
+                            matches,
+                            attribute: att,
+                            type: 'directive',
+                            mockup: att.cloneNode(true),
+                            arguments: ArrayRange<string>(split, 1)
+                        })
                         
                     }
                     
                 })
+ 
+            if(
+                att.value?.match(SyntaxSnapCode) ||
+
+                att.value?.match(SyntaxEcho) 
+
+            ){
+
+                callback({
+                    type: 'attribute',
+                    node: element,
+                    attribute: att,
+                    mockup: att.cloneNode(true),
+                    matches: [
+                        ...att.value?.matchAll(SyntaxSnapCode),
+                        ...att.value?.matchAll(SyntaxEcho),
+                    ]
+                })
+                
+                found[ found.length ] = element;
+
+            }
+            
+        })
+
+    }
+
+    return found;
+    
+}
+
+
+
+
+
+export function FindGlobalExpressions(
+
+    element: HTMLElement,
+
+    callback: (record : ExpressionRecord) => void,
+    
+){
+
+    const children = element.childNodes;
+
+    let found : ChildNode[] = [...FindAttributesExpression(element, callback)]
+
+    
+
+    if(children.length){
+
+        for (let x = 0; x < children.length; x++) {
+
+            const child = children[x];
+            
+
+            if(child instanceof SensenElement){
+
+                // console.log('Find Application', child, child.$application )
                 
             }
 
             else{
 
-                const children = node.querySelectorAll('*');
+                /**
+                 * Recherche une balise
+                 */
 
-                if(children.length){
 
-                    children.forEach(child=>{
+                if(child instanceof Text){
 
-                        if(found){ return;}
+                    if(child.textContent?.match(SyntaxSnapCode)){
 
-                        Object.values(child.attributes).map(attribute=>{
-
-                            if(found){ return;}
-         
-                            Object.values(availables).map(directive=>{
-            
-                                if(
-                                    
-                                    !found && 
-                                    
-                                    directive.expression && 
-                                    
-                                    attribute.name.match(directive.expression)
-                                    
-                                ){
-                
-                                    found = true;
-                                    
-                                }
-                                
-                            })
-                            
+                        callback({
+                            type:'snapcode',
+                            node: child,
+                            mockup: child.cloneNode(true),
+                            matches: [...child.textContent?.matchAll(SyntaxSnapCode)]
                         })
                         
-                    })
-                    
-                }
-                
-                
-            }
-            
+                        found[ found.length ] = child;
 
-        }
-        
-
-        return found;
-        
-    }
-    
-    
-}
-
-
-
-
-
-/**
- * Parse Attributes
- */
-export function ParseAttributesExpression(node: HTMLElement, callback: (record: ExpressionRecord) => void ){
-
-
-    callback = typeof callback == 'function' ? callback : (()=>{});
-
-
-    
-    if(node.attributes){
-        
-        if(node.attributes.length){
-    
-            Object.values(node.attributes).map(attribute=>{
-    
-                /**
-                 * Find Directive
-                 */
-                
-                Object.values(NativeDirectiveAttributes.Availables||{})
-            
-                .map(directive=>{ 
-
-                    const matches = [...attribute.name.matchAll(new RegExp(`^${ directive.expression }`, 'gi'))]
-
-                    if(matches.length){
-
-                        matches.forEach(match=>{
-
-                            const split = attribute.name?.substring((directive.expression||'')?.length).split('.')
-
-                            const name = split[0]
-
-
-                            const record = CreateExpressionRecord({
-                                node,
-                                directive,
-                                match,
-                                name,
-                                type: 'directive',
-                                mockup: attribute,
-                                arguments: ArrayRange<string>(split, 1)
-                            })
-    
-                            callback(record)
-                            
-                        })
+                        continue;
+                        
                         
                     }
                     
-                })
+                    else if(child.textContent?.match(SyntaxEcho)){
 
-
-
-                /**
-                 * Find Echo
-                 */
-                const matchesEcho = [...attribute.value.matchAll(SyntaxEcho)];
-
-                if(matchesEcho.length){
-
-                    matchesEcho.forEach(match=>{
-
-                        const record = CreateExpressionRecord({
-                            node,
-                            attribute,
-                            match,
-                            type: 'attribute.echo',
-                            mockup: attribute
+                        callback({
+                            type:'echo',
+                            node: child,
+                            mockup: child.cloneNode(true),
+                            matches: [...child.textContent?.matchAll(SyntaxEcho)]
                         })
 
-                        callback(record)
+                        found[ found.length ] = child;
 
-                    })
-                    
-                }
-                
-
-
-
-                /**
-                 * Find SnapCode
-                 */
-                const matchesSnapCode = [...attribute.value.matchAll(SyntaxSnapCode)];
-
-                if(matchesSnapCode.length){
-
-                    matchesSnapCode.forEach(match=>{
-
-                        const record = CreateExpressionRecord({
-                            node,
-                            attribute,
-                            match,
-                            type: 'attribute.snapcode',
-                            mockup: attribute
-                        })
-
-                        callback(record)
-
-                    })
-                    
-                }
-
-
-                
-            })
-    
-    
-        }
-
-    }
-    
-    
-    return ParseAttributesExpression;
-    
-}
-
-
-
-/**
- * Parse Echo Expression
- */
-export function ParseEchoExpression(node: HTMLElement, callback: (record: ExpressionRecord) => void ){
-
-    callback = typeof callback == 'function' ? callback : (()=>{});
-
-    const content = (node instanceof Text) 
-        ? node.textContent 
-        : (node instanceof HTMLElement ? node.innerHTML : null);
-
-    
-    let found = false
-
-
-    if(content){
-
-        const matches = [...content?.matchAll(SyntaxEcho)]
-
-        if(matches.length){
-
-            found = true;
-
-            matches.forEach(match=>{
-
-                const record = CreateExpressionRecord({
-                    node,
-                    name: (match[1]||'').trim(),
-                    type: 'echo',
-                    echo: content,
-                    match
-                })
-    
-                callback(record)
-                
-            })
-
-            // console.log('Parse Echo', record)
-
-        }
-        
-    }
-
-    return found;
-
-}
-
-
-
-
-/**
- * Parse SnapCode Expression
- */
-export function ParseSnapCodeExpression(node: HTMLElement, callback: (record: ExpressionRecord) => void ){
-
-    callback = typeof callback == 'function' ? callback : (()=>{});
-
-    let found = false;
-
-
-    if(node.childNodes.length){
-
-        const record = CreateExpressionRecord({
-            node,
-            type: 'snapcode',
-            snapcode: []
-        })
-
-        node.childNodes.forEach(child=>{
-
-
-            const m: ParseSnapCodeBlock[] = []
-
-            if(child instanceof Text){
-
-                if(child.textContent){
-    
-                    const matches = [...child.textContent.matchAll(SyntaxSnapCode)];
-    
-                    if(matches.length){
-    
-                        // console.log('Text subChild', child)
-                            
-                        m.push( { node: child, matches } )
-
-                        // record.snapcode?.push( { node: child, matches } )
-    
+                        continue;
+                        
                     }
-    
+
+                    
                 }
-
-            }
-
-            if(child instanceof HTMLElement){
-
-                ParseAttributesExpression(child as HTMLElement, callback)
                 
-                if(child instanceof HTMLElement){
+                else if(child instanceof HTMLElement){
 
-                    const children = child.querySelectorAll('*')
+                    if(child.innerHTML?.match(SyntaxSnapCode)){
 
-                    if(children.length){
-
-                        children.forEach(subChild=>{
-
-                            // console.log('subChild', subChild)
-                            FindExpressions(subChild as HTMLElement, callback)
-                            
+                        callback({
+                            type:'snapcode',
+                            node: child,
+                            mockup: child.cloneNode(true),
+                            matches: [...child.innerHTML?.matchAll(SyntaxSnapCode)]
                         })
                         
+                        found[ found.length ] = child;
+                        
+                        continue;
+
                     }
 
                     else{
 
-                        // console.log('NO subChild', child)
-                        FindExpressions(child as HTMLElement, callback)
-                            
-                    }
-                    
-                }
-                
-                // FindExpressions(child as HTMLElement, callback)
-                // ParseAttributesExpression(child as HTMLElement, callback)
-                
-            }
-
-
-
-            if(m.length){
-
-                record.snapcode = m;
-
-                callback(record)
-                
-            }
-        
-        })
-        
-
-        if(record.snapcode){
-
-            if(record.snapcode.length){
-    
-                found = true;
-    
-                
-            }
-            
-        }
-
-
-        
-    }
-    
-
-    return found;
-
-}
-
-
-export function FindExpressions(
-    
-    node: HTMLElement, 
-    
-    callback: (record: ExpressionRecord) => void, 
-    
-    // errorCallback?: (reason: any) => void
-    
-){
-
-    const nodes = node.childNodes;
-
-    const recorder: ExpressionRecord[] = []
-    
-
-    /**
-     * Parse Node Attributes
-     */
-    ParseAttributesExpression(node, callback)
-    
-
-
-    /**
-     * ReCallBack
-     */
-
-    const reCallback = (record: ExpressionRecord)=>{
-
-        recorder.push(record)
-
-        callback(record)
-        
-    }
-    
-
-
-
-    /**
-     * Find
-     */
-    if(nodes.length){
-        
-        nodes.forEach(child=>{
-
-
-            /** * Find SnapCode */
-            const snapcode = ParseSnapCodeExpression(child as HTMLElement, reCallback);
-
-
-            /** * Find Deep */
-            if(!snapcode){
-
-                FindExpressions(child as HTMLElement, reCallback)
-    
-            }
-
-
-            else{
-
-                // FindExpressions(child as HTMLElement, reCallback)
-
-                if(child instanceof HTMLElement){
-
-                    const children = child.querySelectorAll('*')
-
-                    ParseAttributesExpression(child, callback)
-    
-                    if(children.length){
-
-                        child.childNodes.forEach(subChild=>{
-
-                            // FindExpressions(subChild as HTMLElement, reCallback)
-    
-                            // console.warn('Stop Find on', subChild, child)
-
-                        })
+                        found = [...found, ...FindGlobalExpressions(child, callback)]
                         
                     }
                     
                 }
                 
-                
+
             }
-            
 
-        
-        })
-        
-    }
+        }
 
-
-    if(!nodes.length){
-
-        /**
-         * Find Echo
-         */
-        ParseEchoExpression(node, reCallback)
-        
         
     }
     
-    return recorder;
+
+    return found
+    
     
 }
 
@@ -629,9 +411,106 @@ export function FindExpressions(
 
 
 
+export function FindStateData<
+
+    State extends SensenElementState,
+    
+>(
+
+    component: SensenElement<State>,
+
+    record: ExpressionRecord
+    
+){
 
 
+    if( component.$controller ){
 
 
+        let inner: string | null = ''
+    
+    
+        if(record.type == 'echo' || record.type == 'snapcode'){
+    
+            inner = (record.mockup instanceof Text)
+    
+                ? record.mockup.textContent
+    
+                : (
+    
+                    record.node instanceof HTMLElement 
+    
+                    ? record.node.innerHTML
+    
+                    : ''
+                    
+                )
+            
+        }
+    
+    
+        // console.log("To detect", component.$controller?.state)
+    
+        const matches = [
+            
+            // ...(inner||'').matchAll(
+                
+            //     new RegExp(`(${ 
+                    
+            //         Object.keys( component.$controller?.state || {} ).join('|') 
+                
+            //     })`, 'g')
+                
+            // ),
+    
+            ...(inner||'').matchAll(
+                
+                new RegExp(`this\\.\\$state\\.(.[a-zA-Z0-9_$-]+)`, 'g')
+                
+
+                // new RegExp(`this\\.\\$state\\.(${ 
+                    
+                //     Object.keys( component.$controller?.state || {} ).join('|') 
+                
+                // })`, 'gm')
+    
+                
+            ),
+    
+        ];
+    
+    
+        if(matches.length){
+    
+            matches.map(match=>{
+                
+                const slot = (`${ match[1] }`).trim()
+    
+                if(component.$stateMirrors && slot){
+    
+                    component.$stateMirrors[ slot ] = component.$stateMirrors[ slot ] || []
+    
+                    component.$stateMirrors[ slot ].push( record )
+    
+                }
+    
+    
+            });
+    
+    
+            
+            // console.warn('Find State ', component.$stateMirrors )
+    
+        }
+    
+    
+        
+        
+    }
+
+    
+
+    
+}
 
 
