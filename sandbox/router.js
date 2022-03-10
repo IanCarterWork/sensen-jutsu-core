@@ -1,5 +1,5 @@
-import { SensenElement } from "./index";
-import { isClass } from "./utilities";
+import { SensenElement } from "./index.js";
+import { isClass } from "./utilities.js";
 export class SensenRouter {
     constructor(options) {
         this.options = options;
