@@ -2,6 +2,12 @@ import { SensenEmitter } from "./emitter";
 
 
 
+type TSensenStateDynamicObject = {
+    
+    [K : string | number] : any
+
+}
+
 
 
 
@@ -15,9 +21,51 @@ export class SensenState{
 
     constructor(public state : SensenStateProps){
 
-        this.store = Object.assign({}, {...(this.state||{})} )    
+        this.store = {...(this.state||{})}
+        
+        // this.store = Object.assign({}, {...(this.state||{})} )    
 
         this.proxies();
+        
+    }
+    
+
+
+
+    make(key : string | number | symbol, value : any){
+
+        const slot = key as keyof typeof this.state
+
+        this.state[slot] = this.state[slot] || value;
+
+    
+        if(Array.isArray(value)){
+
+            // this.store[ slot ] = [...value];
+            
+            this.setObjectProxy(slot, [...value] as typeof this.state[typeof slot] );
+        
+            
+        }
+        
+        else if(typeof value == 'object'){
+
+            // this.store[ slot ] = {...value};
+            
+            this.setObjectProxy(slot, {...value} as typeof this.state[typeof slot] );
+            
+        }
+        
+        else{
+
+            this.store[ slot ] = value;
+
+            this.setDataProxy(slot);
+            
+        }
+            
+
+        return this.state[ slot ];
         
     }
     
@@ -27,32 +75,13 @@ export class SensenState{
 
         if(typeof this.state == 'object'){
 
-
             Object.entries( this.state ).map($=>{
 
                 const slot = $[0] as keyof typeof this.state;
                 
+                this.make(slot, $[1])
 
-                if(Array.isArray($[1])){
-
-                    this.setObjectProxy(slot, [...$[1]] as typeof this.state[typeof slot] )
-                    
-                }
-
-                else if(typeof $[1] == 'object'){
-
-                    this.setObjectProxy(slot, {...$[1]} as typeof this.state[typeof slot] )
-                    
-                }
-
-                else{
-
-                    this.setDataProxy(slot)
-                    
-                }
-                
             })
-            
             
         }
 
@@ -76,23 +105,17 @@ export class SensenState{
 
         const $ = this;
 
-        $.state[ slot ] = new Proxy<typeof this.state[keyof typeof this.state]>(input, {
+        this.state[ slot ] = new Proxy<typeof input>(this.state[ slot ], {
 
-            get: function(target, prop){
-                
-                return target[prop];
-                
-            },
-            
-            set: function(target, prop, value, prox){
+            set: function(target, prop, value){
 
                 target[prop] = value
 
-                // console.log('setObjectProxy', prop, value)
+                $.store[slot] = value;
 
-                $.$emitter.dispatch('objectHydrates', { slot, value });
+                $.$emitter.dispatch('objectHydrates', { slot, value: target[prop] });
 
-                $.$emitter.dispatch('hydrates', { slot, value });
+                $.$emitter.dispatch('hydrates', { slot, value: target[prop] });
                 
                 return true;
                 
@@ -103,7 +126,6 @@ export class SensenState{
         return this;
         
     }
-
 
 
 

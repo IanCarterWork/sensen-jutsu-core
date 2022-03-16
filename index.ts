@@ -1,12 +1,11 @@
-import { FxPresenter, FxSlideHorizontal } from "./animation/preset";
 import { SensenAppearance } from "./appearance";
 import { CommonDirectives } from "./directive";
 import { SensenEmitter } from "./emitter";
-import { FindGlobalExpressions, FindStateData, isCompilable, isCompilableContent } from "./expression";
-import { SensenRawRender, SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
+import { FindGlobalExpressions, FindStateData } from "./expression";
+import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
 import { SensenRouter } from "./router";
 import { SensenState } from "./state";
-import { CloneObject } from "./utilities";
+import { CloneObject, decodeHTMLEntities } from "./utilities";
 
 
 
@@ -81,8 +80,6 @@ export function RawComponent<State extends SensenElementState>(
 
             this.$appearance.mount().bind(this)
 
-            console.warn('Appearance', this.$appearance.$UiD )
-            
 
             this.$hydrators();
 
@@ -112,7 +109,7 @@ export function RawComponent<State extends SensenElementState>(
                     
                     element: this,
         
-                    router: window.$SensenRouter,
+                    router: this.$application?.$router,
         
                     children: this.children,
         
@@ -178,7 +175,7 @@ export function RawComponent<State extends SensenElementState>(
                 
                 element: this as SensenElement<State>,
     
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
     
                 children: this.children,
     
@@ -197,7 +194,7 @@ export function RawComponent<State extends SensenElementState>(
                 
                 element: this,
     
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
     
                 children: this.children,
     
@@ -216,7 +213,9 @@ export function RawComponent<State extends SensenElementState>(
                 
                 element: this,
     
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
+
+                // router: window.$SensenRouter,
     
                 children: this.children,
     
@@ -236,7 +235,9 @@ export function RawComponent<State extends SensenElementState>(
                 
                 element: this,
 
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
+
+                // router: window.$SensenRouter,
 
                 children: this.children,
 
@@ -490,11 +491,37 @@ export class SensenElement<
 
         switch(typeof value){
 
-            case 'object': return JSON.stringify(value); break;
+            case 'object': 
+
+                return JSON.stringify(value); 
+                
+            break;
 
             default: return `${ value }`; break;
             
         }
+        
+    }
+
+    
+
+
+
+
+    $unsetSafeProps(value : any){
+
+        let output = value
+
+        try{
+
+            const obj = JSON.parse(value); 
+
+            if(typeof obj == 'object'){ output = obj; }
+
+        }
+        catch(e){ }
+
+        return output
         
     }
     
@@ -836,18 +863,17 @@ export class SensenElement<
                 record
 
             ).then(compilate=>{
-
-                // console.log("Compilate Content", compilate)
+                
 
                 if(record.node instanceof Text){
 
-                    record.node.textContent = `${ compilate }`
+                    record.node.textContent = `${ decodeHTMLEntities(compilate) }`
                     
                 }
 
                 else if(record.node instanceof HTMLElement){
 
-                    record.node.innerHTML = `${ compilate }`
+                    record.node.innerHTML = `${ (compilate) }`
                     
                 }
                 
@@ -908,12 +934,8 @@ export class SensenElement<
             
         }
 
-
-
         this.$setStates();
             
-        
-
         return this;
         
     }
@@ -960,8 +982,14 @@ export class SensenElement<
                                         const slot = record.attributeName.toLowerCase().substring(this.$anamespace.length + 1) as keyof State
                             
                                         if(slot){
-                            
-                                            this.$state[ slot ] = (this.$setSafeProps(value)) as State[ keyof State]
+
+                                            this.$state[ slot ] = this.$stateHydrates?.make(
+                                                
+                                                slot, 
+
+                                                this.$unsetSafeProps(value)||''
+                                                
+                                            ) as State[ keyof State]
                                             
                                         }
                                         
@@ -1080,17 +1108,58 @@ export class SensenElement<
 
                         const name = `state:${ rawname }`
                         
-                        const value = ($state[ rawname ] || this.getAttribute(`${ name }`)) as State[ keyof State ]
+                        const value = (this.getAttribute(`${ name }`))
 
-                        if(value){
+                        let found  = '' as State[keyof State];
 
-                            this.$state[ rawname ] = value;
 
-                            this.setAttribute(name, this.$setSafeProps(value))
+
+
+                        if(value != undefined){
+
+                            found = this.$setSafeProps(value) as State[keyof State];
+
+                             this.$state[ rawname ] = this.$stateHydrates?.make(
+                                                
+                                rawname, 
+
+                                this.$unsetSafeProps(found)
+                                
+                            ) as State[ keyof State]
+                            
+
+                            this.setAttribute(name, found);
                             
                         }
                         
-                        next(value)
+                        if($state[ rawname ] != undefined && !value){
+
+                            found = this.$setSafeProps($state[ rawname ]) as State[keyof State];
+
+                            // this.$state[ rawname ] = this.$unsetSafeProps(found);
+
+                             this.$state[ rawname ] = this.$stateHydrates?.make(
+                                                
+                                rawname, 
+
+                                this.$unsetSafeProps(found)
+                                
+                            ) as State[ keyof State]
+                            
+                            
+                            this.setAttribute(name, this.$setSafeProps($state[ rawname ]))
+                            
+                        }
+                        
+                        if($state[ rawname ] != undefined && value){
+
+                            this.setAttribute(name, this.$setSafeProps($state[ rawname ]))
+                            
+                        }
+
+
+                        
+                        next(found)
                         
                     })
                     
@@ -1280,21 +1349,21 @@ export class Jutsu{
     
 >(component: SensenElement<State>, event: Event){
 
- const _ : ComponentRenderDependencies<State> = {
-
-    event,
-                    
-    element: component,
-
-    router: window.$SensenRouter,
-
-    children: component.children,
-
-    state: component.$state,
-
-}
- 
- return _;
+    const _ : ComponentRenderDependencies<State> = {
+    
+        event,
+                        
+        element: component,
+    
+        router: component.$application?.$router,
+    
+        children: component.children,
+    
+        state: component.$state,
+    
+    }
+    
+    return _;
 
 }
 
@@ -1442,3 +1511,80 @@ CommonDirectives.Define({
 
 })
 
+
+
+
+
+
+/** * Utilities : $ReadObjectEntries */
+export function $ReadObjectEntries(input : object){
+
+    return Object.entries(input);
+
+}
+
+
+/** * Utilities : $ParseObjectEntries */
+export function $ParseObjectEntries<T>(input : object, callback : () => T){
+
+    return Object.entries(input).map(callback||(()=>{}));
+
+}
+
+
+/** * Utilities : $ReadObjectValues */
+export function $ReadObjectValues(input : object){
+
+    return Object.values(input);
+
+}
+
+
+/** * Utilities : $ParseObjectValues */
+export function $ParseObjectValues<T>(input : object, callback : () => T){
+
+    return Object.values(input).map(callback||(()=>{}));
+
+}
+
+export function $Until<T>(input : object, callback : () => T){
+
+    return Object.values(input).map(callback||(()=>{}));
+
+}
+
+
+/** * Utilities : $ReadObjectKeys */
+export function $ReadObjectKeys(input : object){
+
+    return Object.keys(input);
+
+}
+
+
+/** * Utilities : $ParseObjectKeys */
+export function $ParseObjectKeys<T>(input : object, callback : () => T){
+
+    return Object.keys(input).map(callback||(()=>{}));
+
+}
+
+
+
+
+
+window.$ReadObjectEntries = $ReadObjectEntries;
+
+window.$ParseObjectEntries = $ParseObjectEntries;
+
+
+window.$ReadObjectValues = $ReadObjectValues;
+
+window.$ParseObjectValues = $ParseObjectValues;
+
+window.$Until = $Until;
+
+
+window.$ReadObjectKeys = $ReadObjectKeys;
+
+window.$ParseObjectKeys = $ParseObjectKeys;

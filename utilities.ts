@@ -83,14 +83,89 @@ export function encodeHTMLEntities(input: string){
 
 
 
+
+/**
+ * Convert URI Query to Object
+ */
+export function URIParams<T extends { [Key : string] : any }>(query : string){
+
+    const out : T = {} as T
+
+    const u = new URL(`http://exemple.com/?${ query }`)
+
+    for(const [k, v] of u.searchParams){
+
+        const key = k as keyof T;
+
+        try{
+
+            out[ key ] = JSON.parse( decodeURIComponent(v) ) as T[ keyof T]
+            
+        }
+        
+        catch(e){
+            
+            out[ key ] = decodeURIComponent(v) as T[ keyof T]
+            
+        }
+        
+
+
+    }
+    
+    return out
+    
+}
+
+
+
+
+export function URIParamsQuery(params : object) : string | undefined{
+
+    const parse = Object.entries(params)
+    
+    let output : string[] = []
+
+    if(parse.length){
+
+        parse.map($=>{
+
+            if(typeof $[1] == 'object'){
+
+                output[ output.length ] = (URIParamsQuery($[1])||'')
+                
+            }
+
+            else{
+
+                output[ output.length ] = `${ $[0] }=${ encodeURIComponent($[1]) }`
+                
+            }
+            
+        });
+
+
+        return output.join('&')
+        
+    }
+
+
+    return undefined
+    
+}
+
+
+
+
+
+
 /**
  * Object is Empty
  */
 
-
 export function isEmptyObject($object : object) : boolean{
 
-    return Object.values($object).length > 0;
+    return Object.values($object).length === 0;
     
 }
 

@@ -167,7 +167,9 @@ export function StabilizeEchoExpression(content: string | null, stop?: boolean){
             
             content = (content||'').replace(
           
-                new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
+                new RegExp( (m[0]).replace(/[!@#$%^&*()+=\-[\]\\';,./{}|":<>?~_]/gi, '\\$&') , 'gi' ), 
+
+                // new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'gi' ), 
           
                 `<${ SyntaxDelimiter }=${ m[1] } ${ SyntaxDelimiter }>` 
 
@@ -193,7 +195,9 @@ export function StabilizeSnapCodeExpression(content: string | null, stop?: boole
             
             content = (content||'').replace(
                 
-                new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
+                new RegExp( (m[0]).replace(/[!@#$%^&*()+=\-[\]\\';,./{}|":<>?~_]/gi, '\\$&') , 'g' ), 
+
+                // new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
                 
                 `<${ SyntaxDelimiter }${ m[1] } ${ SyntaxDelimiter }>` 
 
@@ -371,7 +375,7 @@ export function FindGlobalExpressions(
 
                         callback({
                             type:'snapcode',
-                            node: child,
+                            node:  child,
                             mockup: child.cloneNode(true),
                             matches: [...child.innerHTML?.matchAll(SyntaxSnapCode)]
                         })

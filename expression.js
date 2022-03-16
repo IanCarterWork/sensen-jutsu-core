@@ -85,7 +85,9 @@ export function StabilizeEchoExpression(content, stop) {
     const echos = [...(content || '').matchAll(SyntaxEcho)];
     if (echos.length) {
         echos.map(m => {
-            content = (content || '').replace(new RegExp((m[0]).replace(/[^\w\s]/gi, '\\$&'), 'g'), `<${SyntaxDelimiter}=${m[1]} ${SyntaxDelimiter}>`);
+            content = (content || '').replace(new RegExp((m[0]).replace(/[!@#$%^&*()+=\-[\]\\';,./{}|":<>?~_]/gi, '\\$&'), 'gi'), 
+            // new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'gi' ), 
+            `<${SyntaxDelimiter}=${m[1]} ${SyntaxDelimiter}>`);
         });
     }
     else {
@@ -99,7 +101,9 @@ export function StabilizeSnapCodeExpression(content, stop) {
     const echos = [...(content || '').matchAll(SyntaxSnapCode)];
     if (echos.length) {
         echos.map(m => {
-            content = (content || '').replace(new RegExp((m[0]).replace(/[^\w\s]/gi, '\\$&'), 'g'), `<${SyntaxDelimiter}${m[1]} ${SyntaxDelimiter}>`);
+            content = (content || '').replace(new RegExp((m[0]).replace(/[!@#$%^&*()+=\-[\]\\';,./{}|":<>?~_]/gi, '\\$&'), 'g'), 
+            // new RegExp( (m[0]).replace(/[^\w\s]/gi, '\\$&') , 'g' ), 
+            `<${SyntaxDelimiter}${m[1]} ${SyntaxDelimiter}>`);
         });
     }
     else {

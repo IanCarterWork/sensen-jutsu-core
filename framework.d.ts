@@ -12,6 +12,25 @@ declare interface Window {
 
     $GlobalDirectives: IGlobalDirectives;
 
+
+
+    $ReadObjectEntries(input : object) : object
+
+    $ParseObjectEntries<T>(input : object, callback : () => T) : T[]
+    
+
+    $ReadObjectValues(input : object) : object
+
+    $ParseObjectValues<T>(input : object, callback : () => T) : T[]
+
+    $Until<T>(input : object, callback : () => T) : T[]
+    
+
+    $ReadObjectKeys(input : object) : object
+
+    $ParseObjectKeys<T>(input : object, callback : () => T) : T[]
+    
+
 }
 
 
@@ -100,7 +119,9 @@ declare interface KuchiyoceParameter{
 
 declare interface SensenRouterScheme{
 
-    home: {},
+    'home/*/*': {
+        my: string
+    },
 
     about: {},
 
@@ -111,49 +132,101 @@ declare interface SensenRouterOptions{
     default: string;
 
     canvas: HTMLElement;
+
+    syncWithLocation?: boolean;
     
 }
 
 declare type SensenRouterMethod = 'get' | 'post' | 'put';
 
-declare interface SensenRouterRoute{
 
-    uri: keyof SensenRouterScheme;
 
-    method: SensenRouterMethod;
 
-    component: object;
+declare interface SensenRouterEntry{
 
-    canvas?: HTMLElement
+    settings : SensenRouterRoute;
+
+    query?: SensenRouterRouteQuery; 
+
+    macth?(slug : string) : boolean;
     
 }
+
+
+
+declare interface SensenRouterRouteQuery{
+
+    [Param : string | number ] : string
+
+}
+
+
+declare interface SensenRouterRoute{
+
+    pattern: keyof SensenRouterScheme;
+    
+    // uri: keyof SensenRouterScheme;
+    
+    method: SensenRouterMethod;
+    
+    component: object;
+    
+    canvas?: HTMLElement;
+
+}
+
 
 declare interface SensenRouterURI{
 
     name : keyof SensenRouterScheme;
 
-    search : string;
+    query : string;
+
+    params : SensenRouterScheme[ keyof SensenRouterScheme]
 
 }
 
 declare type SensenRouterRoutes = {
 
-    [X in keyof SensenRouterScheme] : SensenRouterRoute
+    [X in keyof SensenRouterScheme] : SensenRouterEntry
 
 }
 
 
 declare interface SensenRouterSwitchRequest {
 
-    route: SensenRouterRoute;
+    route: SensenRouterEntry;
 
     current: object;
 
     canvas: HTMLElement;
 
-    uri: keyof SensenRouterScheme
+    uri: keyof SensenRouterScheme;
+
+    state?: SensenRouterScheme[ keyof SensenRouterScheme ]
     
 }
+
+
+
+declare interface ISensenRouterHistory{
+
+    entries: SensenRouterRoute[];
+
+    current: number;
+
+    push(uri : string, route : SensenRouterRoute) : this;
+
+    get(key : number) : SensenRouterRoute | undefined;
+
+    replace(uri : string, route : SensenRouterRoute) : this;
+    
+}
+
+
+
+declare interface SensenRouterHistory extends ISensenRouterHistory{}
+
 
 
 declare interface SensenRouter{
@@ -165,6 +238,8 @@ declare interface SensenRouter{
     current?: SensenElement<SensenElementState>;
 
     canvas?: HTMLElement;
+    
+    history?: SensenRouterHistory;
 
 
     add(route : SensenRouterRoute) : this;
@@ -201,7 +276,7 @@ declare interface SensenRouter{
         
         slug : keyof SensenRouterScheme, 
         
-        state : SensenElementState,
+        state : SensenRouterScheme[ keyof SensenRouterScheme],
 
         canvas? : HTMLElement
         
@@ -213,7 +288,7 @@ declare interface SensenRouter{
 
 
     /**
-     * Add news Activity component screen in app 
+     * Add new Activity component screen in app 
      * The PROPS is show in URL as URL parameters 
      */
     get(
@@ -230,7 +305,7 @@ declare interface SensenRouter{
 
 
     /**
-     * Add news Activity component screen in app
+     * Add new Activity component screen in app
      * The PROPS is not show
      */
     post(
@@ -426,7 +501,7 @@ declare interface ComponentRenderDependencies< State extends SensenElementState 
     
     element: SensenElement<State>;
 
-    router?: SensenRouter;
+    router?: SensenRouter | object;
 
     children: HTMLCollection;
 
@@ -875,3 +950,10 @@ declare interface SensenAppearance{
     render(slot: string) : Text;
     
 }
+
+
+
+
+
+
+

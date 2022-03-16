@@ -1,6 +1,6 @@
 import { FxScalingIn, FxScalingOut, FxSlideHorizontal, FxSlideVertical } from "./animation/preset";
 import { Component, Jutsu, SensenElement } from "./index";
-import { SensenRouter } from "./router";
+import { SensenRouter, SensenRouterEntry } from "./router";
 
 
 
@@ -13,6 +13,16 @@ type AppState = SensenElementState & {
 }
 
 
+declare type AppToolsAvailables = {
+
+	icon: string;
+
+	label: string;
+
+	route: string;
+
+}
+
 type HelloState = SensenElementState & {
     
     counter : number
@@ -20,8 +30,11 @@ type HelloState = SensenElementState & {
     world : string | null;
 
     my ?: string;
+
+    toolsavailables?: AppToolsAvailables[]
     
 }
+
 
 
 
@@ -38,20 +51,61 @@ const HelloComponent = Component<HelloState>({
 
         world: 'Hello Title',
 
+        abs:['a', 'b', 'c'],
+
+        toolsavailables:[
+
+            { 
+                icon: 'fa-thin fa-face-dizzy fa-7x', 
+                label:`J'ai perdu un objet`, 
+                route:'feeds/getstarted' 
+            },
+
+            { 
+                icon: 'fa-thin fa-face-grin-beam fa-7x', 
+                label:`J'ai retrouvé un objet`, 
+                route:'publish' 
+            },
+            
+        ]
 
     },
 
     methods:{
 
-        addCounter({ state }){
-
-            console.log('AddCounter', state.counter )
+        addCounter({ state, router }){
 
             state.counter ++;
             
             state.my = `count to ${ state.counter }`
 
             state.world = null
+
+            // if(router instanceof SensenRouter){
+
+            //     router.get('home/com/ing', {})
+                
+            // }
+
+
+            if(state.toolsavailables){
+    
+                state.toolsavailables[state.counter] = {
+                    icon: `icon ${ state.counter }`,
+                    label: `label ${ state.counter }`,
+                    route: `route ${ state.counter }`,
+                }
+                
+    
+                // state.toolsavailables['1'].label = `new label to ${ state.counter }`
+                
+
+                // console.log('AddCounter', state.toolsAvailables[0] )
+
+            }
+
+
+
 
         },
 
@@ -148,13 +202,49 @@ const HelloComponent = Component<HelloState>({
             <button type="button" @click.stop="this.methods.minusCounter">Decrementer</button>
 
 
+            <div>
+
+            {% $Until(this.$state.toolsavailables, tool=>{ %}
+        
+            <div 
+            onclick="location.href='#{%=tool.route%}'"
+            ui-fx="transition"
+            ui-margin="2x"
+            ui-rounded
+            ui-flex="column align-center"
+            ui-text="color-white"
+            ui-box="gradient:one-two gradient:two-one::hover square-6" >
+
+                <div 
+                ui-flex="row align-center"
+                flex="fill"
+                >
+                    <i class="">{%= tool.icon %}</i>
+                    
+                    <i class="">{%= tool.label %}</i>
+
+                    <i class="">{%= tool.route %}</i>
+
+                </div>
+
+                <div
+                ui-padding="v:3x"
+                >{%= tool.label %}</div>
+
+            </div>
+
+            {% }) %}
+        
+                
+            </div>
+
             <br>
             <br>
             <br>
 
-            <a href="javascript:void(0)" @click="this.$application.$router.get('home',{world:'Pink me'})">Home</a>
+            <a href="javascript:void(0)" @click="this.$application.$router.get('home/state/update',{world:'Pink me'})">Home</a>
             
-            <a href="javascript:void(0)" @click="this.$application.$router.get('about',{})">About</a>
+            <a href="javascript:void(0)" @click="this.$application.$router.get('about')">About</a>
             
         `;
 
@@ -174,7 +264,7 @@ const WorldComponent = Component<HelloState>({
 
         counter: 0,
 
-        world : 'World Title'
+        world : 'World Title!'
 
     },
 
@@ -206,7 +296,7 @@ const WorldComponent = Component<HelloState>({
 
             <hr>
 
-            <sense-hello state:world="{%= this.$state.world %}"> </sense-hello>
+            <sense-hello state:world="{{ this.$state.world }}" state:counter="{{ this.$state.counter }}"> </sense-hello>
         
         `;
 
@@ -238,31 +328,31 @@ Jutsu.Kuchiyoce<AppState>('sandbox', {
 
         return (new SensenRouter({
 
-            default: 'home',
+            default: 'home/coming/home',
 
             canvas
             
         }))
 
-        .add({
+        .add(new SensenRouterEntry({
             
-            uri: 'home',
+            pattern: 'home/*/*',
             
             method: 'get',
             
             component: HelloComponent
             
-        })
+        }))
 
-        .add({
+        .add(new SensenRouterEntry({
 
-            uri: 'about',
+            pattern: 'about',
             
             method: 'get',
             
             component: WorldComponent
             
-        })
+        }))
 
         .run(state)
 

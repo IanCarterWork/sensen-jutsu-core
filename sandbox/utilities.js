@@ -33,10 +33,43 @@ export function encodeHTMLEntities(input) {
     return tmp.innerHTML;
 }
 /**
+ * Convert URI Query to Object
+ */
+export function URIParams(query) {
+    const out = {};
+    const u = new URL(`http://exemple.com/?${query}`);
+    for (const [k, v] of u.searchParams) {
+        const key = k;
+        try {
+            out[key] = JSON.parse(decodeURIComponent(v));
+        }
+        catch (e) {
+            out[key] = decodeURIComponent(v);
+        }
+    }
+    return out;
+}
+export function URIParamsQuery(params) {
+    const parse = Object.entries(params);
+    let output = [];
+    if (parse.length) {
+        parse.map($ => {
+            if (typeof $[1] == 'object') {
+                output[output.length] = (URIParamsQuery($[1]) || '');
+            }
+            else {
+                output[output.length] = `${$[0]}=${encodeURIComponent($[1])}`;
+            }
+        });
+        return output.join('&');
+    }
+    return undefined;
+}
+/**
  * Object is Empty
  */
 export function isEmptyObject($object) {
-    return Object.values($object).length > 0;
+    return Object.values($object).length === 0;
 }
 /**
  * Clone Object

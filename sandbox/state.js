@@ -4,37 +4,44 @@ export class SensenState {
         this.state = state;
         this.store = {};
         this.$emitter = new SensenEmitter();
-        this.store = Object.assign({}, { ...(this.state || {}) });
+        this.store = { ...(this.state || {}) };
+        // this.store = Object.assign({}, {...(this.state||{})} )    
         this.proxies();
+    }
+    make(key, value) {
+        const slot = key;
+        this.state[slot] = this.state[slot] || value;
+        if (Array.isArray(value)) {
+            // this.store[ slot ] = [...value];
+            this.setObjectProxy(slot, [...value]);
+        }
+        else if (typeof value == 'object') {
+            // this.store[ slot ] = {...value};
+            this.setObjectProxy(slot, { ...value });
+        }
+        else {
+            this.store[slot] = value;
+            this.setDataProxy(slot);
+        }
+        return this.state[slot];
     }
     proxies() {
         if (typeof this.state == 'object') {
             Object.entries(this.state).map($ => {
                 const slot = $[0];
-                if (Array.isArray($[1])) {
-                    this.setObjectProxy(slot, [...$[1]]);
-                }
-                else if (typeof $[1] == 'object') {
-                    this.setObjectProxy(slot, { ...$[1] });
-                }
-                else {
-                    this.setDataProxy(slot);
-                }
+                this.make(slot, $[1]);
             });
         }
         return this;
     }
     setObjectProxy(slot, input) {
         const $ = this;
-        $.state[slot] = new Proxy(input, {
-            get: function (target, prop) {
-                return target[prop];
-            },
-            set: function (target, prop, value, prox) {
+        this.state[slot] = new Proxy(this.state[slot], {
+            set: function (target, prop, value) {
                 target[prop] = value;
-                // console.log('setObjectProxy', prop, value)
-                $.$emitter.dispatch('objectHydrates', { slot, value });
-                $.$emitter.dispatch('hydrates', { slot, value });
+                $.store[slot] = value;
+                $.$emitter.dispatch('objectHydrates', { slot, value: target[prop] });
+                $.$emitter.dispatch('hydrates', { slot, value: target[prop] });
                 return true;
             }
         });

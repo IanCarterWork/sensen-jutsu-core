@@ -11,7 +11,7 @@ import { FindGlobalExpressions, FindStateData } from "./expression.js";
 import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js";
 import { SensenRouter } from "./router.js";
 import { SensenState } from "./state.js";
-import { CloneObject } from "./utilities.js";
+import { CloneObject, decodeHTMLEntities } from "./utilities.js";
 window.$SensenComponents = window.$SensenComponents || {};
 window.$SensenRouter = window.$SensenRouter || {};
 /**
@@ -36,7 +36,6 @@ export function RawComponent($, config) {
             this.$state = this.$stateHydrates.state;
             this.$appearance = new SensenAppearance(this.$controller.appearance);
             this.$appearance.mount().bind(this);
-            console.warn('Appearance', this.$appearance.$UiD);
             this.$hydrators();
             this.$construct();
         }
@@ -50,7 +49,7 @@ export function RawComponent($, config) {
             if (this.$controller?.construct) {
                 this.$controller?.construct({
                     element: this,
-                    router: window.$SensenRouter,
+                    router: this.$application?.$router,
                     children: this.children,
                     state: this.$state || {},
                 });
@@ -81,7 +80,7 @@ export function RawComponent($, config) {
             this.$emitter.dispatch('connected', this);
             return this.$controller?.mount ? this.$controller?.mount({
                 element: this,
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
                 children: this.children,
                 state: this.$state || {},
             }) : undefined;
@@ -90,7 +89,7 @@ export function RawComponent($, config) {
             this.$emitter.dispatch('disconnected', this);
             return this.$controller?.unmount ? this.$controller?.unmount({
                 element: this,
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
                 children: this.children,
                 state: this.$state || {},
             }) : undefined;
@@ -99,7 +98,8 @@ export function RawComponent($, config) {
             this.$emitter.dispatch('adopted', this);
             return this.$controller?.adopted ? this.$controller?.adopted({
                 element: this,
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
+                // router: window.$SensenRouter,
                 children: this.children,
                 state: this.$state || {},
             }) : undefined;
@@ -108,7 +108,8 @@ export function RawComponent($, config) {
             const _state = (state || this.$state);
             const render = this.$controller?.render({
                 element: this,
-                router: window.$SensenRouter,
+                router: this.$application?.$router,
+                // router: window.$SensenRouter,
                 children: this.children,
                 state: _state || {},
             });
@@ -211,6 +212,17 @@ export class SensenElement extends HTMLElement {
                 return `${value}`;
                 break;
         }
+    }
+    $unsetSafeProps(value) {
+        let output = value;
+        try {
+            const obj = JSON.parse(value);
+            if (typeof obj == 'object') {
+                output = obj;
+            }
+        }
+        catch (e) { }
+        return output;
     }
     $destroy(moment = true) {
         return new Promise((resolved) => {
@@ -334,12 +346,11 @@ export class SensenElement extends HTMLElement {
         else if (record.type == 'echo' || record.type == 'snapcode') {
             // console.warn('$Props', `${ this.$props.world }`, record.node, this.$controller?.props?.world )
             SensenNodeRender(record.mockup || record.node, this, this.$controller || {}, record).then(compilate => {
-                // console.log("Compilate Content", compilate)
                 if (record.node instanceof Text) {
-                    record.node.textContent = `${compilate}`;
+                    record.node.textContent = `${decodeHTMLEntities(compilate)}`;
                 }
                 else if (record.node instanceof HTMLElement) {
-                    record.node.innerHTML = `${compilate}`;
+                    record.node.innerHTML = `${(compilate)}`;
                 }
             });
         }
@@ -384,7 +395,7 @@ export class SensenElement extends HTMLElement {
                                     if (check && this.$anamespace) {
                                         const slot = record.attributeName.toLowerCase().substring(this.$anamespace.length + 1);
                                         if (slot) {
-                                            this.$state[slot] = (this.$setSafeProps(value));
+                                            this.$state[slot] = this.$stateHydrates?.make(slot, this.$unsetSafeProps(value) || '');
                                         }
                                     }
                                     this.$emitter.dispatch('propChange', {
@@ -435,12 +446,23 @@ export class SensenElement extends HTMLElement {
             Object.entries(defaultState).map($ => promises.push(new Promise((next) => {
                 const rawname = $[0];
                 const name = `state:${rawname}`;
-                const value = ($state[rawname] || this.getAttribute(`${name}`));
-                if (value) {
-                    this.$state[rawname] = value;
-                    this.setAttribute(name, this.$setSafeProps(value));
+                const value = (this.getAttribute(`${name}`));
+                let found = '';
+                if (value != undefined) {
+                    found = this.$setSafeProps(value);
+                    this.$state[rawname] = this.$stateHydrates?.make(rawname, this.$unsetSafeProps(found));
+                    this.setAttribute(name, found);
                 }
-                next(value);
+                if ($state[rawname] != undefined && !value) {
+                    found = this.$setSafeProps($state[rawname]);
+                    // this.$state[ rawname ] = this.$unsetSafeProps(found);
+                    this.$state[rawname] = this.$stateHydrates?.make(rawname, this.$unsetSafeProps(found));
+                    this.setAttribute(name, this.$setSafeProps($state[rawname]));
+                }
+                if ($state[rawname] != undefined && value) {
+                    this.setAttribute(name, this.$setSafeProps($state[rawname]));
+                }
+                next(found);
             })));
             Promise.allSettled(promises)
                 .then(results => {
@@ -526,7 +548,7 @@ export function CreateComponentMethodEvent(component, event) {
     const _ = {
         event,
         element: component,
-        router: window.$SensenRouter,
+        router: component.$application?.$router,
         children: component.children,
         state: component.$state,
     };
@@ -598,3 +620,37 @@ CommonDirectives.Define({
         }
     },
 });
+/** * Utilities : $ReadObjectEntries */
+export function $ReadObjectEntries(input) {
+    return Object.entries(input);
+}
+/** * Utilities : $ParseObjectEntries */
+export function $ParseObjectEntries(input, callback) {
+    return Object.entries(input).map(callback || (() => { }));
+}
+/** * Utilities : $ReadObjectValues */
+export function $ReadObjectValues(input) {
+    return Object.values(input);
+}
+/** * Utilities : $ParseObjectValues */
+export function $ParseObjectValues(input, callback) {
+    return Object.values(input).map(callback || (() => { }));
+}
+export function $Until(input, callback) {
+    return Object.values(input).map(callback || (() => { }));
+}
+/** * Utilities : $ReadObjectKeys */
+export function $ReadObjectKeys(input) {
+    return Object.keys(input);
+}
+/** * Utilities : $ParseObjectKeys */
+export function $ParseObjectKeys(input, callback) {
+    return Object.keys(input).map(callback || (() => { }));
+}
+window.$ReadObjectEntries = $ReadObjectEntries;
+window.$ParseObjectEntries = $ParseObjectEntries;
+window.$ReadObjectValues = $ReadObjectValues;
+window.$ParseObjectValues = $ParseObjectValues;
+window.$Until = $Until;
+window.$ReadObjectKeys = $ReadObjectKeys;
+window.$ParseObjectKeys = $ParseObjectKeys;

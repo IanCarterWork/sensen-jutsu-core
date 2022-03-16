@@ -1,6 +1,7 @@
 import { SensenElement } from "./index";
 import { render } from "ejs";
 import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
+import { decodeHTMLEntities } from "./utilities";
 
 
 
@@ -27,7 +28,7 @@ export async function SensenRawRender(data : any, props : object, context : obje
 
             StabilizeEchoExpression(
 
-                `${  data }`
+                decodeHTMLEntities(`${  data }`)
 
             )
 
@@ -64,7 +65,7 @@ export function SensenDataRender<State extends SensenElementState>(
 
         StabilizeEchoExpression(
     
-            data
+            decodeHTMLEntities(data)
             
         )
     
@@ -72,7 +73,13 @@ export function SensenDataRender<State extends SensenElementState>(
 
     record.matches?.map(match=>{ 
         
-        content = content?.replace(new RegExp(`${ match[0] }`, 'g'), `<${ SyntaxDelimiter }${ match[1] }${ SyntaxDelimiter }>`) || ''
+        content = content?.replace(
+            
+            new RegExp(`${
+                (match[0]||'').replace(/[^\w\s]/gi, '\\$&')
+            }`, 'gi'), 
+            
+        `<${ SyntaxDelimiter }${ match[1] }${ SyntaxDelimiter }>`) || ''
 
     })
 
@@ -117,15 +124,23 @@ export function SensenNodeRender<State extends SensenElementState>(
 
         StabilizeEchoExpression(
     
-            (node instanceof HTMLElement) ? node.innerHTML : node.textContent
+            decodeHTMLEntities((node instanceof HTMLElement) ? node.innerHTML : node.textContent||'')
             
         )
     
     );
 
+    // console.log('SensenNodeRender', content)
+
     record.matches?.map(match=>{ 
-        
-        content = content?.replace(new RegExp(`${ match[0] }`, 'g'), `<${ SyntaxDelimiter }${ match[1] }${ SyntaxDelimiter }>`) || ''
+            
+        content = content?.replace(
+
+            new RegExp(`${
+                (match[0]||'').replace(/[^\w\s]/gi, '\\$&')
+            }`, 'gi'), 
+            
+        `<${ SyntaxDelimiter }${ decodeHTMLEntities(match[1]) } ${ SyntaxDelimiter }>`) || ''
 
     })
 
@@ -172,7 +187,7 @@ export function SensenRender<State extends SensenElementState>(
 
         StabilizeEchoExpression(
     
-            data
+            decodeHTMLEntities(data)
             
         )
     
