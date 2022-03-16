@@ -1,6 +1,6 @@
 {
   "name": "sensen-jutsu",
-  "version": "0.0.66",
+  "version": "0.0.67",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "serve": "npx webpack serve --hot --config webpack.config.js ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "IanCarter",
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.17.2",
