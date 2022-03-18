@@ -1,5 +1,5 @@
-import { SensenElement } from "./index.js.js.js";
-import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js.js.js";
+import { SensenElement } from "./index.js.js.js.js";
+import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js.js.js.js";
 export class SensenRouterHistory {
     constructor() {
         this.entries = [];
