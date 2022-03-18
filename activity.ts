@@ -2,7 +2,7 @@ import { RawComponent, SensenElement } from "./index";
 
 
 
-export function Activity<State extends SensenElementState >($ : ComponentAttributes<State>){
+export function Activity<State extends SensenElementState >($ : ComponentAttributes<State>) : SensenRawComponent<State>{
 
     const config : RawComponentConfig = {
 
@@ -20,8 +20,8 @@ export function Activity<State extends SensenElementState >($ : ComponentAttribu
 
     window.$SensenComponents[ index ] = RawComponent<State>($, config)
 
-    SensenElement.$use('activity', $.name, window.$SensenComponents[ index ]);
+    SensenElement.$use('activity', $.name, window.$SensenComponents[ index ] as CustomElementConstructor);
     
-    return window.$SensenComponents[ index ];
+    return window.$SensenComponents[ index ] as SensenRawComponent<State>;
     
 }

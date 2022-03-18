@@ -39,6 +39,9 @@ export function RawComponent($, config) {
             this.$hydrators();
             this.$construct();
         }
+        static $using($state) {
+            return new this($state);
+        }
         $construct() {
             this.$emitter.listen('begin', ({ emit, type }) => {
                 emit.style.display = 'none';

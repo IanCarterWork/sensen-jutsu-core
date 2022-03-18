@@ -347,9 +347,47 @@ declare interface SensenRouter{
  * Sensen Elements
  */
 
+
+
+declare interface SensenRawComponent<State extends SensenElementState> {
+
+    $observations? : MutationObserver;
+
+    $emitter? : ISensenEmitter;
+
+    $tnamespace ?: string;
+
+    $anamespace ?: string;
+    
+    $state? : State;
+
+    $methods? : SensenElementMethods<State>
+
+    $appearance ?: object
+    
+
+    $using?($state : State) : this;
+
+    $construct?(): this;
+
+    $hydrators?(): this;
+
+    $willMount?(args : any) : void | Promise<any>;
+
+    $willUnMount?(args : any) : void | Promise<any>;
+
+    $willAdopted?(args : any) : void | Promise<any>;
+
+    $render?(state?: State): Promise<string | Response> | object | Function | string | null | undefined;
+
+    
+}
+
+
+
 declare interface SensenComponents{
 
-    [x : string] : CustomElementConstructor
+    [x : string] : CustomElementConstructor | SensenRawComponent<any>
     
 }
 

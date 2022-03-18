@@ -4,14 +4,14 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SensenElement_instances, _SensenElement_connectedProtocol;
-import { SensenAppearance } from "./appearance.js";
-import { CommonDirectives } from "./directive.js";
-import { SensenEmitter } from "./emitter.js";
-import { FindGlobalExpressions, FindStateData } from "./expression.js";
-import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js";
-import { SensenRouter } from "./router.js";
-import { SensenState } from "./state.js";
-import { CloneObject, decodeHTMLEntities } from "./utilities.js";
+import { SensenAppearance } from "./appearance.js.js.js";
+import { CommonDirectives } from "./directive.js.js.js";
+import { SensenEmitter } from "./emitter.js.js.js";
+import { FindGlobalExpressions, FindStateData } from "./expression.js.js.js";
+import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js.js.js";
+import { SensenRouter } from "./router.js.js.js";
+import { SensenState } from "./state.js.js.js";
+import { CloneObject, decodeHTMLEntities } from "./utilities.js.js.js";
 window.$SensenComponents = window.$SensenComponents || {};
 window.$SensenRouter = window.$SensenRouter || {};
 /**

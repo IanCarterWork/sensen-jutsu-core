@@ -14,6 +14,8 @@ window.$SensenComponents = window.$SensenComponents || {}
 window.$SensenRouter = window.$SensenRouter || {}
 
 
+
+
 /**
  * Sensen Component
  */
@@ -25,7 +27,7 @@ export function RawComponent<State extends SensenElementState>(
     
     config?: RawComponentConfig
     
-){
+) : SensenRawComponent<State>{
 
     const $initial = {...($ || {})} as ComponentAttributes<State>
 
@@ -84,6 +86,14 @@ export function RawComponent<State extends SensenElementState>(
             this.$hydrators();
 
             this.$construct()
+
+        }
+
+
+
+        static $using( $state? : State ){
+
+            return new this( $state )
 
         }
 
@@ -288,7 +298,7 @@ export function RawComponent<State extends SensenElementState>(
 }
 
 
-export function Component<State extends SensenElementState >($ : ComponentAttributes<State>){
+export function Component<State extends SensenElementState >($ : ComponentAttributes<State>) : SensenRawComponent<State>{
 
     const config : RawComponentConfig = {
 
@@ -306,9 +316,9 @@ export function Component<State extends SensenElementState >($ : ComponentAttrib
 
     window.$SensenComponents[ index ] = RawComponent<State>($, config)
 
-    SensenElement.$use('sense', $.name, window.$SensenComponents[ index ]);
+    SensenElement.$use('sense', $.name, window.$SensenComponents[ index ] as CustomElementConstructor);
     
-    return window.$SensenComponents[ index ];
+    return window.$SensenComponents[ index ] as SensenRawComponent<State>;
     
 }
 
