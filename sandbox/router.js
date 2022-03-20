@@ -179,15 +179,15 @@ export class SensenRouter {
     }
     stabilizeUI() {
         const $canvas = this.options.canvas;
-        if ($canvas instanceof HTMLElement) {
-            if ($canvas.children.length) {
-                Object.values($canvas.children).forEach(child => {
-                    if (child instanceof HTMLElement) {
-                        child.style.display = 'block';
-                    }
-                });
-            }
-        }
+        // if($canvas instanceof HTMLElement){
+        //     if($canvas.children.length){
+        //         Object.values($canvas.children).forEach(child=>{
+        //             if(child instanceof HTMLElement){
+        //                 child.style.display = 'block';
+        //             }
+        //         })
+        //     }
+        // }
         return this;
     }
     navigate(method, uri, state, canvas) {
@@ -275,10 +275,14 @@ export class SensenRouter {
                     entry.style.zIndex = '2';
                     if (exit instanceof SensenElement) {
                         exit.style.zIndex = '1';
+                        exit.style.display = 'block';
                         exit.$destroy(firstTime ? false : true).then(element => {
                             if (!firstTime) {
                                 exit.$showing = false;
                             }
+                            element.style.display = 'none';
+                            element.innerHTML = '';
+                            // console.log('Destroy', element)
                         });
                     }
                     if (deployed) {
@@ -291,7 +295,7 @@ export class SensenRouter {
                     if (!deployed) {
                         canvas.appendChild(entry);
                     }
-                    console.warn('Entry', firstTime, entry);
+                    // console.warn('Entry', firstTime, entry )
                     entry.$showing = true;
                     entry.$build(firstTime ? true : false)
                         .then(element => {

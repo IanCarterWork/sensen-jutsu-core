@@ -234,39 +234,6 @@ export function FindAttributesExpression(
 
         Object.values(element.attributes).map(att=>{
 
-            /**
-             * Find Directive
-             */
-            
-                Object.values(CommonDirectives.Availables||{})
-
-                .filter(directive=>directive.type == '-attribute')
-        
-                .map(directive=>{ 
-
-                    const matches = [...att.name.matchAll(new RegExp(`^${ directive.expression }`, 'gi'))]
-
-                    if(matches.length){
-
-                        const split = att.name?.substring((directive.expression||'')?.length).split('.')
-
-                        const r:ExpressionRecord = {
-                            node: element,
-                            name: split[0],
-                            directive,
-                            matches,
-                            attribute: att,
-                            type: 'directive',
-                            mockup: att.cloneNode(true),
-                            arguments: ArrayRange<string>(split, 1)
-                        }
-
-                        callback(r)
-                        
-                    }
-                    
-                })
- 
             if(
                 att.value?.match(SyntaxSnapCode) ||
 
@@ -378,6 +345,7 @@ export function FindGlobalExpressions(
                 }
                 
                 else if(child instanceof HTMLElement){
+
 
                     if(child.attributes.length){
 
@@ -533,4 +501,88 @@ export function FindStateData<
     
 }
 
+
+
+
+
+
+export function FindDirectives(node : Node | HTMLElement, callback : (record : ExpressionRecord) => void){
+
+
+    if(node instanceof Text){
+
+    }
+
+
+
+    
+    else if(node instanceof HTMLElement ){
+
+
+
+
+        if(node instanceof SensenElement) {
+            
+            // console.error('Stop', node)
+           
+            return FindDirectives
+
+        }
+
+
+
+
+
+        Object.values( node.attributes ).map(att=>{
+
+            Object.values(CommonDirectives.Availables||{})
+
+            .filter(directive=>directive.type == '-attribute')
+    
+            .map(directive=>{ 
+    
+                const matches = [...att.name.matchAll(new RegExp(`^${ directive.expression }`, 'gi'))]
+    
+                if(matches.length){
+    
+                    const split = att.name?.substring((directive.expression||'')?.length).split('.')
+    
+                    const r:ExpressionRecord = {
+                        node: node,
+                        name: split[0],
+                        directive,
+                        matches,
+                        attribute: att,
+                        type: 'directive',
+                        mockup: att.cloneNode(true),
+                        arguments: ArrayRange<string>(split, 1)
+                    }
+    
+                    callback(r)
+                    
+                }
+                
+            })
+
+        });
+    
+
+
+        if(node.children.length){
+
+            Object.values(node.children).map(child=>{
+    
+                FindDirectives(child, callback)
+    
+            });
+            
+        }
+            
+        
+    }
+
+
+    return FindDirectives
+    
+}
 

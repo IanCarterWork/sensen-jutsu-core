@@ -165,14 +165,14 @@ const HelloComponent = Component<HelloState>({
             <br>
             <br>
             
-            <button type="button" @click.prevent="this.methods.addCounter">Incrementer</button>
-            <button type="button" @click.stop="this.methods.minusCounter">Decrementer</button>
-
-
             <div>
-
+    
+                <button type="button" @click="this.methods.addCounter">Incrementer</button>
+                <button type="button" @click.stop="this.methods.minusCounter">Decrementer</button>
+    
                 <sense-kit-input state:icon="thumbs-up" state:label="Username!" state:type="username" state:name="username" ></sense-kit-input>
 
+    
             </div>
             
 

@@ -252,6 +252,57 @@ export function isClass(instance : Function | object) : boolean {
 
 
 
+/**
+ * Node Descent
+ */
+export function NodeDescent(parent : HTMLElement, child : Node | HTMLElement) {
+    
+    var node = child.parentNode;
+
+    while (node != null) {
+   
+        if (node == parent) { return true; }
+   
+        node = node.parentNode;
+   
+    }
+
+    return false;
+
+}
+
+
+
+/**
+ * Find Node Descent
+ */
+export function FindParental(
+    
+    child : Node | HTMLElement, 
+    
+    validator : (parent : ParentNode) => boolean
+    
+){
+    
+    var node = child.parentNode;
+
+    while (node != null) {
+   
+        if (validator(node) === true) { return node; }
+   
+        node = node.parentNode;
+   
+    }
+
+    return null;
+
+}
+
+
+
+
+
+
 
 
 /**

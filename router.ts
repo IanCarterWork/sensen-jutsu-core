@@ -428,23 +428,23 @@ export class SensenRouter implements SensenRouter{
 
         const $canvas = this.options.canvas
 
-        if($canvas instanceof HTMLElement){
+        // if($canvas instanceof HTMLElement){
 
-            if($canvas.children.length){
+        //     if($canvas.children.length){
     
-                Object.values($canvas.children).forEach(child=>{
+        //         Object.values($canvas.children).forEach(child=>{
 
-                    if(child instanceof HTMLElement){
+        //             if(child instanceof HTMLElement){
 
-                        child.style.display = 'block';
+        //                 child.style.display = 'block';
                         
-                    }
+        //             }
                     
-                })
+        //         })
                 
-            }
+        //     }
     
-        }
+        // }
         
         return this;
 
@@ -685,9 +685,17 @@ export class SensenRouter implements SensenRouter{
                         exit.style.zIndex = '1';
 
 
+                        exit.style.display = 'block';
+                        
                         exit.$destroy(firstTime ? false : true ).then(element=>{
 
                             if(!firstTime){ exit.$showing = false }
+
+                            element.style.display = 'none'
+
+                            element.innerHTML = ''
+
+                            // console.log('Destroy', element)
 
                         })
 
@@ -715,7 +723,7 @@ export class SensenRouter implements SensenRouter{
                     }
 
 
-                    console.warn('Entry', firstTime, entry )
+                    // console.warn('Entry', firstTime, entry )
     
 
                     entry.$showing = true

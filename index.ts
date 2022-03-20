@@ -1,11 +1,11 @@
 import { SensenAppearance } from "./appearance";
 import { CommonDirectives } from "./directive";
 import { SensenEmitter } from "./emitter";
-import { FindGlobalExpressions, FindStateData } from "./expression";
+import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression";
 import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
 import { SensenRouter } from "./router";
 import { SensenState } from "./state";
-import { CloneObject, decodeHTMLEntities, isEmptyObject } from "./utilities";
+import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities";
 
 
 
@@ -158,7 +158,7 @@ export function RawComponent<State extends SensenElementState>(
                                 records.map(record=>{
         
                                     this.$compilateRecord(record)
-        
+
                                     this.$emitter.dispatch('hydrate', record)
         
                                 })
@@ -552,9 +552,9 @@ export class SensenElement<
 
             const callback = ()=>{
 
-                this.style.display = 'none';
+                // this.style.display = 'none';
     
-                this.innerHTML = ''
+                // this.innerHTML = ''
                 
                 resolved(this)
                 
@@ -580,20 +580,26 @@ export class SensenElement<
                     
                 ){
 
-                    // const $display = getComputedStyle(this).display || 'inline'; 
-
-                    // if($display.match(/inline/)){ this.style.display = 'block'; }
-        
 
                     if(moment === true && typeof this.$controller.transition.ondestroy.exit == 'function'){
 
+                        const $display = getComputedStyle(this).display || 'inline'; 
+    
+                        if($display.match(/inline/)){ this.style.display = 'block'; }
+            
+                        
                         this.$controller.transition.ondestroy.exit( this )
 
-                        .then(done=>callback())
+                            .then(done=>callback())
 
                     }
 
-                    if(moment === false && typeof this.$controller.transition.ondestroy.exitReverse == 'function'){
+                    else if(moment === false && typeof this.$controller.transition.ondestroy.exitReverse == 'function'){
+
+                        const $display = getComputedStyle(this).display || 'inline'; 
+    
+                        if($display.match(/inline/)){ this.style.display = 'block'; }
+            
 
                         this.$controller.transition.ondestroy.exitReverse( this )
 
@@ -815,6 +821,27 @@ export class SensenElement<
 
 
 
+    $compilateDirectives(node : Node | HTMLElement){
+
+        FindDirectives(node, (record)=>{
+
+            // // @ts-ignore
+            // record.node.$parentComponent = this;
+
+            FindStateData<State>( this, record )
+
+            // console.log('Build Directive', record.node )
+
+            this.$compilateRecord(record);
+            
+        })
+
+        return this;
+        
+    }
+    
+
+
 
     $compilateRecord(record : ExpressionRecord){
 
@@ -922,11 +949,16 @@ export class SensenElement<
                 throw (`Corrupted directive : < ${ record.directive?.name } >`);
             }
 
-            record.directive.main({component : this, record})
+            
+            record.directive.main({
+                
+                component : FindParental(record.node, c=> c instanceof SensenElement ) || this, 
+                
+                record
+            
+            })
            
         }
-
-
 
         return this;
         
@@ -963,6 +995,23 @@ export class SensenElement<
         }
 
         this.$setStates();
+
+
+        if(this.childNodes){
+
+            Object.values(this.childNodes).map(child=>{
+
+                if(!(child instanceof SensenElement)){
+                
+                    this.$compilateDirectives(child)
+
+                }
+                
+
+            })
+            
+        }
+
             
         return this;
         
@@ -983,6 +1032,8 @@ export class SensenElement<
         
 
         this.$observations = new MutationObserver((records)=>{
+
+
 
             if(records){
 
@@ -1043,6 +1094,8 @@ export class SensenElement<
                             case 'characterData':
                             case 'childList':
 
+                                // console.log('target Observed', record.target )
+
                                 if(record.target instanceof SensenElement){
 
                                     record.target.$application = this.$application;
@@ -1056,6 +1109,12 @@ export class SensenElement<
                                         child.$application = this.$application
 
                                         child.$parentComponent = this
+                                        
+                                    }
+
+                                    else if( child instanceof HTMLElement && !(child instanceof SensenElement)){
+
+                                        this.$compilateDirectives(child)
                                         
                                     }
                                     
@@ -1506,16 +1565,16 @@ CommonDirectives.Define({
                         
                         const _event = CreateComponentMethodEvent<typeof component.$state>(component, ev)
             
-            
+                        
             
                         if(isMethod && component.$methods){
+
+                            const methodName = attrib.substring((`this.methods.`).length) 
             
-                            const method = component.$methods[ 
-                                
-                                attrib.substring((`this.methods.`).length) 
+                            const method = component.$methods[ methodName ];
                             
-                            ];
-                            
+                            // console.warn('Directive Event', method, methodName, attrib, component )
+                        
                             /** * Check is transaction function */
                             if(typeof method == 'function'){
                                 

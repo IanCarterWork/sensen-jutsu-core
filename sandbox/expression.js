@@ -117,28 +117,6 @@ export function FindAttributesExpression(element, callback) {
     let found = [];
     if (element.attributes.length) {
         Object.values(element.attributes).map(att => {
-            /**
-             * Find Directive
-             */
-            Object.values(CommonDirectives.Availables || {})
-                .filter(directive => directive.type == '-attribute')
-                .map(directive => {
-                const matches = [...att.name.matchAll(new RegExp(`^${directive.expression}`, 'gi'))];
-                if (matches.length) {
-                    const split = att.name?.substring((directive.expression || '')?.length).split('.');
-                    const r = {
-                        node: element,
-                        name: split[0],
-                        directive,
-                        matches,
-                        attribute: att,
-                        type: 'directive',
-                        mockup: att.cloneNode(true),
-                        arguments: ArrayRange(split, 1)
-                    };
-                    callback(r);
-                }
-            });
             if (att.value?.match(SyntaxSnapCode) ||
                 att.value?.match(SyntaxEcho)) {
                 const r = {
@@ -253,4 +231,41 @@ export function FindStateData(component, record) {
             // console.warn('Find State ', component.$stateMirrors )
         }
     }
+}
+export function FindDirectives(node, callback) {
+    if (node instanceof Text) {
+    }
+    else if (node instanceof HTMLElement) {
+        if (node instanceof SensenElement) {
+            // console.error('Stop', node)
+            return FindDirectives;
+        }
+        Object.values(node.attributes).map(att => {
+            Object.values(CommonDirectives.Availables || {})
+                .filter(directive => directive.type == '-attribute')
+                .map(directive => {
+                const matches = [...att.name.matchAll(new RegExp(`^${directive.expression}`, 'gi'))];
+                if (matches.length) {
+                    const split = att.name?.substring((directive.expression || '')?.length).split('.');
+                    const r = {
+                        node: node,
+                        name: split[0],
+                        directive,
+                        matches,
+                        attribute: att,
+                        type: 'directive',
+                        mockup: att.cloneNode(true),
+                        arguments: ArrayRange(split, 1)
+                    };
+                    callback(r);
+                }
+            });
+        });
+        if (node.children.length) {
+            Object.values(node.children).map(child => {
+                FindDirectives(child, callback);
+            });
+        }
+    }
+    return FindDirectives;
 }

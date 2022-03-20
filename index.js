@@ -7,11 +7,11 @@ var _SensenElement_instances, _SensenElement_connectedProtocol;
 import { SensenAppearance } from "./appearance.js";
 import { CommonDirectives } from "./directive.js";
 import { SensenEmitter } from "./emitter.js";
-import { FindGlobalExpressions, FindStateData } from "./expression.js";
+import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression.js";
 import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js";
 import { SensenRouter } from "./router.js";
 import { SensenState } from "./state.js";
-import { CloneObject, decodeHTMLEntities, isEmptyObject } from "./utilities.js";
+import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities.js";
 window.$SensenComponents = window.$SensenComponents || {};
 window.$SensenRouter = window.$SensenRouter || {};
 /**
@@ -233,8 +233,8 @@ export class SensenElement extends HTMLElement {
     $destroy(moment = true) {
         return new Promise((resolved) => {
             const callback = () => {
-                this.style.display = 'none';
-                this.innerHTML = '';
+                // this.style.display = 'none';
+                // this.innerHTML = ''
                 resolved(this);
                 this.$emitter.dispatch('destroy', this);
                 this.$inTransition = false;
@@ -244,13 +244,19 @@ export class SensenElement extends HTMLElement {
                 this.$inTransition = true;
                 if (this.$controller.transition.ondestroy &&
                     ('exit' in this.$controller.transition.ondestroy || 'exitReverse' in this.$controller.transition.ondestroy)) {
-                    // const $display = getComputedStyle(this).display || 'inline'; 
-                    // if($display.match(/inline/)){ this.style.display = 'block'; }
                     if (moment === true && typeof this.$controller.transition.ondestroy.exit == 'function') {
+                        const $display = getComputedStyle(this).display || 'inline';
+                        if ($display.match(/inline/)) {
+                            this.style.display = 'block';
+                        }
                         this.$controller.transition.ondestroy.exit(this)
                             .then(done => callback());
                     }
-                    if (moment === false && typeof this.$controller.transition.ondestroy.exitReverse == 'function') {
+                    else if (moment === false && typeof this.$controller.transition.ondestroy.exitReverse == 'function') {
+                        const $display = getComputedStyle(this).display || 'inline';
+                        if ($display.match(/inline/)) {
+                            this.style.display = 'block';
+                        }
                         this.$controller.transition.ondestroy.exitReverse(this)
                             .then(done => callback());
                     }
@@ -335,6 +341,16 @@ export class SensenElement extends HTMLElement {
         }
         return this;
     }
+    $compilateDirectives(node) {
+        FindDirectives(node, (record) => {
+            // // @ts-ignore
+            // record.node.$parentComponent = this;
+            FindStateData(this, record);
+            // console.log('Build Directive', record.node )
+            this.$compilateRecord(record);
+        });
+        return this;
+    }
     $compilateRecord(record) {
         if (record.type == 'attribute') {
             if (record.node instanceof SensenElement) {
@@ -370,7 +386,10 @@ export class SensenElement extends HTMLElement {
             if (typeof record.directive?.main != 'function') {
                 throw (`Corrupted directive : < ${record.directive?.name} >`);
             }
-            record.directive.main({ component: this, record });
+            record.directive.main({
+                component: FindParental(record.node, c => c instanceof SensenElement) || this,
+                record
+            });
         }
         return this;
     }
@@ -385,6 +404,13 @@ export class SensenElement extends HTMLElement {
             });
         }
         this.$setStates();
+        if (this.childNodes) {
+            Object.values(this.childNodes).map(child => {
+                if (!(child instanceof SensenElement)) {
+                    this.$compilateDirectives(child);
+                }
+            });
+        }
         return this;
     }
     $observers() {
@@ -418,6 +444,7 @@ export class SensenElement extends HTMLElement {
                                 break;
                             case 'characterData':
                             case 'childList':
+                                // console.log('target Observed', record.target )
                                 if (record.target instanceof SensenElement) {
                                     record.target.$application = this.$application;
                                 }
@@ -425,6 +452,9 @@ export class SensenElement extends HTMLElement {
                                     if (child instanceof SensenElement) {
                                         child.$application = this.$application;
                                         child.$parentComponent = this;
+                                    }
+                                    else if (child instanceof HTMLElement && !(child instanceof SensenElement)) {
+                                        this.$compilateDirectives(child);
                                     }
                                     this.$emitter.dispatch('addedChild', child);
                                 });
@@ -629,7 +659,9 @@ CommonDirectives.Define({
                         // const isRouter = attrib?.indexOf(`$router.`) == 0;
                         const _event = CreateComponentMethodEvent(component, ev);
                         if (isMethod && component.$methods) {
-                            const method = component.$methods[attrib.substring((`this.methods.`).length)];
+                            const methodName = attrib.substring((`this.methods.`).length);
+                            const method = component.$methods[methodName];
+                            // console.warn('Directive Event', method, methodName, attrib, component )
                             /** * Check is transaction function */
                             if (typeof method == 'function') {
                                 method.apply(component.$state, [_event]);

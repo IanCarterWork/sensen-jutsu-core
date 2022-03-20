@@ -107,6 +107,32 @@ export function isClass(instance) {
     return !isFunction(instance);
 }
 /**
+ * Node Descent
+ */
+export function NodeDescent(parent, child) {
+    var node = child.parentNode;
+    while (node != null) {
+        if (node == parent) {
+            return true;
+        }
+        node = node.parentNode;
+    }
+    return false;
+}
+/**
+ * Find Node Descent
+ */
+export function FindParental(child, validator) {
+    var node = child.parentNode;
+    while (node != null) {
+        if (validator(node) === true) {
+            return node;
+        }
+        node = node.parentNode;
+    }
+    return null;
+}
+/**
  * Fix JSON
  */
 // export function JSONSafeParse<T extends object>(json: string) : T | null{
