@@ -126,7 +126,7 @@ export function FindAttributesExpression(element, callback) {
                 const matches = [...att.name.matchAll(new RegExp(`^${directive.expression}`, 'gi'))];
                 if (matches.length) {
                     const split = att.name?.substring((directive.expression || '')?.length).split('.');
-                    callback({
+                    const r = {
                         node: element,
                         name: split[0],
                         directive,
@@ -135,12 +135,13 @@ export function FindAttributesExpression(element, callback) {
                         type: 'directive',
                         mockup: att.cloneNode(true),
                         arguments: ArrayRange(split, 1)
-                    });
+                    };
+                    callback(r);
                 }
             });
             if (att.value?.match(SyntaxSnapCode) ||
                 att.value?.match(SyntaxEcho)) {
-                callback({
+                const r = {
                     type: 'attribute',
                     node: element,
                     attribute: att,
@@ -149,8 +150,9 @@ export function FindAttributesExpression(element, callback) {
                         ...att.value?.matchAll(SyntaxSnapCode),
                         ...att.value?.matchAll(SyntaxEcho),
                     ]
-                });
-                found[found.length] = element;
+                };
+                callback(r);
+                found[found.length] = r;
             }
         });
     }
@@ -171,35 +173,41 @@ export function FindGlobalExpressions(element, callback) {
                  */
                 if (child instanceof Text) {
                     if (child.textContent?.match(SyntaxSnapCode)) {
-                        callback({
+                        const r = {
                             type: 'snapcode',
                             node: child,
                             mockup: child.cloneNode(true),
                             matches: [...child.textContent?.matchAll(SyntaxSnapCode)]
-                        });
-                        found[found.length] = child;
+                        };
+                        callback(r);
+                        found[found.length] = r;
                         continue;
                     }
                     else if (child.textContent?.match(SyntaxEcho)) {
-                        callback({
+                        const r = {
                             type: 'echo',
                             node: child,
                             mockup: child.cloneNode(true),
                             matches: [...child.textContent?.matchAll(SyntaxEcho)]
-                        });
-                        found[found.length] = child;
+                        };
+                        callback(r);
+                        found[found.length] = r;
                         continue;
                     }
                 }
                 else if (child instanceof HTMLElement) {
+                    if (child.attributes.length) {
+                        found = [...found, ...FindAttributesExpression(child, callback)];
+                    }
                     if (child.innerHTML?.match(SyntaxSnapCode)) {
-                        callback({
+                        const r = {
                             type: 'snapcode',
                             node: child,
                             mockup: child.cloneNode(true),
                             matches: [...child.innerHTML?.matchAll(SyntaxSnapCode)]
-                        });
-                        found[found.length] = child;
+                        };
+                        callback(r);
+                        found[found.length] = r;
                         continue;
                     }
                     else {

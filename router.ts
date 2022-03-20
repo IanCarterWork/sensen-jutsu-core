@@ -1,3 +1,4 @@
+import { SensenAppearance } from "./appearance";
 import { SensenElement } from "./index";
 import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities";
 
@@ -90,6 +91,8 @@ export class SensenRouter implements SensenRouter{
     currentRoute?: SensenRouterEntry;
 
     history?: SensenRouterHistory;
+
+    appearance: SensenAppearance = new SensenAppearance
 
 
     constructor(
@@ -289,6 +292,46 @@ export class SensenRouter implements SensenRouter{
             
         }
 
+        this.appearance.selectors({
+           
+            $self:{
+           
+                position: 'relative',
+           
+                display: 'block',
+           
+                width: '100%',
+           
+                height: '100%',
+           
+                maxWidth: '100vw',
+           
+                maxHeight: '100vh',
+           
+                overflowX: 'hidden',
+           
+                overflowY: 'auto',
+           
+            },
+
+            '> *':{
+
+                display: 'block',
+           
+                position: 'absolute',
+           
+                top: '0',
+           
+                left: '0',
+                
+            }
+            
+        }).mount().bind(this.options.canvas)
+        
+
+        // this.options.canvas.style.position = `relative`;
+        // this.options.canvas.style.display = `block`;
+        
 
         window.addEventListener('hashchange', (ev)=>{
 
@@ -633,22 +676,15 @@ export class SensenRouter implements SensenRouter{
 
                     const firstTime = !entry.$showing
 
-                    entry.style.position = 'absolute';
-
-                    entry.style.top = '0';
-
-                    entry.style.left = '0';
+                    entry.style.zIndex = '2';
 
 
 
                     if(exit instanceof SensenElement){
 
-                        exit.style.position = 'absolute';
+                        exit.style.zIndex = '1';
 
-                        exit.style.top = '0';
 
-                        exit.style.left = '0';
-    
                         exit.$destroy(firstTime ? false : true ).then(element=>{
 
                             if(!firstTime){ exit.$showing = false }
@@ -659,8 +695,10 @@ export class SensenRouter implements SensenRouter{
             
                     if(deployed){
 
-                        entry.style.removeProperty('display');
-
+                        // entry.style.removeProperty('display');
+                        
+                        entry.style.display = 'block';
+                        
                         window.requestAnimationFrame(()=>{
 
                             entry.$build(deployed).then(el=> entry.$render(state) )
@@ -675,6 +713,10 @@ export class SensenRouter implements SensenRouter{
                         canvas.appendChild( entry )
 
                     }
+
+
+                    console.warn('Entry', firstTime, entry )
+    
 
                     entry.$showing = true
 

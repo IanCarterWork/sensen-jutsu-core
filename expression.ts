@@ -227,7 +227,7 @@ export function FindAttributesExpression(
     
 ){
 
-    let found : ChildNode[] = [];
+    let found : ExpressionRecord[] = [];
 
 
     if(element.attributes.length){
@@ -250,7 +250,7 @@ export function FindAttributesExpression(
 
                         const split = att.name?.substring((directive.expression||'')?.length).split('.')
 
-                        callback({
+                        const r:ExpressionRecord = {
                             node: element,
                             name: split[0],
                             directive,
@@ -259,7 +259,9 @@ export function FindAttributesExpression(
                             type: 'directive',
                             mockup: att.cloneNode(true),
                             arguments: ArrayRange<string>(split, 1)
-                        })
+                        }
+
+                        callback(r)
                         
                     }
                     
@@ -272,7 +274,7 @@ export function FindAttributesExpression(
 
             ){
 
-                callback({
+                const r :ExpressionRecord = {
                     type: 'attribute',
                     node: element,
                     attribute: att,
@@ -281,9 +283,11 @@ export function FindAttributesExpression(
                         ...att.value?.matchAll(SyntaxSnapCode),
                         ...att.value?.matchAll(SyntaxEcho),
                     ]
-                })
+                }
                 
-                found[ found.length ] = element;
+                callback(r)
+                
+                found[ found.length ] = r;
 
             }
             
@@ -309,7 +313,7 @@ export function FindGlobalExpressions(
 
     const children = element.childNodes;
 
-    let found : ChildNode[] = [...FindAttributesExpression(element, callback)]
+    let found : ExpressionRecord[] = [...FindAttributesExpression(element, callback)]
 
     
 
@@ -337,14 +341,16 @@ export function FindGlobalExpressions(
 
                     if(child.textContent?.match(SyntaxSnapCode)){
 
-                        callback({
+                        const r : ExpressionRecord = {
                             type:'snapcode',
                             node: child,
                             mockup: child.cloneNode(true),
                             matches: [...child.textContent?.matchAll(SyntaxSnapCode)]
-                        })
+                        }
+
+                        callback(r)
                         
-                        found[ found.length ] = child;
+                        found[ found.length ] = r;
 
                         continue;
                         
@@ -353,14 +359,16 @@ export function FindGlobalExpressions(
                     
                     else if(child.textContent?.match(SyntaxEcho)){
 
-                        callback({
+                        const r : ExpressionRecord = {
                             type:'echo',
                             node: child,
                             mockup: child.cloneNode(true),
                             matches: [...child.textContent?.matchAll(SyntaxEcho)]
-                        })
+                        }
 
-                        found[ found.length ] = child;
+                        callback(r)
+
+                        found[ found.length ] = r;
 
                         continue;
                         
@@ -371,17 +379,25 @@ export function FindGlobalExpressions(
                 
                 else if(child instanceof HTMLElement){
 
+                    if(child.attributes.length){
+
+                        found = [...found, ...FindAttributesExpression(child, callback)]
+
+                    }
+
                     if(child.innerHTML?.match(SyntaxSnapCode)){
 
-                        callback({
+                        const r : ExpressionRecord = {
                             type:'snapcode',
                             node:  child,
                             mockup: child.cloneNode(true),
                             matches: [...child.innerHTML?.matchAll(SyntaxSnapCode)]
-                        })
+                        }
+
+                        callback(r)
                         
-                        found[ found.length ] = child;
-                        
+                        found[ found.length ] = r;
+
                         continue;
 
                     }

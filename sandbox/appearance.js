@@ -1,7 +1,7 @@
-import { SensenEmitter } from "./emitter.js.js.js.js";
-import { SensenMetricRandom } from "./metric-random.js.js.js.js";
-import { ArrayRange } from "./utilities.js.js.js.js";
-import SensenURLScheme from "./pathScheme.js.js.js.js";
+import { SensenEmitter } from "./emitter.js";
+import { SensenMetricRandom } from "./metric-random.js";
+import { ArrayRange } from "./utilities.js";
+import SensenURLScheme from "./pathScheme.js";
 export class SensenAppearance {
     constructor(props) {
         this.$dom = {};
@@ -104,8 +104,8 @@ export class SensenAppearance {
         if (this.props) {
             const slot = OIAppearance(this.props);
             slot.selectors.forEach((selector, k) => {
-                this.$refs[selector] = this.render(`.${this.$UiD}${(selector).trim().toLocaleLowerCase() == '$self'
-                    ? `` : ` ${selector}`}{${slot.rows[k]}}`);
+                this.$refs[selector] = this.render(`.${this.$UiD}${((selector).trim().toLocaleLowerCase() == '$self')
+                    ? `` : `${selector.trim().indexOf('&') === 0 ? `${selector.trim().substring(1)}` : ` ${selector}`}`}{${slot.rows[k]}}`);
             });
         }
         /** * Emit Event */

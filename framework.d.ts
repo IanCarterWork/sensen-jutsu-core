@@ -366,7 +366,7 @@ declare interface SensenRawComponent<State extends SensenElementState> {
     $appearance ?: object
     
 
-    $using?($state? : State) : this;
+    $using($state? : State) : this;
 
     $construct?(): this;
 
@@ -451,6 +451,9 @@ declare interface SensenElement<State extends SensenElementState> extends HTMLEl
 
 
     $appearance ?: object
+    
+
+    $using? : Function;
     
     
     $initialize?(state ?: State) : this;

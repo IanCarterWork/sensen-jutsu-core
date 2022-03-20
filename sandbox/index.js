@@ -4,14 +4,14 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SensenElement_instances, _SensenElement_connectedProtocol;
-import { SensenAppearance } from "./appearance.js.js.js.js";
-import { CommonDirectives } from "./directive.js.js.js.js";
-import { SensenEmitter } from "./emitter.js.js.js.js";
-import { FindGlobalExpressions, FindStateData } from "./expression.js.js.js.js";
-import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js.js.js.js";
-import { SensenRouter } from "./router.js.js.js.js";
-import { SensenState } from "./state.js.js.js.js";
-import { CloneObject, decodeHTMLEntities } from "./utilities.js.js.js.js";
+import { SensenAppearance } from "./appearance.js";
+import { CommonDirectives } from "./directive.js";
+import { SensenEmitter } from "./emitter.js";
+import { FindGlobalExpressions, FindStateData } from "./expression.js";
+import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js";
+import { SensenRouter } from "./router.js";
+import { SensenState } from "./state.js";
+import { CloneObject, decodeHTMLEntities, isEmptyObject } from "./utilities.js";
 window.$SensenComponents = window.$SensenComponents || {};
 window.$SensenRouter = window.$SensenRouter || {};
 /**
@@ -39,12 +39,15 @@ export function RawComponent($, config) {
             this.$hydrators();
             this.$construct();
         }
+        static $using($state) {
+            return new this($state);
+        }
         $construct() {
             this.$emitter.listen('begin', ({ emit, type }) => {
-                emit.style.display = 'none';
+                // emit.style.display = 'none';
             });
             this.$emitter.listen('done', ({ emit, type }) => {
-                emit.style.removeProperty('display');
+                // emit.style.removeProperty('display');
             });
             if (this.$controller?.construct) {
                 this.$controller?.construct({
@@ -206,6 +209,9 @@ export class SensenElement extends HTMLElement {
     $setSafeProps(value) {
         switch (typeof value) {
             case 'object':
+                if (Array.isArray(value)) {
+                    return `[ ${value.map(i => `"${i}"`).join(',')} ]`;
+                }
                 return JSON.stringify(value);
                 break;
             default:
@@ -238,10 +244,8 @@ export class SensenElement extends HTMLElement {
                 this.$inTransition = true;
                 if (this.$controller.transition.ondestroy &&
                     ('exit' in this.$controller.transition.ondestroy || 'exitReverse' in this.$controller.transition.ondestroy)) {
-                    const $display = getComputedStyle(this).display || 'inline';
-                    if ($display.match(/inline/)) {
-                        this.style.display = 'block';
-                    }
+                    // const $display = getComputedStyle(this).display || 'inline'; 
+                    // if($display.match(/inline/)){ this.style.display = 'block'; }
                     if (moment === true && typeof this.$controller.transition.ondestroy.exit == 'function') {
                         this.$controller.transition.ondestroy.exit(this)
                             .then(done => callback());
@@ -249,6 +253,9 @@ export class SensenElement extends HTMLElement {
                     if (moment === false && typeof this.$controller.transition.ondestroy.exitReverse == 'function') {
                         this.$controller.transition.ondestroy.exitReverse(this)
                             .then(done => callback());
+                    }
+                    else {
+                        callback();
                     }
                 }
                 else {
@@ -265,7 +272,7 @@ export class SensenElement extends HTMLElement {
         return new Promise((resolved) => {
             const hosted = (host instanceof HTMLElement) ? host.appendChild(this) : false;
             const callback = () => {
-                this.style.removeProperty('display');
+                // this.style.removeProperty('display');
                 resolved(this);
                 this.$emitter.dispatch('build', this);
                 this.$inTransition = false;
@@ -275,17 +282,18 @@ export class SensenElement extends HTMLElement {
                 this.$inTransition = true;
                 if (this.$controller.transition.onbuild &&
                     ('entry' in this.$controller.transition.onbuild || 'entryReverse' in this.$controller.transition.onbuild)) {
-                    const $display = getComputedStyle(this).display || 'inline';
-                    if ($display.match(/inline/)) {
-                        this.style.display = 'block';
-                    }
+                    // const $display = getComputedStyle(this).display || 'inline'; 
+                    // if($display.match(/inline/)){ this.style.display = 'block'; }
                     if (moment === true && typeof this.$controller.transition.onbuild.entry == 'function') {
                         this.$controller.transition.onbuild.entry(this)
                             .then(done => callback());
                     }
-                    if (moment === false && typeof this.$controller.transition.onbuild.entryReverse == 'function') {
+                    else if (moment === false && typeof this.$controller.transition.onbuild.entryReverse == 'function') {
                         this.$controller.transition.onbuild.entryReverse(this)
                             .then(done => callback());
+                    }
+                    else {
+                        callback();
                     }
                 }
                 else {
@@ -330,7 +338,8 @@ export class SensenElement extends HTMLElement {
     $compilateRecord(record) {
         if (record.type == 'attribute') {
             if (record.node instanceof SensenElement) {
-                // record.node.$syncProps();
+                record.node.$setStates();
+                return this;
             }
             SensenDataRender((record.attribute ? record.attribute.value || ''
                 : (record.mockup ? record.mockup.nodeValue || '' : '')), (record.node instanceof SensenElement && record.node.$parentComponent instanceof SensenElement)
@@ -395,7 +404,9 @@ export class SensenElement extends HTMLElement {
                                     if (check && this.$anamespace) {
                                         const slot = record.attributeName.toLowerCase().substring(this.$anamespace.length + 1);
                                         if (slot) {
-                                            this.$state[slot] = this.$stateHydrates?.make(slot, this.$unsetSafeProps(value) || '');
+                                            const $ = {};
+                                            $[slot] = value;
+                                            this.$setStates($);
                                         }
                                     }
                                     this.$emitter.dispatch('propChange', {
@@ -439,31 +450,54 @@ export class SensenElement extends HTMLElement {
         return this;
     }
     $setStates(state) {
-        const $state = (state || {});
+        // const $state = (state || {}) as State;
         return new Promise((resolved) => {
             const promises = [];
             const defaultState = { ...this.$controller?.state, /* ...(state||{})  */ };
-            Object.entries(defaultState).map($ => promises.push(new Promise((next) => {
-                const rawname = $[0];
-                const name = `state:${rawname}`;
-                const value = (this.getAttribute(`${name}`));
-                let found = '';
-                if (value != undefined) {
-                    found = this.$setSafeProps(value);
-                    this.$state[rawname] = this.$stateHydrates?.make(rawname, this.$unsetSafeProps(found));
-                    this.setAttribute(name, found);
+            const fn = ($) => {
+                return promises.push(new Promise((next) => {
+                    const rawname = $[0];
+                    const name = `state:${rawname}`;
+                    if (defaultState[$[0]] !== undefined) {
+                        const currentValue = (this.getAttribute(`${name}`) || this.$state[rawname]);
+                        if (currentValue !== this.$state[rawname]) {
+                            const found = this.$setSafeProps(currentValue);
+                            this.$state[rawname] = this.$stateHydrates?.make(rawname, this.$unsetSafeProps(found));
+                            // this.setAttribute(name, found);
+                        }
+                    }
+                    // else{
+                    //     if(currentValue === null){
+                    //         // console.warn('$> SET ///',name, $[1], defaultState[$[0]])
+                    //     }
+                    //     else{
+                    //         // console.log('$>',name, currentValue, defaultState[$[0]])
+                    //     }
+                    //     // this.$state[ rawname ] = defaultState[$[0]] as State[ keyof State]
+                    // }
+                    // if($state[ rawname ] != undefined && !currentValue){
+                    //     found = this.$setSafeProps($state[ rawname ]) as State[keyof State];
+                    //     // this.$state[ rawname ] = this.$unsetSafeProps(found);
+                    //      this.$state[ rawname ] = this.$stateHydrates?.make(
+                    //         rawname, 
+                    //         this.$unsetSafeProps(found)
+                    //     ) as State[ keyof State]
+                    //     // this.setAttribute(name, this.$setSafeProps($state[ rawname ]))
+                    // }
+                    // if($state[ rawname ] != undefined && currentValue){
+                    //     // this.setAttribute(name, this.$setSafeProps($state[ rawname ]))
+                    // }
+                    next(this.$state[rawname]);
+                }));
+            };
+            if (state) {
+                if (!isEmptyObject(state)) {
+                    Object.entries(state).map($ => fn($));
                 }
-                if ($state[rawname] != undefined && !value) {
-                    found = this.$setSafeProps($state[rawname]);
-                    // this.$state[ rawname ] = this.$unsetSafeProps(found);
-                    this.$state[rawname] = this.$stateHydrates?.make(rawname, this.$unsetSafeProps(found));
-                    this.setAttribute(name, this.$setSafeProps($state[rawname]));
-                }
-                if ($state[rawname] != undefined && value) {
-                    this.setAttribute(name, this.$setSafeProps($state[rawname]));
-                }
-                next(found);
-            })));
+            }
+            else {
+                Object.entries(defaultState).map($ => fn($));
+            }
             Promise.allSettled(promises)
                 .then(results => {
                 resolved(this.$state);
@@ -496,7 +530,7 @@ export class KuchiyoceElement extends SensenElement {
         super($params.state || {});
         this.$params = $params;
         this.$tnamespace = 'sensen';
-        this.$anamespace = 'prop';
+        this.$anamespace = 'state';
         if (!this.parentNode) {
             document.body.insertBefore(this, document.body.firstChild);
         }

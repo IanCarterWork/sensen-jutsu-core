@@ -104,8 +104,8 @@ export class SensenAppearance {
         if (this.props) {
             const slot = OIAppearance(this.props);
             slot.selectors.forEach((selector, k) => {
-                this.$refs[selector] = this.render(`.${this.$UiD}${(selector).trim().toLocaleLowerCase() == '$self'
-                    ? `` : ` ${selector}`}{${slot.rows[k]}}`);
+                this.$refs[selector] = this.render(`.${this.$UiD}${((selector).trim().toLocaleLowerCase() == '$self')
+                    ? `` : `${selector.trim().indexOf('&') === 0 ? `${selector.trim().substring(1)}` : ` ${selector}`}`}{${slot.rows[k]}}`);
             });
         }
         /** * Emit Event */

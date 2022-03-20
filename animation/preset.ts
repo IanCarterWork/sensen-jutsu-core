@@ -549,7 +549,7 @@ export const FxScalingIn : SensenAnimationTransition = {
 
                 const fx = new SensenAnimationEngine({
                     
-                    from:[100, 0], to:[0, 100],
+                    from:[0, 0], to:[100, 100],
                     
                     duration: 256,
                     
@@ -635,7 +635,7 @@ export const FxScalingIn : SensenAnimationTransition = {
 
                 const fx = new SensenAnimationEngine({
                     
-                    from:[0, 100], to:[100, 0],
+                    from:[100, 100], to:[0, 0],
                     
                     duration: 400,
                     

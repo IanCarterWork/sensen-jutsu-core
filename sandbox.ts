@@ -129,47 +129,6 @@ const HelloComponent = Component<HelloState>({
     },
     
 
-    construct({element}){
-
-        // console.warn('Element Construct', element)
-
-        // element.$emitter?.listen<SensenElement<HelloState, HelloState>>('begin', ({ emit, type })=>{
-
-        //     console.warn(type, '=>', emit )
-
-        // })
-
-        // element.$emitter?.listen<SensenElement<HelloState, HelloState>>('done', ({ emit, type })=>{
-
-        //     console.warn(type, '=>', emit )
-
-        // })
-
-    },
-    
-
-    mount({ element }){
-
-        // console.warn('Mount Component', this.state)
-
-
-        // return new Promise<string>((done, fail)=>{
-
-        //     setTimeout(()=>{
-
-        //         done("data.done")
-
-        //     }, 3000)
-
-        // })
-        
-    },
-    
-    unmount(){
-
-        console.log('UnMount Now', this)
-        
-    },
     
     render({element, children, state}){
 
@@ -198,16 +157,31 @@ const HelloComponent = Component<HelloState>({
             <h1>{{ this.$state.my }}</h1>
             <h3>{{ this.$state.counter }}</h3>
 
+            <a href="javascript:void(0)" @click="this.$application.$router.get('home/state/update',{world:'Pink me'})">Home</a>
+            
+            <a href="javascript:void(0)" @click="this.$application.$router.get('about')">About</a>
+
+            <br>
+            <br>
+            <br>
+            
             <button type="button" @click.prevent="this.methods.addCounter">Incrementer</button>
             <button type="button" @click.stop="this.methods.minusCounter">Decrementer</button>
 
 
             <div>
 
+                <sense-kit-input state:icon="thumbs-up" state:label="Username!" state:type="username" state:name="username" ></sense-kit-input>
+
+            </div>
+            
+
+            <div>
+
             {% $Until(this.$state.toolsavailables, tool=>{ %}
         
             <div 
-            onclick="location.href='#{%=tool.route%}'"
+
             ui-fx="transition"
             ui-margin="2x"
             ui-rounded
@@ -224,6 +198,8 @@ const HelloComponent = Component<HelloState>({
                     <i class="">{%= tool.label %}</i>
 
                     <i class="">{%= tool.route %}</i>
+
+                    <sense-kit-input state:label="{%= tool.route %}" > </sense-kit-input>
 
                 </div>
 
@@ -242,10 +218,7 @@ const HelloComponent = Component<HelloState>({
             <br>
             <br>
 
-            <a href="javascript:void(0)" @click="this.$application.$router.get('home/state/update',{world:'Pink me'})">Home</a>
-            
-            <a href="javascript:void(0)" @click="this.$application.$router.get('about')">About</a>
-            
+
         `;
 
         return null;
@@ -255,7 +228,7 @@ const HelloComponent = Component<HelloState>({
 })
 
 
-
+// HelloComponent.$using()
 
 
 const WorldComponent = Component<HelloState>({
@@ -299,6 +272,147 @@ const WorldComponent = Component<HelloState>({
             <hr>
 
             <sense-hello state:world="{{ this.$state.world }}" state:counter="{{ this.$state.counter }}"> </sense-hello>
+        
+        `;
+
+        return null;
+
+    }
+    
+})
+
+
+
+
+
+
+interface KitInputState{
+
+	icon: string,
+
+	label: string,
+
+	cleaner: boolean,
+
+	secureText: boolean,
+
+	name: string,
+
+	type: string,
+
+	value: string,
+
+	rounded? : 'smaller' | 'small' | 'medium' | 'large' | 'larger'
+
+}
+
+
+
+const KitInput = Component<KitInputState>({
+    
+    name:'kit-input',
+
+    state:{
+
+        icon: 'user',
+
+        label : 'no label',
+
+        cleaner : true,
+
+        secureText : false,
+
+        name : 'test',
+
+        type : 'text',
+
+        value : 'sdclhbsd',
+
+        rounded : 'medium',
+
+    },
+
+    appearance:{
+
+        $self:{
+            backgroundColor:'red'
+        }
+        
+    },
+    
+    transition:{
+
+        onbuild: FxScalingIn,
+
+        ondestroy: FxScalingIn,
+        
+    },
+
+    render: ({state})=>{
+
+        return `
+
+        <label ui-fx="transition" fx-global ui-textinput ui-rounded="{{ this.$state.rounded || 'larger' }}" >
+
+            <div input-icon ui-flex="row align-center-v align-center-h"> <i class="fa-thin fa-{{ this.$state.icon || 'circle-dashed' }}"></i> </div>
+        
+            <div input-stack >
+        
+                {% if(this.$state.type == "textarea"){ %}
+        
+                    <textarea 
+        
+                    @blur="this.methods.leaved" 
+                    
+                    type="{%= this.$state.type || 'text' %}" 
+                    
+                    name="{%= this.$state.name || '' %}" 
+        
+                    placeholder="{%= this.$state.label || '' %}" 
+                    
+                    input-field >{%= this.$state.value || '' %}</textarea>
+        
+                {% } else{ %}
+                    
+                    <input 
+                        
+                        @blur="this.methods.leaved" 
+                        
+                        type="{%= this.$state.type || 'text' %}" 
+                        
+                        name="{%= this.$state.name || '' %}" 
+        
+                        placeholder="{%= this.$state.label || '' %}" 
+                        
+                        input-field 
+                        
+                    />
+                
+                {% } %}
+        
+                <div input-label >{%= this.$state.label %}</div>
+        
+            </div>
+        
+        
+            <div input-tools ui-flex="align-center-v align-center-h">
+        
+                <div ui-tools >
+        
+                    {% if(this.$state.label){ %}
+        
+                    <div tool-item @click="this.methods.cleaner" > <i class="fa-thin fa-times"></i> </div>
+                    
+                    {% } %}
+                    
+                </div>
+                
+            </div>
+        
+        
+        
+        </label>
+        
         
         `;
 

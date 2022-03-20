@@ -1,5 +1,6 @@
-import { SensenElement } from "./index.js.js.js.js";
-import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js.js.js.js";
+import { SensenAppearance } from "./appearance.js";
+import { SensenElement } from "./index.js";
+import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js";
 export class SensenRouterHistory {
     constructor() {
         this.entries = [];
@@ -32,6 +33,7 @@ export class SensenRouter {
     constructor(options) {
         this.options = options;
         this.routes = {};
+        this.appearance = new SensenAppearance;
         this.options.syncWithLocation = typeof this.options.syncWithLocation == 'boolean' ? this.options.syncWithLocation : true;
         this.initialize();
     }
@@ -117,6 +119,26 @@ export class SensenRouter {
         if (!(this.options.canvas instanceof SensenElement)) {
             throw (`SensenRouter : The canvas is not a SensenElement`);
         }
+        this.appearance.selectors({
+            $self: {
+                position: 'relative',
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                maxWidth: '100vw',
+                maxHeight: '100vh',
+                overflowX: 'hidden',
+                overflowY: 'auto',
+            },
+            '> *': {
+                display: 'block',
+                position: 'absolute',
+                top: '0',
+                left: '0',
+            }
+        }).mount().bind(this.options.canvas);
+        // this.options.canvas.style.position = `relative`;
+        // this.options.canvas.style.display = `block`;
         window.addEventListener('hashchange', (ev) => {
             const uri = (location.hash ? location.hash.substring(1) : this.options.default);
             const $uri = this.concateURI(uri);
@@ -250,13 +272,9 @@ export class SensenRouter {
                 if (entry instanceof SensenElement) {
                     const deployed = this.isDeployed(entry);
                     const firstTime = !entry.$showing;
-                    entry.style.position = 'absolute';
-                    entry.style.top = '0';
-                    entry.style.left = '0';
+                    entry.style.zIndex = '2';
                     if (exit instanceof SensenElement) {
-                        exit.style.position = 'absolute';
-                        exit.style.top = '0';
-                        exit.style.left = '0';
+                        exit.style.zIndex = '1';
                         exit.$destroy(firstTime ? false : true).then(element => {
                             if (!firstTime) {
                                 exit.$showing = false;
@@ -264,7 +282,8 @@ export class SensenRouter {
                         });
                     }
                     if (deployed) {
-                        entry.style.removeProperty('display');
+                        // entry.style.removeProperty('display');
+                        entry.style.display = 'block';
                         window.requestAnimationFrame(() => {
                             entry.$build(deployed).then(el => entry.$render(state));
                         });
@@ -272,6 +291,7 @@ export class SensenRouter {
                     if (!deployed) {
                         canvas.appendChild(entry);
                     }
+                    console.warn('Entry', firstTime, entry);
                     entry.$showing = true;
                     entry.$build(firstTime ? true : false)
                         .then(element => {

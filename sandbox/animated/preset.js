@@ -1,4 +1,4 @@
-import { SensenAnimationEngine } from "./index.js.js.js.js.js.js.js.js.js.js.js";
+import { SensenAnimationEngine } from "./index.js.js.js.js.js.js.js.js.js.js.js.js.js.js.js.js";
 export const FxPresenter = {
     async entry(widget) {
         return new Promise((done, fail) => {

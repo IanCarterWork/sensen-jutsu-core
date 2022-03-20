@@ -253,9 +253,9 @@ export class SensenAppearance implements SensenAppearance{
 
                 this.$refs[selector] = this.render(`.${this.$UiD}${
                 
-                    (selector).trim().toLocaleLowerCase() == '$self'
+                    ((selector).trim().toLocaleLowerCase() == '$self')
                 
-                    ? `` : ` ${ selector }`
+                    ? `` : `${ selector.trim().indexOf('&') === 0 ? `${ selector.trim().substring(1) }` : ` ${ selector }`  }`
                 
                 }{${ slot.rows[k] }}`)
                 

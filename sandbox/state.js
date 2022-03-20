@@ -1,4 +1,4 @@
-import { SensenEmitter } from "./emitter.js.js.js.js";
+import { SensenEmitter } from "./emitter.js";
 export class SensenState {
     constructor(state) {
         this.state = state;

@@ -1,4 +1,4 @@
-import { SensenAnimationEngine } from "./index.js.js.js.js";
+import { SensenAnimationEngine } from "./index.js";
 export const FxPresenter = {
     async entry(widget) {
         return new Promise((done, fail) => {
@@ -273,7 +273,7 @@ export const FxScalingIn = {
         return new Promise((done, fail) => {
             try {
                 const fx = new SensenAnimationEngine({
-                    from: [100, 0], to: [0, 100],
+                    from: [0, 0], to: [100, 100],
                     duration: 256,
                     hit: (interpolarity) => {
                         if (widget) {
@@ -319,7 +319,7 @@ export const FxScalingIn = {
         return new Promise((done, fail) => {
             try {
                 const fx = new SensenAnimationEngine({
-                    from: [0, 100], to: [100, 0],
+                    from: [100, 100], to: [0, 0],
                     duration: 400,
                     hit: (interpolarity) => {
                         if (widget) {
