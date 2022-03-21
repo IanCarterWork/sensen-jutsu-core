@@ -534,6 +534,10 @@ export class SensenElement extends HTMLElement {
             });
         });
     }
+    $assign(prop, value) {
+        this[prop] = value;
+        return this;
+    }
     static $use($namspace, $name, $klass) {
         const _name = `${$namspace}-${$name}`;
         if (!customElements.get(_name) && $klass) {
@@ -686,6 +690,42 @@ CommonDirectives.Define({
         }
     },
 });
+/**
+ * Sensen Functional Commands
+ */
+/** * Sensen Element Caller */
+export function Sensen(command, state) {
+    if (typeof command == 'string') {
+        if (command in window.$SensenComponents) {
+            const $ref = customElements.get(command);
+            if ($ref instanceof Function) {
+                const $instance = (new $ref(state || {}));
+                if ($instance instanceof SensenElement) {
+                    return $instance;
+                }
+            }
+        }
+        else {
+            const element = document.querySelector(command);
+            if (element instanceof HTMLElement) {
+                return element;
+            }
+        }
+    }
+    return undefined;
+}
+/** * Sensen Plugin Element Caller */
+export function SensenPlugin(name, state) {
+    return Sensen(`plugin-${name}`, state);
+}
+/** * Sensen Activity Element Caller */
+export function SensenActivity(name, state) {
+    return Sensen(`activity-${name}`, state);
+}
+/** * Sensen Component Element Caller */
+export function SensenComponent(name, state) {
+    return Sensen(`sense-${name}`, state);
+}
 /** * Utilities : $ReadObjectEntries */
 export function $ReadObjectEntries(input) {
     return Object.entries(input);

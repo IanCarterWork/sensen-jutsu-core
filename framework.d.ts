@@ -380,7 +380,10 @@ declare interface SensenRawComponent<State extends SensenElementState> {
 
     $render?(state?: State): Promise<string | Response> | object | Function | string | null | undefined;
 
+    $setStates?(state ?: State) : Promise<State>
     
+    $assign?(prop : string, value : any) : this;
+
 }
 
 
@@ -454,7 +457,7 @@ declare interface SensenElement<State extends SensenElementState> extends HTMLEl
     
 
     $using? : Function;
-    
+
     
     $initialize?(state ?: State) : this;
 

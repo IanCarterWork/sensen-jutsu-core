@@ -18,9 +18,9 @@ export function Activity<State extends SensenElementState >($ : ComponentAttribu
 
     const index = `activity-${ $.name }`
 
-    window.$SensenComponents[ index ] = RawComponent<State>($, config)
+    window.$SensenComponents[ index ] = RawComponent<State>($, config);
 
-    SensenElement.$use('activity', $.name, window.$SensenComponents[ index ] as CustomElementConstructor);
+    SensenElement.$use('activity', $.name, window.$SensenComponents[ index ]);
     
     return window.$SensenComponents[ index ] as SensenRawComponent<State>;
     

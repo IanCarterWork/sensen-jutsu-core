@@ -316,7 +316,7 @@ export function Component<State extends SensenElementState >($ : ComponentAttrib
 
     window.$SensenComponents[ index ] = RawComponent<State>($, config)
 
-    SensenElement.$use('sense', $.name, window.$SensenComponents[ index ] as CustomElementConstructor);
+    SensenElement.$use('sense', $.name, window.$SensenComponents[ index ]);
     
     return window.$SensenComponents[ index ] as SensenRawComponent<State>;
     
@@ -1308,13 +1308,23 @@ export class SensenElement<
     }
 
 
-    static $use($namspace: string, $name: string, $klass: CustomElementConstructor){
+
+    $assign(prop : string, value : any){
+
+        this[ prop as keyof this ] = value;
+
+        return this;
+        
+    }
+
+
+    static $use($namspace: string, $name: string, $klass: CustomElementConstructor | SensenRawComponent<any>){
 
         const _name = `${ $namspace }-${ $name }`;
 
         if(!customElements.get(_name) && $klass){
 
-            customElements.define(_name, $klass)
+            customElements.define(_name, $klass as CustomElementConstructor)
             
         }
 
@@ -1637,6 +1647,93 @@ CommonDirectives.Define({
 
 
 
+
+
+
+
+/**
+ * Sensen Functional Commands
+ */
+
+/** * Sensen Element Caller */
+
+export function Sensen<
+
+    State extends SensenElementState
+    
+>(command : any, state? : State) : HTMLElement | SensenElement<State> | undefined{
+
+    
+    if(typeof command == 'string'){
+
+        if(command in window.$SensenComponents){ 
+    
+            const $ref = customElements.get( command )
+
+
+            if($ref instanceof Function){
+
+                const $instance = (new $ref(state || {} as State));
+
+                if($instance instanceof SensenElement){
+
+                    return $instance;
+                    
+                }
+
+            }
+
+            
+        }
+    
+        else{
+    
+            const element = document.querySelector( command )
+    
+            if(element instanceof HTMLElement){
+    
+                return element
+                
+            }
+
+            
+        }
+
+    }
+        
+
+    return undefined
+
+}
+
+
+/** * Sensen Plugin Element Caller */
+
+export function SensenPlugin<State extends SensenElementState>(name : string, state? : State) {
+
+   return Sensen<State>(`plugin-${ name }`, state)
+
+}
+
+
+
+/** * Sensen Activity Element Caller */
+
+export function SensenActivity<State extends SensenElementState>(name : string, state? : State) {
+
+    return Sensen<State>(`activity-${ name }`, state)
+
+}
+
+
+
+/** * Sensen Component Element Caller */
+
+export function SensenComponent<State extends SensenElementState>(name : string, state? : State) {
+
+    return Sensen<State>(`sense-${ name }`, state)
+
+}
 
 
 
