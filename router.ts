@@ -1,5 +1,5 @@
 import { SensenAppearance } from "./appearance";
-import { SensenElement } from "./index";
+import { Component, KuchiyoceElement, SensenElement } from "./index";
 import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities";
 
 
@@ -836,119 +836,78 @@ export class SensenRouter implements SensenRouter{
 
 
 
-// CommonDirectives.Define({
 
-//     name:'action',
 
-//     type:'-attribute',
-    
-//     expression:'@',
-    
-//     main: (component: SensenElement<SensenElementProps, SensenElementState>, record: ExpressionRecord)=>{
-    
-//         /**
-//          * HTMLElement Only
-//          */
-//         if(record.node instanceof HTMLElement && component instanceof SensenElement){
+
+
+
+
+export class NavigateLinkComponent extends HTMLElement{
+
+    constructor(){
+
+        super();
+        
+    }
+
+
+    $handler(){
+
+        const $uri = this.getAttribute('uri') as keyof SensenRouterScheme;
+
+        const $method = this.getAttribute('method') as SensenRouterMethod;
+
+        const $state = this.getAttribute('state') || '{}';
+
+
+        let $globalRouter = window.$SensenRouter || undefined;
+
+
+        if(typeof $uri == "string"){
             
-//             const alreadyKey = `directiveState${ record.directive?.expression }` as keyof HTMLElement;
+            const $router = ((
+    
+                this.$parentComponent instanceof SensenElement && 
+                
+                this.$parentComponent?.$application instanceof KuchiyoceElement &&
 
-//             const args = Array.isArray(record.arguments) ? record.arguments : [];
+                this.$parentComponent?.$application.$router instanceof SensenRouter
+                
+            ) ? this.$parentComponent?.$application.$router : false ) || $globalRouter;
 
-
-//             /**
-//              * Evité les abus de définition
-//              */
-//             if(record.node[ alreadyKey ]){ return ; }
             
-//             /**
-//              * Definition de l'évènement 
-//              */
-//             record.node.addEventListener(`${ record.name }`, (ev: Event)=>{
-                
-//                 record.matches?.map(match=>{
+            $router.navigate($method || 'get', $uri, JSON.parse($state) as SensenElementState);
+            
+        }
 
-//                     const attrib = (
-                        
-//                         ('attributes' in record.node) 
-                        
-//                         ? record.node.getAttribute(match?.input||'')
+    }
+
+
+    connectedCallback(){
+
+        this.setAttribute('tabindex', '0')
         
-//                         : ''
+        this.removeEventListener('click', this.$handler.bind(this), false )
+
+        this.addEventListener('click', this.$handler.bind(this), false );
+
+        // this.onclick = this.$handler.bind(this)
+
         
-//                     )?.trim();
+    }
     
 
-//                     if(args.indexOf('prevent') > -1){ ev.preventDefault() }
-        
-//                     if(args.indexOf('stop') > -1){ ev.stopPropagation() }
-        
-//                     // const attrib = value as keyof typeof component.state;
-        
-        
-//                     /**
-//                      * Check Component methods
-//                      */
-//                     const isMethod = attrib?.indexOf(`this.methods.`) == 0;
-                    
-//                     const _event = CreateComponentMethodEvent<
+    disconnectedCallback(){
 
-//                         typeof component.$props,
-
-//                         typeof component.$state
-                    
-//                     >(component, ev)
+        this.removeEventListener('click', this.$handler.bind(this), false )
         
-        
-        
-//                     if(isMethod && component.$methods){
-        
-//                         const method = component.$methods[ 
-                            
-//                             attrib.substring((`this.methods.`).length) 
-                        
-//                         ];
-                        
-//                         /** * Check is transaction function */
-//                         if(typeof method == 'function'){
-                            
-//                             method.apply(component.$state, [_event])
-                            
-//                         }
-                        
-//                     }
-        
-//                     else{
-        
-//                         if(typeof attrib == 'string' && attrib in window){
-        
-
-//                             const fn = (window[attrib as keyof Window] || (()=>{})) as Function
-        
-//                             if(typeof fn == 'function'){
-                                
-//                                 fn.apply(window, [_event])
-        
-//                             }
-                            
-//                         }
-                        
-//                     }
-
-//                 })
-                
-//             }, args.indexOf('capture') > -1 ? true : false)
+    }
     
 
+}
 
-//             // @ts-ignore
-//             record.node[ alreadyKey ] = true;
+if(!customElements.get('navigate-link')){
 
+    customElements.define('navigate-link', NavigateLinkComponent );
 
-//         }
-        
-    
-//     },
-    
-
-// })
+}

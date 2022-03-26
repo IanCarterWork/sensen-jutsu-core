@@ -4,14 +4,14 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SensenElement_instances, _SensenElement_connectedProtocol;
-import { SensenAppearance } from "./appearance.js";
-import { CommonDirectives } from "./directive.js";
-import { SensenEmitter } from "./emitter.js";
-import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression.js";
-import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js";
-import { SensenRouter } from "./router.js";
-import { SensenState } from "./state.js";
-import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities.js";
+import { SensenAppearance } from "./appearance";
+import { CommonDirectives } from "./directive";
+import { SensenEmitter } from "./emitter";
+import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression";
+import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
+import { SensenRouter } from "./router";
+import { SensenState } from "./state";
+import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities";
 window.$SensenComponents = window.$SensenComponents || {};
 window.$SensenRouter = window.$SensenRouter || {};
 /**
@@ -207,17 +207,34 @@ export class SensenElement extends HTMLElement {
         // this.$showing = false
     }
     $setSafeProps(value) {
+        let $value = value;
         switch (typeof value) {
             case 'object':
                 if (Array.isArray(value)) {
-                    return `[ ${value.map(i => `"${i}"`).join(',')} ]`;
+                    $value = `[ ${value.map(i => `"${i}"`).join(',')} ]`;
                 }
-                return JSON.stringify(value);
+                $value = JSON.stringify(value);
                 break;
             default:
-                return `${value}`;
+                $value = `${value}`;
                 break;
         }
+        // if(typeof $value == 'string'){
+        //     if($value.match(SyntaxSnapCode) || $value.match(SyntaxEcho)){
+        //         try{
+        //             SensenRawRender(
+        //                 $value, 
+        //                 this.$parentComponent instanceof SensenElement ? this.$parentComponent.$state : this.$state, 
+        //                 this.$parentComponent  instanceof SensenElement ? this.$parentComponent : this
+        //             ).then(compilate=>{
+        //                 console.log('Compilated', compilate )
+        //             })
+        //         }catch(e){
+        //         }
+        //     }
+        // }
+        // console.log('Change Attribute', value, );
+        return $value;
     }
     $unsetSafeProps(value) {
         let output = value;
@@ -399,10 +416,10 @@ export class SensenElement extends HTMLElement {
             FindStateData(this, record);
             this.$compilateRecord(record);
         });
-        if (expressions.length) {
-            expressions.map(child => {
-            });
-        }
+        // if(expressions.length){
+        //     expressions.map(child=>{
+        //     })
+        // }
         this.$setStates();
         if (this.childNodes) {
             Object.values(this.childNodes).map(child => {
@@ -463,6 +480,13 @@ export class SensenElement extends HTMLElement {
                                 });
                                 this.$emitter.dispatch('contentChanges', record);
                                 break;
+                        }
+                        if (record.target instanceof HTMLElement) {
+                            record.target.querySelectorAll('*').forEach(target => {
+                                if (target instanceof HTMLElement) {
+                                    target.$parentComponent = FindParental(record.target, c => c instanceof SensenElement) || this;
+                                }
+                            });
                         }
                     });
                     this.$emitter.dispatch('changesDone', records);

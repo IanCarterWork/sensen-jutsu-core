@@ -2,7 +2,7 @@ import { SensenAppearance } from "./appearance";
 import { CommonDirectives } from "./directive";
 import { SensenEmitter } from "./emitter";
 import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression";
-import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
+import { SensenDataRender, SensenNodeRender, SensenRawRender, SensenRender, SyntaxDelimiter, SyntaxEcho, SyntaxSnapCode } from "./render";
 import { SensenRouter } from "./router";
 import { SensenState } from "./state";
 import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities";
@@ -501,23 +501,62 @@ export class SensenElement<
 
     $setSafeProps(value : any){
 
+        let $value = value;
+
         switch(typeof value){
 
             case 'object': 
     
                 if(Array.isArray(value)){
     
-                    return `[ ${ value.map(i=>`"${i}"`).join(',') } ]`; 
+                    $value = `[ ${ value.map(i=>`"${i}"`).join(',') } ]`; 
     
                 }
     
-                return JSON.stringify(value); 
+                $value = JSON.stringify(value); 
                 
             break;
 
-            default: return `${ value }`; break;
+            default: $value = `${ value }`; break;
             
         }
+
+
+        // if(typeof $value == 'string'){
+
+        //     if($value.match(SyntaxSnapCode) || $value.match(SyntaxEcho)){
+
+
+        //         try{
+
+        //             SensenRawRender(
+                    
+        //                 $value, 
+                        
+        //                 this.$parentComponent instanceof SensenElement ? this.$parentComponent.$state : this.$state, 
+                        
+        //                 this.$parentComponent  instanceof SensenElement ? this.$parentComponent : this
+                        
+        //             ).then(compilate=>{
+    
+        //                 console.log('Compilated', compilate )
+                        
+        //             })
+
+        //         }catch(e){
+
+        //         }
+                
+                
+        //     }
+            
+        // }
+
+
+        // console.log('Change Attribute', value, );
+
+        
+        return $value
         
     }
 
@@ -986,13 +1025,13 @@ export class SensenElement<
             
         )
 
-        if(expressions.length){
+        // if(expressions.length){
 
-            expressions.map(child=>{
+        //     expressions.map(child=>{
 
-            })
+        //     })
             
-        }
+        // }
 
         this.$setStates();
 
@@ -1061,6 +1100,7 @@ export class SensenElement<
                                     if(check && this.$anamespace){
                             
                                         const slot = record.attributeName.toLowerCase().substring(this.$anamespace.length + 1) as keyof State
+
                             
                                         if(slot){
 
@@ -1137,6 +1177,25 @@ export class SensenElement<
                             
                         }
 
+
+                        if(record.target instanceof HTMLElement){
+
+                            record.target.querySelectorAll('*').forEach(target=>{
+
+                                if(target instanceof HTMLElement){
+
+                                    target.$parentComponent = FindParental(
+                                        
+                                        record.target, c=> c instanceof SensenElement 
+                                        
+                                    ) || this;
+                                    
+                                }
+                                
+                            })
+                            
+                        }
+
                         
                     })
                     
@@ -1197,6 +1256,7 @@ export class SensenElement<
                         if(defaultState[ $[0] ] !== undefined){
 
                             const currentValue = (this.getAttribute(`${ name }`) || this.$state[ rawname ] )
+
 
                             
                             if(currentValue !== this.$state[ rawname ]){

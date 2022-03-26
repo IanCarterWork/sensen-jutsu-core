@@ -1,11 +1,12 @@
-import { FxScalingIn, FxSlideHorizontal } from "./animation/preset.js";
-import { Component, Jutsu, SensenComponent } from "./index.js";
-import { SensenRouter, SensenRouterEntry } from "./router.js";
+import { FxScalingIn, FxSlideHorizontal } from "./animation/preset";
+import { Component, Jutsu, SensenComponent } from "./index";
+import { SensenRouter, SensenRouterEntry } from "./router";
 const HelloComponent = Component({
     name: 'hello',
     state: {
         my: 'SubTitle',
         counter: 0,
+        aboutlink: 'about',
         world: 'Hello Title',
         abs: ['a', 'b', 'c'],
         toolsavailables: [
@@ -71,6 +72,26 @@ const HelloComponent = Component({
             <br>
             <br>
             <br>
+
+
+            <div>
+
+                <navigate-link uri="{{ this.$state.aboutlink }}"   >
+    
+                    <div 
+                        ui-flex="row align-center-v"
+                    >
+                        <div navigation-icon="">
+                            <i class="fal fa-circle"></i>
+                        </div>
+                        <div navigation-label="">Link Navigate to about</div>
+    
+                    </div>
+                    
+                </navigate-link>
+
+            </div>
+            
             
             <div>
     

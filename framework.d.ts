@@ -228,6 +228,13 @@ declare interface ISensenRouterHistory{
 declare interface SensenRouterHistory extends ISensenRouterHistory{}
 
 
+declare interface RouterNavigateState extends SensenElementState{
+
+    uri: string
+
+}
+
+
 
 declare interface SensenRouter{
 
@@ -526,6 +533,8 @@ declare type SensenElementPropEntry = {
 /**
  * Component
  */
+
+
 
 declare interface RawComponentConfig{
 
@@ -827,6 +836,8 @@ declare interface HTMLElement{
 
     directiveStateNone: boolean;
 
+    $parentComponent?: object;
+
 }
 
 
@@ -1000,4 +1011,42 @@ declare interface SensenAppearance{
 
 
 
+
+
+declare interface ISensenPluginExtended<Props> extends HTMLElement{
+
+	$identity: string;
+
+    $plugin? : ISensenPluginExtended<Props>;
+
+    $propsObserver : MutationObserver;
+	
+    $contentObserver : MutationObserver;
+
+    $props? : Props;
+
+    $render: () => this;
+
+	$bewitchment: () => this;
+
+	$setProp: <T extends keyof Props>(name: keyof Props, value: Props[T] ) => this;
+
+	$initializeProps: (props?: Props) => this;
+    
+}
+
+
+declare interface ISensenPlugin<Props> extends ISensenPluginExtended<Props>{
+
+	$plugin: ISensenPluginExtended<Props>;
+	
+}
+
+
+
+declare type SensenPluginExtendedProps = {
+
+    status?: number;
+
+}
 

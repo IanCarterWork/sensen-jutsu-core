@@ -31,6 +31,8 @@ type HelloState = SensenElementState & {
 
     my ?: string;
 
+    aboutlink ?: string;
+
     toolsavailables?: AppToolsAvailables[]
     
 }
@@ -48,6 +50,8 @@ const HelloComponent = Component<HelloState>({
         my: 'SubTitle',
 
         counter: 0,
+
+        aboutlink: 'about',
 
         world: 'Hello Title',
 
@@ -164,6 +168,26 @@ const HelloComponent = Component<HelloState>({
             <br>
             <br>
             <br>
+
+
+            <div>
+
+                <navigate-link uri="{{ this.$state.aboutlink }}"   >
+    
+                    <div 
+                        ui-flex="row align-center-v"
+                    >
+                        <div navigation-icon="">
+                            <i class="fal fa-circle"></i>
+                        </div>
+                        <div navigation-label="">Link Navigate to about</div>
+    
+                    </div>
+                    
+                </navigate-link>
+
+            </div>
+            
             
             <div>
     

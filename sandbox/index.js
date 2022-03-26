@@ -207,17 +207,34 @@ export class SensenElement extends HTMLElement {
         // this.$showing = false
     }
     $setSafeProps(value) {
+        let $value = value;
         switch (typeof value) {
             case 'object':
                 if (Array.isArray(value)) {
-                    return `[ ${value.map(i => `"${i}"`).join(',')} ]`;
+                    $value = `[ ${value.map(i => `"${i}"`).join(',')} ]`;
                 }
-                return JSON.stringify(value);
+                $value = JSON.stringify(value);
                 break;
             default:
-                return `${value}`;
+                $value = `${value}`;
                 break;
         }
+        // if(typeof $value == 'string'){
+        //     if($value.match(SyntaxSnapCode) || $value.match(SyntaxEcho)){
+        //         try{
+        //             SensenRawRender(
+        //                 $value, 
+        //                 this.$parentComponent instanceof SensenElement ? this.$parentComponent.$state : this.$state, 
+        //                 this.$parentComponent  instanceof SensenElement ? this.$parentComponent : this
+        //             ).then(compilate=>{
+        //                 console.log('Compilated', compilate )
+        //             })
+        //         }catch(e){
+        //         }
+        //     }
+        // }
+        // console.log('Change Attribute', value, );
+        return $value;
     }
     $unsetSafeProps(value) {
         let output = value;
@@ -399,10 +416,10 @@ export class SensenElement extends HTMLElement {
             FindStateData(this, record);
             this.$compilateRecord(record);
         });
-        if (expressions.length) {
-            expressions.map(child => {
-            });
-        }
+        // if(expressions.length){
+        //     expressions.map(child=>{
+        //     })
+        // }
         this.$setStates();
         if (this.childNodes) {
             Object.values(this.childNodes).map(child => {
@@ -463,6 +480,13 @@ export class SensenElement extends HTMLElement {
                                 });
                                 this.$emitter.dispatch('contentChanges', record);
                                 break;
+                        }
+                        if (record.target instanceof HTMLElement) {
+                            record.target.querySelectorAll('*').forEach(target => {
+                                if (target instanceof HTMLElement) {
+                                    target.$parentComponent = FindParental(record.target, c => c instanceof SensenElement) || this;
+                                }
+                            });
                         }
                     });
                     this.$emitter.dispatch('changesDone', records);
@@ -533,6 +557,10 @@ export class SensenElement extends HTMLElement {
                 resolved(this.$state);
             });
         });
+    }
+    $assign(prop, value) {
+        this[prop] = value;
+        return this;
     }
     static $use($namspace, $name, $klass) {
         const _name = `${$namspace}-${$name}`;
@@ -691,14 +719,21 @@ CommonDirectives.Define({
  */
 /** * Sensen Element Caller */
 export function Sensen(command, state) {
-    if (command in window.$SensenComponents) {
-        const $ref = customElements.get(command);
-        return $ref instanceof Function ? (new $ref(state || {})) : undefined;
-    }
-    else {
-        const element = document.querySelector(command);
-        if (element instanceof HTMLElement) {
-            return element;
+    if (typeof command == 'string') {
+        if (command in window.$SensenComponents) {
+            const $ref = customElements.get(command);
+            if ($ref instanceof Function) {
+                const $instance = (new $ref(state || {}));
+                if ($instance instanceof SensenElement) {
+                    return $instance;
+                }
+            }
+        }
+        else {
+            const element = document.querySelector(command);
+            if (element instanceof HTMLElement) {
+                return element;
+            }
         }
     }
     return undefined;

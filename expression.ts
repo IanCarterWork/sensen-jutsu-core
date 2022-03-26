@@ -303,7 +303,6 @@ export function FindGlobalExpressions(
                  * Recherche une balise
                  */
 
-
                 if(child instanceof Text){
 
                     if(child.textContent?.match(SyntaxSnapCode)){

@@ -1,5 +1,5 @@
 import { SensenAppearance } from "./appearance.js.js.js";
-import { SensenElement } from "./index.js.js.js";
+import { KuchiyoceElement, SensenElement } from "./index.js.js.js";
 import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js.js.js";
 export class SensenRouterHistory {
     constructor() {
@@ -392,3 +392,33 @@ export class SensenRouter {
 //         }
 //     },
 // })
+export class NavigateLinkComponent extends HTMLElement {
+    constructor() {
+        super();
+    }
+    $handler() {
+        const $uri = this.getAttribute('uri');
+        const $method = this.getAttribute('method');
+        const $state = this.getAttribute('state') || '{}';
+        let $globalRouter = window.$SensenRouter || undefined;
+        if (typeof $uri == "string") {
+            const $router = ((this.$parentComponent instanceof SensenElement &&
+                this.$parentComponent?.$application instanceof KuchiyoceElement &&
+                this.$parentComponent?.$application.$router instanceof SensenRouter) ? this.$parentComponent?.$application.$router : false) || $globalRouter;
+            // console.warn('$router', $method||'get', $uri, $state, '\n', $router.navigate,  )
+            $router.navigate($method || 'get', $uri, JSON.parse($state));
+        }
+    }
+    connectedCallback() {
+        this.setAttribute('tabindex', '0');
+        this.removeEventListener('click', this.$handler.bind(this), false);
+        this.addEventListener('click', this.$handler.bind(this), false);
+        // this.onclick = this.$handler.bind(this)
+    }
+    disconnectedCallback() {
+        this.removeEventListener('click', this.$handler.bind(this), false);
+    }
+}
+if (!customElements.get('navigate-link')) {
+    customElements.define('navigate-link', NavigateLinkComponent);
+}
