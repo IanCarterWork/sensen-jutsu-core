@@ -4,14 +4,14 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SensenElement_instances, _SensenElement_connectedProtocol;
-import { SensenAppearance } from "./appearance";
-import { CommonDirectives } from "./directive";
-import { SensenEmitter } from "./emitter";
-import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression";
-import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
-import { SensenRouter } from "./router";
-import { SensenState } from "./state";
-import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities";
+import { SensenAppearance } from "./appearance.js";
+import { CommonDirectives } from "./directive.js";
+import { SensenEmitter } from "./emitter.js";
+import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression.js";
+import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js";
+import { SensenRouter } from "./router.js";
+import { SensenState } from "./state.js";
+import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities.js";
 window.$SensenComponents = window.$SensenComponents || {};
 window.$SensenRouter = window.$SensenRouter || {};
 /**
@@ -636,9 +636,10 @@ export class Jutsu {
 /**
  * Create Component Method Event
  */
-export function CreateComponentMethodEvent(component, event) {
+export function CreateComponentMethodEvent(component, event, record) {
     const _ = {
         event,
+        record,
         element: component,
         router: component.$application?.$router,
         children: component.children,
@@ -685,7 +686,7 @@ CommonDirectives.Define({
                          */
                         const isMethod = attrib?.indexOf(`this.methods.`) == 0;
                         // const isRouter = attrib?.indexOf(`$router.`) == 0;
-                        const _event = CreateComponentMethodEvent(component, ev);
+                        const _event = CreateComponentMethodEvent(component, ev, record);
                         if (isMethod && component.$methods) {
                             const methodName = attrib.substring((`this.methods.`).length);
                             const method = component.$methods[methodName];
@@ -739,15 +740,15 @@ export function Sensen(command, state) {
     return undefined;
 }
 /** * Sensen Plugin Element Caller */
-export function SensenPlugin(name, state) {
+export function $Plugin(name, state) {
     return Sensen(`plugin-${name}`, state);
 }
 /** * Sensen Activity Element Caller */
-export function SensenActivity(name, state) {
+export function $Activity(name, state) {
     return Sensen(`activity-${name}`, state);
 }
 /** * Sensen Component Element Caller */
-export function SensenComponent(name, state) {
+export function $Component(name, state) {
     return Sensen(`sense-${name}`, state);
 }
 /** * Utilities : $ReadObjectEntries */

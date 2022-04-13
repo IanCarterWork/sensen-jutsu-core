@@ -1,6 +1,6 @@
-import { SensenAppearance } from "./appearance";
-import { KuchiyoceElement, SensenElement } from "./index";
-import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities";
+import { SensenAppearance } from "./appearance.js";
+import { KuchiyoceElement, SensenElement } from "./index.js";
+import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js";
 export class SensenRouterHistory {
     constructor() {
         this.entries = [];
@@ -195,7 +195,7 @@ export class SensenRouter {
         const $canvas = canvas || this.options.canvas || undefined;
         const $method = method || 'get';
         state = !isEmptyObject($uri.params || {}) ? $uri.params : state;
-        $uri.params = state;
+        $uri.params = state || {};
         return new Promise((resolved, rejected) => {
             const route = this.find(uri);
             if (route) {

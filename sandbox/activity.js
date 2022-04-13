@@ -1,4 +1,4 @@
-import { RawComponent, SensenElement } from "./index.js.js.js";
+import { RawComponent, SensenElement } from "./index.js.js.js.js";
 export function Activity($) {
     const config = {
         namespace: {

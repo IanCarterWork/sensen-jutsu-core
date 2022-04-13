@@ -1,4 +1,4 @@
-import { SensenAnimationEngine } from "./index";
+import { SensenAnimationEngine } from "./index.js";
 export const FxPresenter = {
     async entry(widget) {
         return new Promise((done, fail) => {

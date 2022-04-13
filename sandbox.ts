@@ -1,5 +1,5 @@
 import { FxScalingIn, FxScalingOut, FxSlideHorizontal, FxSlideVertical } from "./animation/preset";
-import { Component, Jutsu, SensenComponent, SensenElement } from "./index";
+import { Component, Jutsu, $Component, SensenElement } from "./index";
 import { SensenRouter, SensenRouterEntry } from "./router";
 
 
@@ -466,7 +466,7 @@ Jutsu.Kuchiyoce<AppState>('sandbox', {
         // console.warn('Kuchioyce State', state, this)
 
 
-        console.warn('$>', SensenComponent<HelloState>('hello') )
+        console.warn('$>', $Component<HelloState>('hello') )
 
 
         return (new SensenRouter({

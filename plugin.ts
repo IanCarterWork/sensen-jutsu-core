@@ -252,13 +252,23 @@ export class SensenPluginExtended<Props extends SensenPluginExtendedProps> exten
 
 
 
+
+
+    static $use(){
+
+        
+        
+    }
+
+
+
 }
 
 
 
 
 
-const PluginMaker = {
+const SensenPlugin = {
 
     Child : PluginChild,
 
@@ -266,7 +276,9 @@ const PluginMaker = {
 
     CreateChild : CreatePluginChild,
 
+    Extended: SensenPluginExtended
+
 }
 
 
-export default PluginMaker
+export default SensenPlugin

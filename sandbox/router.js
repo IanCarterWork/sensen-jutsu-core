@@ -1,6 +1,6 @@
-import { SensenAppearance } from "./appearance.js.js.js";
-import { KuchiyoceElement, SensenElement } from "./index.js.js.js";
-import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js.js.js";
+import { SensenAppearance } from "./appearance.js.js.js.js";
+import { KuchiyoceElement, SensenElement } from "./index.js.js.js.js";
+import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js.js.js.js";
 export class SensenRouterHistory {
     constructor() {
         this.entries = [];

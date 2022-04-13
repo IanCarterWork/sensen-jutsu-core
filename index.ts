@@ -1483,6 +1483,9 @@ export class KuchiyoceElement extends SensenElement<SensenElementState>{
         if(render instanceof SensenRouter){
 
             this.$router = render;
+
+            //@ts-ignore
+            window.$SensenRouter = render
             
         }
 
@@ -1541,11 +1544,13 @@ export class Jutsu{
     
     State extends SensenElementState
     
->(component: SensenElement<State>, event: Event){
+>(component: SensenElement<State>, event: Event, record: ExpressionRecord){
 
     const _ : ComponentRenderDependencies<State> = {
     
         event,
+
+        record,
                         
         element: component,
     
@@ -1633,7 +1638,15 @@ CommonDirectives.Define({
     
                         // const isRouter = attrib?.indexOf(`$router.`) == 0;
                         
-                        const _event = CreateComponentMethodEvent<typeof component.$state>(component, ev)
+                        const _event = CreateComponentMethodEvent<typeof component.$state>(
+                            
+                            component, 
+                            
+                            ev,
+
+                            record
+                            
+                        )
             
                         
             
@@ -1743,7 +1756,6 @@ export function Sensen<
 
             }
 
-            
         }
     
         else{
@@ -1769,7 +1781,7 @@ export function Sensen<
 
 /** * Sensen Plugin Element Caller */
 
-export function SensenPlugin<State extends SensenElementState>(name : string, state? : State) {
+export function $Plugin<State extends SensenElementState>(name : string, state? : State) {
 
    return Sensen<State>(`plugin-${ name }`, state)
 
@@ -1779,7 +1791,7 @@ export function SensenPlugin<State extends SensenElementState>(name : string, st
 
 /** * Sensen Activity Element Caller */
 
-export function SensenActivity<State extends SensenElementState>(name : string, state? : State) {
+export function $Activity<State extends SensenElementState>(name : string, state? : State) {
 
     return Sensen<State>(`activity-${ name }`, state)
 
@@ -1789,7 +1801,7 @@ export function SensenActivity<State extends SensenElementState>(name : string, 
 
 /** * Sensen Component Element Caller */
 
-export function SensenComponent<State extends SensenElementState>(name : string, state? : State) {
+export function $Component<State extends SensenElementState>(name : string, state? : State) {
 
     return Sensen<State>(`sense-${ name }`, state)
 

@@ -458,7 +458,7 @@ export class SensenRouter implements SensenRouter{
         
         uri : keyof SensenRouterScheme, 
         
-        state : SensenRouterScheme[ keyof SensenRouterScheme ],
+        state? : SensenRouterScheme[ keyof SensenRouterScheme ],
 
         canvas?: InstanceType<typeof SensenElement>
         
@@ -471,7 +471,7 @@ export class SensenRouter implements SensenRouter{
         const $method = method || 'get';
 
 
-        state = !isEmptyObject($uri.params || {}) ? $uri.params : state; $uri.params = state
+        state = !isEmptyObject($uri.params || {}) ? $uri.params : state; $uri.params = state || {}
 
 
         return new Promise< SensenRouterEntry  >((resolved, rejected) => {
@@ -777,7 +777,7 @@ export class SensenRouter implements SensenRouter{
         
         slug : keyof SensenRouterScheme, 
         
-        state : SensenRouterScheme[ keyof SensenRouterScheme ],
+        state? : SensenRouterScheme[ keyof SensenRouterScheme ],
 
         canvas?: HTMLElement
         
@@ -796,7 +796,7 @@ export class SensenRouter implements SensenRouter{
         
         slug : keyof SensenRouterScheme, 
         
-        state : SensenRouterScheme[ keyof SensenRouterScheme ],
+        state? : SensenRouterScheme[ keyof SensenRouterScheme ],
 
         canvas?: HTMLElement
         
@@ -815,7 +815,7 @@ export class SensenRouter implements SensenRouter{
         
         slug : keyof SensenRouterScheme, 
         
-        state : SensenRouterScheme[ keyof SensenRouterScheme ],
+        state? : SensenRouterScheme[ keyof SensenRouterScheme ],
 
         canvas?: HTMLElement
         
@@ -875,7 +875,7 @@ export class NavigateLinkComponent extends HTMLElement{
                 
             ) ? this.$parentComponent?.$application.$router : false ) || $globalRouter;
 
-            
+
             $router.navigate($method || 'get', $uri, JSON.parse($state) as SensenElementState);
             
         }

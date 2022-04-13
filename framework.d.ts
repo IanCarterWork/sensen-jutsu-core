@@ -560,6 +560,8 @@ declare interface ComponentRenderDependencies< State extends SensenElementState 
 
     event?: Event
 
+    record?: ExpressionRecord
+
 }
 
 
