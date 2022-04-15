@@ -79,7 +79,7 @@ export class SensenRouterEntry implements SensenRouterEntry{
 
 
 
-
+ 
 
 export class SensenRouter implements SensenRouter{
 
@@ -186,7 +186,7 @@ export class SensenRouter implements SensenRouter{
 
     find(slug : keyof SensenRouterScheme) : SensenRouterEntry | undefined{
 
-        const $uri = this.concateURI(slug)
+        const $uri = SensenRouter.concateURI(slug)
 
         const routes = Object.values( this.routes );
 
@@ -250,7 +250,7 @@ export class SensenRouter implements SensenRouter{
 
         if(uri){
 
-            const $uri = this.concateURI(uri as keyof SensenRouterScheme);
+            const $uri = SensenRouter.concateURI(uri as keyof SensenRouterScheme);
 
             // const route = this.routes[ $uri.name ] || undefined
 
@@ -337,7 +337,7 @@ export class SensenRouter implements SensenRouter{
 
             const uri = (location.hash ? location.hash.substring(1) : this.options.default) as keyof SensenRouterScheme
             
-            const $uri = this.concateURI(uri);
+            const $uri = SensenRouter.concateURI(uri);
             
             const route = this.find(uri);
 
@@ -391,7 +391,7 @@ export class SensenRouter implements SensenRouter{
         
     }
 
-    concateURI(slug : keyof SensenRouterScheme) : SensenRouterURI{
+    static concateURI(slug : keyof SensenRouterScheme) : SensenRouterURI{
 
         const ex = (`${ slug }`).split('?')
 
@@ -464,11 +464,10 @@ export class SensenRouter implements SensenRouter{
         
     ) : Promise< SensenRouterEntry >{
 
-        const $uri = this.concateURI(uri);
+        const $uri = SensenRouter.concateURI(uri);
 
         const $canvas = canvas || this.options.canvas || undefined;
 
-        const $method = method || 'get';
 
 
         state = !isEmptyObject($uri.params || {}) ? $uri.params : state; $uri.params = state || {}
@@ -518,7 +517,7 @@ export class SensenRouter implements SensenRouter{
         
                         ).then(current=>{
         
-                            this.switchDone({ uri, state, route, current, canvas: $canvas });
+                            this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                             
                         })
         
@@ -546,7 +545,7 @@ export class SensenRouter implements SensenRouter{
         
                             ).then(current=>{
     
-                                this.switchDone({ uri, state, route, current, canvas: $canvas });
+                                this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                             
                             })
                             
@@ -587,16 +586,18 @@ export class SensenRouter implements SensenRouter{
 
 
 
-    switchDone({ uri, state, route, current, canvas } : SensenRouterSwitchRequest){
+    switchDone({ method, uri, state, route, current, canvas } : SensenRouterSwitchRequest){
 
         const currentURI = this.getCurrentURI()
 
 
         if(current instanceof SensenElement && route){
 
-            const $uri = this.concateURI(uri)
+            const $uri = SensenRouter.concateURI(uri)
 
             const query = URIParamsQuery(state||{}) || ''
+
+            const $method = method || route.settings.method;
             
             // @ts-ignore
             const _uri = (`#${ $uri.name }${ query ? `?${ query }` : `` }`) as keyof SensenRouterScheme;
@@ -623,22 +624,16 @@ export class SensenRouter implements SensenRouter{
 
             else{ 
 
-                if(route.settings.method == 'get'){
+                if($method == 'get'){
 
-                    location.href = `${ _uri }`; 
-
-                    // history.pushState(state||{}, document.title, _uri)
+                    location.href = `${ _uri }`;
 
                 }
 
-                else if(route.settings.method == 'post'){
+                else if($method == 'post'){
 
                     location.href = `#${ $uri.name }`; 
 
-                    // history.pushState(state||{}, document.title, `#${ $uri.name }` )
-
-                    // console.warn('Post Method', route, _uri)
-                    
                 }
                 
             
@@ -841,73 +836,91 @@ export class SensenRouter implements SensenRouter{
 
 
 
-
-export class NavigateLinkComponent extends HTMLElement{
-
-    constructor(){
-
-        super();
-        
-    }
+export default function RouterNavigationAbilities<T extends SensenElementState>(){
 
 
-    $handler(){
-
-        const $uri = this.getAttribute('uri') as keyof SensenRouterScheme;
-
-        const $method = this.getAttribute('method') as SensenRouterMethod;
-
-        const $state = this.getAttribute('state') || '{}';
+    return {
 
 
-        let $globalRouter = window.$SensenRouter || undefined;
+        navigate({ router, record}){
 
-
-        if(typeof $uri == "string"){
+            router = router || window.$SensenRouter
             
-            const $router = ((
+
+            if(
+                
+                router instanceof SensenRouter && 
+
+                record && 
+                
+                record.node instanceof HTMLElement
+                
+            ){
+
+
+                const method = (record.node.getAttribute('navigate-method') || 'get') as SensenRouterMethod;
+
+                const uri = (record.node.getAttribute('navigate-uri') || '') as keyof SensenRouterScheme;
+                
+                const concat = SensenRouter.concateURI(uri)
+
+                const args = concat.params;
+
+                const canvasQuery = record.node.getAttribute('navigate-canvas');
+
+                
+                let canvas : SensenElement<SensenElementState> | undefined = undefined;
+
+                if(canvasQuery){
     
-                this.$parentComponent instanceof SensenElement && 
+                    canvas = (
+    
+                        document.querySelector( canvasQuery ) || undefined
+                        
+                    ) as SensenElement<SensenElementState> | undefined;
+                    
+                }
                 
-                this.$parentComponent?.$application instanceof KuchiyoceElement &&
-
-                this.$parentComponent?.$application.$router instanceof SensenRouter
                 
-            ) ? this.$parentComponent?.$application.$router : false ) || $globalRouter;
+                router.navigate(method, concat.name, args, canvas)
 
+                    .then(()=>{
 
-            $router.navigate($method || 'get', $uri, JSON.parse($state) as SensenElementState);
-            
+                        console.log(
+                            
+                            `Navigation Accepted`, 
+                            
+                            method, concat.name, args, canvas
+
+                        )
+                        
+                    })
+
+                    .catch($e=>{
+
+                        console.warn(
+                            
+                            `Navigation Refused`, 
+                            
+                            method, concat.name, args, canvas
+
+                        )
+                        
+                    })
+                
+            }
+
         }
-
-    }
-
-
-    connectedCallback(){
-
-        this.setAttribute('tabindex', '0')
         
-        this.removeEventListener('click', this.$handler.bind(this), false )
 
-        this.addEventListener('click', this.$handler.bind(this), false );
 
-        // this.onclick = this.$handler.bind(this)
 
-        
-    }
+
+    } as SensenElementMethods<T> | undefined
+    
     
 
-    disconnectedCallback(){
 
-        this.removeEventListener('click', this.$handler.bind(this), false )
-        
-    }
+
     
-
-}
-
-if(!customElements.get('navigate-link')){
-
-    customElements.define('navigate-link', NavigateLinkComponent );
-
 }

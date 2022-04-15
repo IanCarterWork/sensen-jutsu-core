@@ -13,7 +13,7 @@ import { SensenRouter } from "./router.js";
 import { SensenState } from "./state.js";
 import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities.js";
 window.$SensenComponents = window.$SensenComponents || {};
-window.$SensenRouter = window.$SensenRouter || {};
+// window.$SensenRouter = window.$SensenRouter || {}
 /**
  * Sensen Component
  */
@@ -609,13 +609,23 @@ export class KuchiyoceElement extends SensenElement {
         }
         return this;
     }
-    $render(state) {
-        const render = this.$params.main(state || this.$params.state || { children: '' }, this);
+    $factory(render) {
         if (typeof render == 'string') {
             this.innerHTML = render;
         }
-        if (render instanceof SensenRouter) {
+        else if (render instanceof SensenRouter) {
             this.$router = render;
+            //@ts-ignore
+            window.$SensenRouter = render;
+            console.warn('$>', window.$SensenRouter, window.$SensenRouter instanceof SensenRouter);
+        }
+        else if (render instanceof Promise) {
+            render.then(result => {
+                this.$factory(result);
+                this.$bewitchment();
+            }).catch(err => {
+                console.error('Sensen Kuchuiyoce Failed\n', err);
+            });
         }
         else {
             if (render instanceof HTMLElement) {
@@ -623,6 +633,10 @@ export class KuchiyoceElement extends SensenElement {
             }
         }
         this.$bewitchment();
+        return this;
+    }
+    $render(state) {
+        this.$factory(this.$params.main(state || this.$params.state || { children: '' }, this));
         return null;
     }
 }

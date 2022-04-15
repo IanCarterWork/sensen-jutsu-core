@@ -1,5 +1,5 @@
 import { SensenAppearance } from "./appearance.js";
-import { KuchiyoceElement, SensenElement } from "./index.js";
+import { SensenElement } from "./index.js";
 import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js";
 export class SensenRouterHistory {
     constructor() {
@@ -72,7 +72,7 @@ export class SensenRouter {
         return undefined;
     }
     find(slug) {
-        const $uri = this.concateURI(slug);
+        const $uri = SensenRouter.concateURI(slug);
         const routes = Object.values(this.routes);
         let found = undefined;
         for (let pattern = 0; pattern < routes.length; pattern++) {
@@ -99,7 +99,7 @@ export class SensenRouter {
     run(state) {
         const uri = this.getCurrentURI() || this.options.default || Object.keys(this.routes)[0] || undefined;
         if (uri) {
-            const $uri = this.concateURI(uri);
+            const $uri = SensenRouter.concateURI(uri);
             // const route = this.routes[ $uri.name ] || undefined
             const route = this.find(uri);
             if (route instanceof SensenRouterEntry) {
@@ -141,7 +141,7 @@ export class SensenRouter {
         // this.options.canvas.style.display = `block`;
         window.addEventListener('hashchange', (ev) => {
             const uri = (location.hash ? location.hash.substring(1) : this.options.default);
-            const $uri = this.concateURI(uri);
+            const $uri = SensenRouter.concateURI(uri);
             const route = this.find(uri);
             // const params = URIParams(location.search)
             // console.log('HashChange',location.search,  params)
@@ -162,7 +162,7 @@ export class SensenRouter {
     clean() {
         return this;
     }
-    concateURI(slug) {
+    static concateURI(slug) {
         const ex = (`${slug}`).split('?');
         return {
             name: (ex[0]),
@@ -191,9 +191,8 @@ export class SensenRouter {
         return this;
     }
     navigate(method, uri, state, canvas) {
-        const $uri = this.concateURI(uri);
+        const $uri = SensenRouter.concateURI(uri);
         const $canvas = canvas || this.options.canvas || undefined;
-        const $method = method || 'get';
         state = !isEmptyObject($uri.params || {}) ? $uri.params : state;
         $uri.params = state || {};
         return new Promise((resolved, rejected) => {
@@ -210,7 +209,7 @@ export class SensenRouter {
                 else if (route) {
                     if (route.settings.component instanceof SensenElement && $canvas instanceof SensenElement) {
                         this.switch($canvas, route.settings.component, this.currentComponent, state).then(current => {
-                            this.switchDone({ uri, state, route, current, canvas: $canvas });
+                            this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                         });
                     }
                     else if (route.settings.component && isClass(route.settings.component)) {
@@ -219,7 +218,7 @@ export class SensenRouter {
                         if ($instance instanceof SensenElement && $canvas instanceof SensenElement) {
                             route.settings.component = $instance;
                             this.switch($canvas, $instance, this.currentComponent, state).then(current => {
-                                this.switchDone({ uri, state, route, current, canvas: $canvas });
+                                this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                             });
                         }
                         else {
@@ -237,11 +236,12 @@ export class SensenRouter {
             }
         });
     }
-    switchDone({ uri, state, route, current, canvas }) {
+    switchDone({ method, uri, state, route, current, canvas }) {
         const currentURI = this.getCurrentURI();
         if (current instanceof SensenElement && route) {
-            const $uri = this.concateURI(uri);
+            const $uri = SensenRouter.concateURI(uri);
             const query = URIParamsQuery(state || {}) || '';
+            const $method = method || route.settings.method;
             // @ts-ignore
             const _uri = (`#${$uri.name}${query ? `?${query}` : ``}`);
             this.currentComponent = current;
@@ -253,14 +253,11 @@ export class SensenRouter {
                 return this;
             }
             else {
-                if (route.settings.method == 'get') {
+                if ($method == 'get') {
                     location.href = `${_uri}`;
-                    // history.pushState(state||{}, document.title, _uri)
                 }
-                else if (route.settings.method == 'post') {
+                else if ($method == 'post') {
                     location.href = `#${$uri.name}`;
-                    // history.pushState(state||{}, document.title, `#${ $uri.name }` )
-                    // console.warn('Post Method', route, _uri)
                 }
             }
         }
@@ -332,32 +329,30 @@ export class SensenRouter {
         ]);
     }
 }
-export class NavigateLinkComponent extends HTMLElement {
-    constructor() {
-        super();
-    }
-    $handler() {
-        const $uri = this.getAttribute('uri');
-        const $method = this.getAttribute('method');
-        const $state = this.getAttribute('state') || '{}';
-        let $globalRouter = window.$SensenRouter || undefined;
-        if (typeof $uri == "string") {
-            const $router = ((this.$parentComponent instanceof SensenElement &&
-                this.$parentComponent?.$application instanceof KuchiyoceElement &&
-                this.$parentComponent?.$application.$router instanceof SensenRouter) ? this.$parentComponent?.$application.$router : false) || $globalRouter;
-            $router.navigate($method || 'get', $uri, JSON.parse($state));
+export default function RouterNavigationAbilities() {
+    return {
+        navigate({ router, record }) {
+            router = router || window.$SensenRouter;
+            if (router instanceof SensenRouter &&
+                record &&
+                record.node instanceof HTMLElement) {
+                const method = (record.node.getAttribute('navigate-method') || 'get');
+                const uri = (record.node.getAttribute('navigate-uri') || '');
+                const concat = SensenRouter.concateURI(uri);
+                const args = concat.params;
+                const canvasQuery = record.node.getAttribute('navigate-canvas');
+                let canvas = undefined;
+                if (canvasQuery) {
+                    canvas = (document.querySelector(canvasQuery) || undefined);
+                }
+                router.navigate(method, concat.name, args, canvas)
+                    .then(() => {
+                    console.log(`Navigation Accepted`, method, concat.name, args, canvas);
+                })
+                    .catch($e => {
+                    console.warn(`Navigation Refused`, method, concat.name, args, canvas);
+                });
+            }
         }
-    }
-    connectedCallback() {
-        this.setAttribute('tabindex', '0');
-        this.removeEventListener('click', this.$handler.bind(this), false);
-        this.addEventListener('click', this.$handler.bind(this), false);
-        // this.onclick = this.$handler.bind(this)
-    }
-    disconnectedCallback() {
-        this.removeEventListener('click', this.$handler.bind(this), false);
-    }
-}
-if (!customElements.get('navigate-link')) {
-    customElements.define('navigate-link', NavigateLinkComponent);
+    };
 }

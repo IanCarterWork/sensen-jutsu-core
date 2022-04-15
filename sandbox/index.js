@@ -4,16 +4,16 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _SensenElement_instances, _SensenElement_connectedProtocol;
-import { SensenAppearance } from "./appearance.js.js.js.js";
-import { CommonDirectives } from "./directive.js.js.js.js";
-import { SensenEmitter } from "./emitter.js.js.js.js";
-import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression.js.js.js.js";
-import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render.js.js.js.js";
-import { SensenRouter } from "./router.js.js.js.js";
-import { SensenState } from "./state.js.js.js.js";
-import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities.js.js.js.js";
+import { SensenAppearance } from "./appearance";
+import { CommonDirectives } from "./directive";
+import { SensenEmitter } from "./emitter";
+import { FindDirectives, FindGlobalExpressions, FindStateData } from "./expression";
+import { SensenDataRender, SensenNodeRender, SensenRender, SyntaxDelimiter } from "./render";
+import { SensenRouter } from "./router";
+import { SensenState } from "./state";
+import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./utilities";
 window.$SensenComponents = window.$SensenComponents || {};
-window.$SensenRouter = window.$SensenRouter || {};
+// window.$SensenRouter = window.$SensenRouter || {}
 /**
  * Sensen Component
  */
@@ -609,13 +609,23 @@ export class KuchiyoceElement extends SensenElement {
         }
         return this;
     }
-    $render(state) {
-        const render = this.$params.main(state || this.$params.state || { children: '' }, this);
+    $factory(render) {
         if (typeof render == 'string') {
             this.innerHTML = render;
         }
-        if (render instanceof SensenRouter) {
+        else if (render instanceof SensenRouter) {
             this.$router = render;
+            //@ts-ignore
+            window.$SensenRouter = render;
+            console.warn('$>', window.$SensenRouter, window.$SensenRouter instanceof SensenRouter);
+        }
+        else if (render instanceof Promise) {
+            render.then(result => {
+                this.$factory(result);
+                this.$bewitchment();
+            }).catch(err => {
+                console.error('Sensen Kuchuiyoce Failed\n', err);
+            });
         }
         else {
             if (render instanceof HTMLElement) {
@@ -623,6 +633,10 @@ export class KuchiyoceElement extends SensenElement {
             }
         }
         this.$bewitchment();
+        return this;
+    }
+    $render(state) {
+        this.$factory(this.$params.main(state || this.$params.state || { children: '' }, this));
         return null;
     }
 }
@@ -636,9 +650,10 @@ export class Jutsu {
 /**
  * Create Component Method Event
  */
-export function CreateComponentMethodEvent(component, event) {
+export function CreateComponentMethodEvent(component, event, record) {
     const _ = {
         event,
+        record,
         element: component,
         router: component.$application?.$router,
         children: component.children,
@@ -685,7 +700,7 @@ CommonDirectives.Define({
                          */
                         const isMethod = attrib?.indexOf(`this.methods.`) == 0;
                         // const isRouter = attrib?.indexOf(`$router.`) == 0;
-                        const _event = CreateComponentMethodEvent(component, ev);
+                        const _event = CreateComponentMethodEvent(component, ev, record);
                         if (isMethod && component.$methods) {
                             const methodName = attrib.substring((`this.methods.`).length);
                             const method = component.$methods[methodName];
@@ -739,15 +754,15 @@ export function Sensen(command, state) {
     return undefined;
 }
 /** * Sensen Plugin Element Caller */
-export function SensenPlugin(name, state) {
+export function $Plugin(name, state) {
     return Sensen(`plugin-${name}`, state);
 }
 /** * Sensen Activity Element Caller */
-export function SensenActivity(name, state) {
+export function $Activity(name, state) {
     return Sensen(`activity-${name}`, state);
 }
 /** * Sensen Component Element Caller */
-export function SensenComponent(name, state) {
+export function $Component(name, state) {
     return Sensen(`sense-${name}`, state);
 }
 /** * Utilities : $ReadObjectEntries */

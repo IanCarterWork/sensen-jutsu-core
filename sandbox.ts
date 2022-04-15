@@ -1,6 +1,6 @@
 import { FxScalingIn, FxScalingOut, FxSlideHorizontal, FxSlideVertical } from "./animation/preset";
 import { Component, Jutsu, $Component, SensenElement } from "./index";
-import { SensenRouter, SensenRouterEntry } from "./router";
+import RouterNavigationAbilities, { SensenRouter, SensenRouterEntry } from "./router";
 
 
 
@@ -76,6 +76,8 @@ const HelloComponent = Component<HelloState>({
     },
 
     methods:{
+
+        ...RouterNavigationAbilities(),
 
         addCounter({ state, router }){
 
@@ -166,6 +168,14 @@ const HelloComponent = Component<HelloState>({
             <a href="javascript:void(0)" @click="this.$application.$router.get('about')">About</a>
 
             <br>
+            <br>
+
+                <button 
+                    @click="this.methods.navigate" 
+                    navigate-method="post"
+                    navigate-uri="about?counter=200"
+                >Navigate to About</button>
+            
             <br>
             <br>
 
@@ -466,7 +476,7 @@ Jutsu.Kuchiyoce<AppState>('sandbox', {
         // console.warn('Kuchioyce State', state, this)
 
 
-        console.warn('$>', $Component<HelloState>('hello') )
+        // console.warn('$>', $Component<HelloState>('hello') )
 
 
         return (new SensenRouter({

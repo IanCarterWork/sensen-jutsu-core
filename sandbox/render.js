@@ -1,6 +1,6 @@
 import { render } from "ejs";
-import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression.js.js.js.js";
-import { decodeHTMLEntities } from "./utilities.js.js.js.js";
+import { StabilizeEchoExpression, StabilizeSnapCodeExpression } from "./expression";
+import { decodeHTMLEntities } from "./utilities";
 export const SyntaxEcho = new RegExp('{{(.*?)}}', 'g');
 export const SyntaxSnapCode = new RegExp('{%(.*?)%}', 'g');
 export const SyntaxDelimiter = `%sn`;

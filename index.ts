@@ -11,7 +11,7 @@ import { CloneObject, decodeHTMLEntities, FindParental, isEmptyObject } from "./
 
 window.$SensenComponents = window.$SensenComponents || {}
 
-window.$SensenRouter = window.$SensenRouter || {}
+// window.$SensenRouter = window.$SensenRouter || {}
 
 
 
@@ -1461,17 +1461,11 @@ export class KuchiyoceElement extends SensenElement<SensenElementState>{
         
     }
     
-    
 
-    $render(state?: typeof this.$params.state): null {
 
-        const render = this.$params.main(
-            
-            state || this.$params.state || {children:''},
 
-            this
-            
-        )
+
+    $factory(render : any){
 
 
         if(typeof render == 'string'){
@@ -1480,14 +1474,35 @@ export class KuchiyoceElement extends SensenElement<SensenElementState>{
             
         }
 
-        if(render instanceof SensenRouter){
+        else if(render instanceof SensenRouter){
 
             this.$router = render;
 
             //@ts-ignore
-            window.$SensenRouter = render
+            window.$SensenRouter = render;
+            
+
+            console.warn('$>', window.$SensenRouter, window.$SensenRouter instanceof SensenRouter )
+
+        }
+
+
+        else if(render instanceof Promise){
+
+            render.then(result=>{
+
+                this.$factory(result);
+
+                this.$bewitchment();
+                
+            }).catch(err=>{
+
+                console.error('Sensen Kuchuiyoce Failed\n', err)
+                
+            })
             
         }
+        
 
         else{
 
@@ -1500,6 +1515,27 @@ export class KuchiyoceElement extends SensenElement<SensenElementState>{
         }
         
         this.$bewitchment();
+
+
+        return this;
+        
+    }
+    
+    
+
+    $render(state?: typeof this.$params.state): null {
+
+        this.$factory(
+            
+            this.$params.main(
+            
+                state || this.$params.state || {children:''},
+    
+                this
+            
+            )
+
+        );
 
         return null
         

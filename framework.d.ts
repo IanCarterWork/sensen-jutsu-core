@@ -195,6 +195,8 @@ declare type SensenRouterRoutes = {
 
 declare interface SensenRouterSwitchRequest {
 
+    method ?: SensenRouterMethod, 
+    
     route: SensenRouterEntry;
 
     current: object;

@@ -1,7 +1,7 @@
-import { CommonDirectives } from "./directive.js.js.js.js";
-import { SensenElement } from "./index.js.js.js.js";
-import { SyntaxDelimiter, SyntaxEcho, SyntaxSnapCode } from "./render.js.js.js.js";
-import { ArrayRange } from "./utilities.js.js.js.js";
+import { CommonDirectives } from "./directive";
+import { SensenElement } from "./index";
+import { SyntaxDelimiter, SyntaxEcho, SyntaxSnapCode } from "./render";
+import { ArrayRange } from "./utilities";
 /**
  * Test node compilation
  */
