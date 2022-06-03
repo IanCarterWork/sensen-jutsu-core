@@ -1,7 +1,7 @@
-import { SensenEmitter } from "./emitter.js";
-import { SensenMetricRandom } from "./metric-random.js";
-import { ArrayRange } from "./utilities.js";
-import SensenURLScheme from "./pathScheme.js";
+import { SensenEmitter } from "./emitter";
+import { SensenMetricRandom } from "./metric-random";
+import { ArrayRange } from "./utilities";
+import SensenURLScheme from "./pathScheme";
 export class SensenAppearance {
     constructor(props) {
         this.$dom = {};

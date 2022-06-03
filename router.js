@@ -1,6 +1,7 @@
-import { SensenAppearance } from "./appearance.js";
-import { SensenElement } from "./index.js";
-import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities.js";
+import { SensenAppearance } from "./appearance";
+import { SensenEmitter } from "./emitter";
+import { SensenElement } from "./index";
+import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities";
 export class SensenRouterHistory {
     constructor() {
         this.entries = [];
@@ -203,12 +204,17 @@ export class SensenRouter {
                     if (route.settings.component instanceof SensenElement) {
                         this.switchDone({ uri, state, route, current: route.settings.component, canvas: $canvas });
                         route.settings.component.$render(state);
+                        resolved(route);
                     }
-                    resolved(route);
+                    else {
+                        rejected("route:component.instance.not.found");
+                        throw (`SensenRouter : Route component is not a SensenElement Class instance"`);
+                    }
                 }
                 else if (route) {
                     if (route.settings.component instanceof SensenElement && $canvas instanceof SensenElement) {
                         this.switch($canvas, route.settings.component, this.currentComponent, state).then(current => {
+                            resolved(route);
                             this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                         });
                     }
@@ -218,19 +224,24 @@ export class SensenRouter {
                         if ($instance instanceof SensenElement && $canvas instanceof SensenElement) {
                             route.settings.component = $instance;
                             this.switch($canvas, $instance, this.currentComponent, state).then(current => {
+                                resolved(route);
                                 this.switchDone({ method, uri, state, route, current, canvas: $canvas });
-                            });
+                            })
+                                .catch(er => { rejected(er); });
                         }
                         else {
+                            rejected("route:component.instance.not.found");
                             throw (`SensenRouter : Route component is not a SensenElement Class instance"`);
                         }
                     }
                     else {
+                        rejected("route:component.not.found");
                         throw (`SensenRouter : Route component not found"`);
                     }
                 }
                 else {
                     console.error('Route', route);
+                    rejected("route:not.found");
                     throw (`SensenRouter : Route not found (${uri}) `);
                 }
             }
@@ -329,13 +340,18 @@ export class SensenRouter {
         ]);
     }
 }
+export const RouterEmitter = window.SensenRouterEmitter || new SensenEmitter();
+window.SensenRouterEmitter = RouterEmitter;
 export default function RouterNavigationAbilities() {
     return {
-        navigate({ router, record }) {
+        navigate({ router, record, event }) {
             router = router || window.$SensenRouter;
             if (router instanceof SensenRouter &&
                 record &&
                 record.node instanceof HTMLElement) {
+                event?.preventDefault();
+                event?.stopPropagation();
+                const emitter = (window.SensenRouterEmitter instanceof SensenEmitter) ? window.SensenRouterEmitter : undefined;
                 const method = (record.node.getAttribute('navigate-method') || 'get');
                 const uri = (record.node.getAttribute('navigate-uri') || '');
                 const concat = SensenRouter.concateURI(uri);
@@ -345,12 +361,39 @@ export default function RouterNavigationAbilities() {
                 if (canvasQuery) {
                     canvas = (document.querySelector(canvasQuery) || undefined);
                 }
+                emitter?.dispatch('navigationStart', {
+                    router,
+                    uri: concat,
+                    args,
+                    canvas,
+                    route: undefined
+                });
                 router.navigate(method, concat.name, args, canvas)
-                    .then(() => {
-                    console.log(`Navigation Accepted`, method, concat.name, args, canvas);
+                    .then((route) => {
+                    emitter?.dispatch('navigationDone', {
+                        router,
+                        uri: concat,
+                        args,
+                        canvas,
+                        route,
+                    });
+                    // console.log(
+                    //     `Navigation Accepted`, 
+                    //     method, concat.name, args, canvas
+                    // )
                 })
                     .catch($e => {
-                    console.warn(`Navigation Refused`, method, concat.name, args, canvas);
+                    emitter?.dispatch('navigationFail', {
+                        router,
+                        uri: concat,
+                        args,
+                        canvas,
+                        error: $e,
+                    });
+                    // console.warn(
+                    //     `Navigation Refused`, 
+                    //     method, concat.name, args, canvas
+                    // )
                 });
             }
         }

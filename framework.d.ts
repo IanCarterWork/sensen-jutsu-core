@@ -12,6 +12,8 @@ declare interface Window {
 
     $GlobalDirectives: IGlobalDirectives;
 
+    SensenRouterEmitter ?: ISensenEmitter | object;
+
 
 
     $ReadObjectEntries(input : object) : object
@@ -235,6 +237,7 @@ declare interface RouterNavigateState extends SensenElementState{
     uri: string
 
 }
+
 
 
 

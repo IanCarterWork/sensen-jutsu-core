@@ -1,4 +1,4 @@
-import { SensenEmitter } from "./emitter.js";
+import { SensenEmitter } from "./emitter";
 export function CreatePluginChild(instance, identifier, tag = 'div') {
     const $child = document.createElement(tag || 'div');
     $child.setAttribute('plugin-child', `@${identifier}`);

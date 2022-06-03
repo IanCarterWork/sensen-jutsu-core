@@ -1,4 +1,5 @@
 import { SensenAppearance } from "./appearance";
+import { SensenEmitter } from "./emitter";
 import { Component, KuchiyoceElement, SensenElement } from "./index";
 import { isClass, isEmptyObject, URIParams, URIParamsQuery } from "./utilities";
 
@@ -493,9 +494,17 @@ export class SensenRouter implements SensenRouter{
                         
                         route.settings.component.$render(state);
                             
+                        resolved(route)
+
                     }
     
-                    resolved(route)
+                    else{
+        
+                        rejected("route:component.instance.not.found")
+
+                        throw (`SensenRouter : Route component is not a SensenElement Class instance"`)
+                     
+                    }
     
                 }
                 
@@ -517,6 +526,8 @@ export class SensenRouter implements SensenRouter{
         
                         ).then(current=>{
         
+                            resolved(route)
+
                             this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                             
                         })
@@ -545,14 +556,20 @@ export class SensenRouter implements SensenRouter{
         
                             ).then(current=>{
     
+                                resolved(route)
+
                                 this.switchDone({ method, uri, state, route, current, canvas: $canvas });
                             
                             })
+
+                            .catch(er=>{ rejected(er) })
                             
                         }
         
                         else{
         
+                            rejected("route:component.instance.not.found")
+
                             throw (`SensenRouter : Route component is not a SensenElement Class instance"`)
                          
                         }
@@ -561,6 +578,8 @@ export class SensenRouter implements SensenRouter{
         
                     else{
                        
+                        rejected("route:component.not.found")
+
                         throw (`SensenRouter : Route component not found"`)
                          
                     }
@@ -571,6 +590,8 @@ export class SensenRouter implements SensenRouter{
     
                     console.error('Route', route)
                     
+                    rejected("route:not.found")
+
                     throw (`SensenRouter : Route not found (${ uri }) `); 
                 
                 }
@@ -833,6 +854,29 @@ export class SensenRouter implements SensenRouter{
 
 
 
+export interface RouterNavigationStack{
+
+    router : SensenRouter;
+
+    uri: SensenRouterURI;
+
+    args?: SensenRouterScheme[ keyof SensenRouterScheme]
+
+    canvas ?: HTMLElement | undefined
+
+    route ?: SensenRouterEntry;
+
+    error ?: any;
+
+}
+
+
+
+export const RouterEmitter = window.SensenRouterEmitter || new SensenEmitter()
+
+window.SensenRouterEmitter = RouterEmitter;
+
+
 
 
 
@@ -841,8 +885,7 @@ export default function RouterNavigationAbilities<T extends SensenElementState>(
 
     return {
 
-
-        navigate({ router, record}){
+        navigate({ router, record, event}){
 
             router = router || window.$SensenRouter
             
@@ -857,6 +900,11 @@ export default function RouterNavigationAbilities<T extends SensenElementState>(
                 
             ){
 
+                event?.preventDefault();
+
+                event?.stopPropagation();
+
+                const emitter = (window.SensenRouterEmitter instanceof SensenEmitter) ? window.SensenRouterEmitter : undefined
 
                 const method = (record.node.getAttribute('navigate-method') || 'get') as SensenRouterMethod;
 
@@ -871,6 +919,7 @@ export default function RouterNavigationAbilities<T extends SensenElementState>(
                 
                 let canvas : SensenElement<SensenElementState> | undefined = undefined;
 
+
                 if(canvasQuery){
     
                     canvas = (
@@ -881,30 +930,77 @@ export default function RouterNavigationAbilities<T extends SensenElementState>(
                     
                 }
                 
+
+
+                emitter?.dispatch('navigationStart', {
                 
+                    router,
+                
+                    uri : concat,
+                
+                    args,
+                
+                    canvas,
+
+                    route : undefined
+                
+                } as RouterNavigationStack)
+                
+                
+
                 router.navigate(method, concat.name, args, canvas)
 
-                    .then(()=>{
+                    .then((route)=>{
 
-                        console.log(
-                            
-                            `Navigation Accepted`, 
-                            
-                            method, concat.name, args, canvas
 
-                        )
+                        emitter?.dispatch('navigationDone', {
+                        
+                            router,
+                        
+                            uri : concat,
+                        
+                            args,
+                        
+                            canvas,
+
+                            route,
+                        
+                        } as RouterNavigationStack)
+                        
+
+                        // console.log(
+                            
+                        //     `Navigation Accepted`, 
+                            
+                        //     method, concat.name, args, canvas
+
+                        // )
                         
                     })
 
                     .catch($e=>{
 
-                        console.warn(
-                            
-                            `Navigation Refused`, 
-                            
-                            method, concat.name, args, canvas
+                        emitter?.dispatch('navigationFail', {
+                        
+                            router,
+                        
+                            uri : concat,
+                        
+                            args,
+                        
+                            canvas,
 
-                        )
+                            error : $e,
+                        
+                        } as RouterNavigationStack)
+                        
+                        // console.warn(
+                            
+                        //     `Navigation Refused`, 
+                            
+                        //     method, concat.name, args, canvas
+
+                        // )
                         
                     })
                 

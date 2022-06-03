@@ -1,6 +1,6 @@
-import { FxScalingIn, FxSlideHorizontal } from "./animation/preset.js";
-import { Component, Jutsu } from "./index.js";
-import RouterNavigationAbilities, { SensenRouter, SensenRouterEntry } from "./router.js";
+import { FxScalingIn, FxSlideHorizontal } from "./animation/preset";
+import { Component, Jutsu } from "./index";
+import RouterNavigationAbilities, { SensenRouter, SensenRouterEntry } from "./router";
 const HelloComponent = Component({
     name: 'hello',
     state: {
